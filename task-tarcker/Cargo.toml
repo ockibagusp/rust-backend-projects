@@ -1,0 +1,8 @@
+[package]
+name = "task-tarcker"
+version = "0.1.0"
+authors = ["Ocki Bagus P. <ocki.bagus.p@gmail.com>"]
+edition = "2024"
+
+[dependencies]
+chrono = "0.4"
