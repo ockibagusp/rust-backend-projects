@@ -1,6 +1,7 @@
 mod help;
-
 mod tasks;
+mod tasks_test;
+
 use help::help_all;
 // => add(...); v
 use tasks::add;
@@ -132,12 +133,9 @@ fn main() {
 // 1.3. hapus tugas ❔
 #[cfg(test)]
 mod tests {
-    use chrono::DateTime;
-
     use crate::{
         help::{self, help_all},
         run,
-        tasks::{self, add},
     };
 
     static TASK_TRACKER: &str = "task-tracker";
@@ -147,58 +145,53 @@ mod tests {
         let mut args: Vec<String> = Vec::new();
         args.push(String::from(TASK_TRACKER));
         assert_eq!(args.len(), 1);
-        assert_eq!(run(&args), help::help_all());
+        assert_eq!(run(&args), help_all());
 
         args.push("first_err".to_string());
         assert_eq!(args.len(), 2);
-        assert_eq!(run(&args), help::help_all());
+        assert_eq!(run(&args), help_all());
 
         args.push(String::from("second_err"));
         args.push(String::from("third_err"));
         assert_eq!(args.len(), 4);
-        assert_eq!(run(&args), help::help_all());
+        assert_eq!(run(&args), help_all());
     }
 
     #[test]
     fn test_add_empty() {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("add")];
         assert_eq!(args.len(), 2);
+        assert_eq!(args[1], "add");
         assert_eq!(run(&args), help::help_add());
     }
 
     #[test]
-    fn test_args_add_buymilk() {
+    fn test_args_add_success() {
         let args: Vec<String> = vec![
             String::from(TASK_TRACKER),
             String::from("add"),
-            String::from("buy milk"),
+            String::from("test buy milk"),
         ];
 
         assert_eq!(args.len(), 3);
-
-        let test_task = tasks::Task {
-            id: 1,
-            description: String::from("test buy eggs"),
-            status: String::from("todo"),
-            created_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-            updated_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-        };
-
-        assert_eq!(test_task, add("test buy eggs"));
+        assert_eq!(args[1], "add");
+        assert_eq!(args[2], "test buy milk");
+        let expected_output = String::from(
+            "Add tast:\n------------------\nID: 1\n----- Description: test buy milk\n----- Status: todo\n----- Created At: 2025-04-10T10:10:10+07:00\n----- Updated At: 2025-04-10T10:10:10+07:00",
+        );
+        assert_eq!(run(&args), expected_output);
     }
 
     #[test]
-    fn test_args_update_buy3eggs() {
+    fn test_update_empty() {
+        let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("update")];
+        assert_eq!(args.len(), 2);
+        assert_eq!(args[1], "update");
+        assert_eq!(run(&args), help::help_update());
+    }
+
+    #[test]
+    fn test_update_success() {
         let args: Vec<String> = vec![
             String::from(TASK_TRACKER),
             String::from("update"),
@@ -206,84 +199,36 @@ mod tests {
         ];
 
         assert_eq!(args.len(), 3);
-
-        let test_task = tasks::Task {
-            id: 1,
-            description: String::from("test buy 3 eggs"),
-            status: String::from("todo"),
-            created_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-            updated_at: DateTime::parse_from_str(
-                "2025-04-10 14:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-        };
-
-        assert_eq!(test_task, tasks::update(1, "test buy 3 eggs"));
+        assert_eq!(args[1], "update");
+        let expected_output = String::from(
+            "Update task:\n------------------\nID: 1\n----- Description: test buy 3 eggs\n----- Status: todo\n----- Created At: 2025-04-10T10:10:10+07:00\n----- Updated At: 2025-04-10T14:10:10+07:00",
+        );
+        assert_eq!(run(&args), expected_output);
     }
 
     #[test]
     fn test_not_list() {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("fail")];
         assert_eq!(args.len(), 2);
-        assert_eq!(run(&args), help::help_all());
+        assert_eq!(run(&args), help_all());
     }
 
     #[test]
     fn test_args_help_success() {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("help")];
         assert_eq!(args.len(), 2);
-        assert_eq!(run(&args), help::help_all());
+        assert_eq!(run(&args), help_all());
     }
 
     #[test]
     fn test_args_list_success() {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("list")];
-        assert_eq!(args.len(), 2);
-        assert_eq!(run(&args), help_all());
 
-        let tasts = vec![
-            tasks::Task {
-                id: 1,
-                description: String::from("buy milk"),
-                status: String::from("todo"),
-                created_at: DateTime::parse_from_str(
-                    "2025-04-10 10:10:10.000000 +07:00",
-                    "%Y-%m-%d %H:%M:%S%.6f %z",
-                )
-                .unwrap()
-                .into(),
-                updated_at: DateTime::parse_from_str(
-                    "2025-04-10 10:10:10.000000 +07:00",
-                    "%Y-%m-%d %H:%M:%S%.6f %z",
-                )
-                .unwrap()
-                .into(),
-            },
-            tasks::Task {
-                id: 2,
-                description: String::from("buy bread"),
-                status: String::from("in-progress"),
-                created_at: DateTime::parse_from_str(
-                    "2025-04-12 12:10:10.000000 +07:00",
-                    "%Y-%m-%d %H:%M:%S%.6f %z",
-                )
-                .unwrap()
-                .into(),
-                updated_at: DateTime::parse_from_str(
-                    "2025-04-12 12:10:10.000000 +07:00",
-                    "%Y-%m-%d %H:%M:%S%.6f %z",
-                )
-                .unwrap()
-                .into(),
-            },
-        ];
-        assert_eq!(tasts, tasks::list());
+        assert_eq!(args.len(), 2);
+        assert_eq!(args[1], "list");
+        let expected_output = String::from(
+            "Lists:\n------------------\nID: 1\n----- Description: buy milk\n----- Status: todo\n----- Created At: 2025-04-10T10:10:10+07:00\n----- Updated At: 2025-04-10T10:10:10+07:00\nID: 2\n----- Description: buy bread\n----- Status: in-progress\n----- Created At: 2025-04-12T12:10:10+07:00\n----- Updated At: 2025-04-12T12:10:10+07:00",
+        );
+        assert_eq!(run(&args), expected_output);
     }
 }

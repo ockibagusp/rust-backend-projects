@@ -1,5 +1,5 @@
+use chrono::DateTime;
 use chrono::prelude::FixedOffset;
-use chrono::{DateTime, Local, Utc};
 
 #[derive(PartialEq, Debug)]
 pub struct Task {
@@ -61,25 +61,7 @@ pub fn delete(id: i32) -> bool {
     return true;
 }
 
-#[cfg_attr(debug_assertions, allow(dead_code))]
-fn list_cli() {
-    // date in local tz
-    let date_in_local: DateTime<Local> = Local::now();
-    println!("(in local_tz): {date_in_local}");
-    // 2025-04-10 10:10:10.000000 +07:00
-    let date_str = "2025-04-10 10:10:10.000000 +07:00";
-    // let date_str = "2020-04-12 22:10:57 +02:00";
-    let mut datetime = DateTime::parse_from_str(date_str, "%Y-%m-%d %H:%M:%S%.6f %z").unwrap();
-    println!("Parsed datetime: {}", datetime);
-
-    let now_utc = Utc::now();
-    datetime = now_utc.into();
-
-    println!("now_fixed: {}", datetime);
-}
-
 pub fn list() -> Vec<Task> {
-    // list_cli();
     let task1 = Task {
         id: 1,
         description: String::from("buy milk"),

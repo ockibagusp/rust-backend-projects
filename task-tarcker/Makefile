@@ -5,6 +5,9 @@ run:
 action:
 	cargo run
 
+test:
+	cargo test
+
 build:
 	cargo build
 
