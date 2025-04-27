@@ -1,8 +1,8 @@
-mod help;
+mod helps;
 mod tasks;
 mod tasks_test;
 
-use help::help_all;
+use helps::help_all;
 // => add(...); v
 use tasks::add;
 
@@ -10,7 +10,7 @@ use std::env::args;
 
 pub fn run(args: &Vec<String>) -> String {
     if args.len() == 1 || args.len() > 3 || (args.len() == 2 && &args[1] == "help") {
-        return help::help_all();
+        return helps::help_all();
     }
 
     // 1
@@ -19,7 +19,7 @@ pub fn run(args: &Vec<String>) -> String {
     // add <task>
     if accept_args == "add" {
         if args.len() != 3 {
-            return help::help_add();
+            return helps::help_add();
         }
 
         // 2
@@ -43,7 +43,7 @@ pub fn run(args: &Vec<String>) -> String {
     // update <id> <task>
     if accept_args == "update" {
         if args.len() != 3 {
-            return help::help_update();
+            return helps::help_update();
         }
 
         // 2
@@ -68,7 +68,7 @@ pub fn run(args: &Vec<String>) -> String {
 
     if accept_args == "delete" {
         if args.len() != 3 {
-            return help::help_delete();
+            return helps::help_delete();
         }
 
         // 2
@@ -89,11 +89,11 @@ pub fn run(args: &Vec<String>) -> String {
     }
 
     if accept_args == "mark-in-progress" {
-        return help::help_all();
+        return helps::help_all();
     }
 
     if accept_args == "mark-done" {
-        return help::help_all();
+        return helps::help_all();
     }
 
     // list
@@ -134,7 +134,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use crate::{
-        help::{self, help_all},
+        helps::{self, help_all},
         run,
     };
 
@@ -162,7 +162,7 @@ mod tests {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("add")];
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "add");
-        assert_eq!(run(&args), help::help_add());
+        assert_eq!(run(&args), helps::help_add());
     }
 
     #[test]
@@ -187,7 +187,7 @@ mod tests {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("update")];
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "update");
-        assert_eq!(run(&args), help::help_update());
+        assert_eq!(run(&args), helps::help_update());
     }
 
     #[test]
