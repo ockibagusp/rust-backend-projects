@@ -8,7 +8,22 @@ Task CLI
 
 ### b. ke dari dalam json
 
-### c. menambahkan berkas buru di i-abc.json ke file-nya
+### c. menambahkan berkas buru di task-cli.json ke file-nya
+
+```
+{
+    "next_count": 2,
+    "tasks": [
+        {
+            "id": 1,
+            "description": "xxx",
+            "status": "xxx",
+            "created_at": xxx,
+            "updated_at": xxx
+        }
+    ]
+}
+```
 
 ## 1.2. perubahan tugas
 
@@ -16,7 +31,7 @@ Task CLI
 
 ### b. ke dari dalam json
 
-### c. mengganti berkas di i-abc.json ke file-nya
+### c. mengganti berkas di task-cli.json ke file-nya
 
 ## 1.3. hapus tugas
 
@@ -24,4 +39,8 @@ Task CLI
 
 ### b. ke dari dalam json
 
-### c. hapus berkas di i-abc.json ke file-nya
+### c. hapus berkas di task-cli.json ke file-nya
+
+```
+
+```

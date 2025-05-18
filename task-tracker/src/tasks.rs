@@ -1,7 +1,12 @@
 use chrono::DateTime;
 use chrono::prelude::FixedOffset;
 
-#[derive(PartialEq, Debug)]
+pub struct TaskList {
+    pub next_count: i32,
+    pub tasks: Vec<Task>,
+}
+
+#[derive(PartialEq, Debug, serde::Serialize)]
 pub struct Task {
     pub id: i32,
     pub description: String,

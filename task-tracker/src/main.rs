@@ -1,6 +1,8 @@
 mod helps;
 mod tasks;
 mod tasks_test;
+mod files;
+mod files_test;
 
 use helps::help_all;
 // => add(...); v
