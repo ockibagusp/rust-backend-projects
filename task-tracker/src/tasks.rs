@@ -1,12 +1,15 @@
 use chrono::DateTime;
 use chrono::prelude::FixedOffset;
 
-pub struct TaskList {
-    pub next_count: i32,
-    pub tasks: Vec<Task>,
-}
+pub(crate) static _FILE_NAME: &'static str = "task-cli.json";
 
 #[derive(PartialEq, Debug, serde::Serialize)]
+pub struct TaskList<'a> {
+    pub next_count: i32,
+    pub tasks: Vec<&'a Task>,
+}
+
+#[derive(PartialEq, Clone, Debug, serde::Serialize)]
 pub struct Task {
     pub id: i32,
     pub description: String,
