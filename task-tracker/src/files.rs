@@ -1,85 +1,120 @@
+use std::fs;
+use std::fs::File as std_file;
 use std::io::Write;
-use tasks::_FILE_NAME;
 
-use chrono::prelude::FixedOffset;
-use chrono::{DateTime, Utc};
-
-use crate::tasks;
+use crate::task::{self, Task};
 
 // https://medium.com/@aleksej.gudkov/rust-write-to-file-example-a-practical-guide-51c24695aa80
 
 #[allow(dead_code)]
-pub struct File {
-    pub file_name: String,
+pub struct File<'a> {
+    file_name: &'a str,
 }
 
 #[allow(dead_code)]
-pub trait FileTrait {
-    fn new(name: String) -> Self;
-    fn name(&self) -> String;
-    fn create(&self, description: &str) -> tasks::Task;
-    fn now_utc(&self) -> DateTime<FixedOffset>;
-    fn task(
-        &self,
-        id: i32,
-        description: &str,
-        status: &str,
-        created_at: DateTime<FixedOffset>,
-        updated_at: DateTime<FixedOffset>,
-    ) -> tasks::Task;
-    fn task_list<'a>(&self, next_count: i32, tasks: Vec<&'a tasks::Task>) -> tasks::TaskList<'a>;
-}
+impl<'a> File<'a> {
+    pub fn new(name: &'a str) -> Self {
+        // Try to open the file; if it doesn't exist, try to create it.
+        match std_file::create(name) {
+            Ok(mut f) => {
+                let nil_json_string =
+                    serde_json::to_string_pretty(&Vec::<task::Task>::new()).unwrap();
+                f.write_all(nil_json_string.as_bytes())
+                    .expect("Failed to write initial JSON");
+                f
+            }
+            Err(e) => panic!("Failed to open or create file '{}': {}", name, e),
+        };
 
-impl FileTrait for File {
-    fn new(name: String) -> Self {
         File { file_name: name }
     }
-    fn name(&self) -> String {
-        // format!("{}", _FILE_NAME)
-        self.file_name.clone()
+
+    fn name(&self) -> &str {
+        &self.file_name
     }
 
-    fn create(&self, description: &str) -> tasks::Task {
-        let now_utc = Self::now_utc(self);
-        let add_task = Self::task(self, 1, description, "todo", now_utc, now_utc);
-        let add_tasklist = Self::task_list(self, 2, vec![&add_task]);
+    fn list(&self) -> Vec<Task> {
+        let tasks: Vec<Task> = vec![];
+        tasks
+    }
 
-        let json_data =
-            serde_json::to_string_pretty(&add_tasklist).expect("Unable to serialize task list");
-
-        let mut file = std::fs::File::create(_FILE_NAME).expect("Failed to create file");
-        if let Err(error) = file.write_all(json_data.as_bytes()) {
-            eprintln!("Unable to write to file: {}", error);
-            std::process::exit(1);
+    fn update(&self, update_task: Vec<Task>) -> bool {
+        let json_string = serde_json::to_string_pretty(&update_task).unwrap();
+        if fs::write(&self.name(), json_string).is_err() {
+            return false;
         }
 
-        add_task
+        return true;
+    }
+}
+
+mod tests {
+    use super::{File, Task, fs};
+
+    fn test_file_name() -> &'static str {
+        return "test-task-cli.json";
     }
 
-    fn now_utc(&self) -> DateTime<FixedOffset> {
-        let now_utc = Utc::now();
-        return now_utc.into();
-    }
-    fn task(
-        &self,
-        id: i32,
-        description: &str,
-        status: &str,
-        created_at: DateTime<FixedOffset>,
-        updated_at: DateTime<FixedOffset>,
-    ) -> tasks::Task {
-        tasks::Task {
-            id,
-            description: description.to_string(),
-            status: String::from(status),
-            created_at: created_at,
-            updated_at: updated_at,
+    fn test_exists_file() {
+        if std::path::Path::new(&test_file_name()).exists() {
+            test_remove_file();
         }
     }
-    fn task_list<'a>(&self, next_count: i32, tasks: Vec<&'a tasks::Task>) -> tasks::TaskList<'a> {
-        tasks::TaskList {
-            next_count: next_count,
-            tasks: tasks,
-        }
+
+    fn test_remove_file() {
+        std::fs::remove_file(&test_file_name()).expect("Failed to remove existing file");
+    }
+
+    #[test]
+    fn test_file_new() {
+        test_exists_file();
+
+        let test_file = File::new(&test_file_name());
+        assert_eq!(test_file.name(), test_file.file_name);
+
+        let contents =
+            fs::read_to_string(&test_file_name()).expect("Should have been able to read the file");
+        assert_eq!(contents, "[]".to_string());
+
+        test_remove_file();
+    }
+
+    #[test]
+    fn test_file_update() {
+        let test_file = File::new(&test_file_name());
+        use chrono::{DateTime, FixedOffset};
+
+        let created_at = DateTime::parse_from_str(
+            "2025-10-13 14:07:06.072493 +07:00",
+            "%Y-%m-%d %H:%M:%S%.f %z",
+        )
+        .expect("Failed to parse created_at");
+
+        let updated_at = DateTime::parse_from_str(
+            "2025-10-13 19:07:06.072493 +07:00",
+            "%Y-%m-%d %H:%M:%S%.f %z",
+        )
+        .expect("Failed to parse updated_at");
+
+        let update_task = Task {
+            id: 2,
+            description: "Buy cook dinner".to_string(),
+            status: "in-progress".to_string(),
+            created_at,
+            updated_at,
+        };
+        let updated = test_file.update(vec![update_task]);
+        assert_eq!(updated, true);
+
+        let contents =
+            fs::read_to_string(&test_file_name()).expect("Should have been able to read the file");
+        assert_eq!(
+            contents,
+            String::from(
+                "[\n  {\n    \"id\": 2,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]"
+            )
+        );
+
+        test_remove_file();
     }
 }
