@@ -1,0 +1,141 @@
+    use serde::{Serialize, Deserialize};
+    use std::fs::{File, OpenOptions};
+    use std::io::{self, Read, Write};
+    use std::sync::Mutex;
+
+    #[derive(Serialize, Deserialize, Debug, Default)]
+    struct AppState {
+        counter: u32,
+        messages: Vec<String>,
+    }
+
+    fn main() -> io::Result<()> {
+        let file_path = "state.json";
+        let app_state_mutex: Mutex<AppState> = Mutex::new(load_or_create_state(file_path)?);
+
+        // Access and modify the state in a thread-safe manner
+        {
+            let mut state = app_state_mutex.lock().unwrap(); // Acquire the lock
+            state.counter += 1;
+            state.messages.push("New message!".to_string());
+            println!("Current state: {:?}", *state);
+        } // Lock is released here as `state` goes out of scope
+
+        // Save the updated state to the file
+        save_state(&app_state_mutex.lock().unwrap(), file_path)?;
+
+        Ok(())
+    }
+
+    fn load_or_create_state(file_path: &str) -> io::Result<AppState> {
+        match File::open(file_path) {
+            Ok(mut file) => {
+                let mut contents = String::new();
+                file.read_to_string(&mut contents)?;
+                if contents.is_empty() {
+                    Ok(AppState::default())
+                } else {
+                    serde_json::from_str(&contents)
+                        .map_err(|e| io::Error::new(io::ErrorKind::InvalidData, e))
+                }
+            }
+            Err(ref e) if e.kind() == io::ErrorKind::NotFound => {
+                // File not found, create a default state
+                Ok(AppState::default())
+            }
+            Err(e) => Err(e),
+        }
+    }
+
+    fn save_state(state: &AppState, file_path: &str) -> io::Result<()> {
+        let file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(file_path)?;
+        serde_json::to_writer_pretty(file, state)
+            .map_err(|e| io::Error::new(io::ErrorKind::Other, e))
+    }
+
+    ////
+    use serde::{Serialize, Deserialize};
+use std::sync::{Arc, Mutex};
+use std::fs;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct AppData {
+    counter: u32,
+    messages: Vec<String>,
+}
+
+fn main() {
+    let file_path = "data.json";
+    let shared_data = Arc::new(Mutex::new(AppData {
+        counter: 0,
+        messages: Vec::new(),
+    }));
+
+    // --- Load data from file (if exists) ---
+    if let Ok(content) = fs::read_to_string(file_path) {
+        if let Ok(loaded_data) = serde_json::from_str(&content) {
+            *shared_data.lock().unwrap() = loaded_data;
+        }
+    }
+
+    // --- Example of modifying and saving data ---
+    {
+        let mut data = shared_data.lock().unwrap();
+        data.counter += 1;
+        data.messages.push(format!("Message {}", data.counter));
+        let json_string = serde_json::to_string_pretty(&*data).unwrap();
+        fs::write(file_path, json_string).unwrap();
+    }
+
+    // --- Example of reading data ---
+    let current_data = shared_data.lock().unwrap().clone();
+    println!("Current data: {:?}", current_data);
+}
+
+///
+
+   use std::fs;
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+
+    fn main() {
+        let file_to_delete = Arc::new(Mutex::new(Some("shared_file.txt".to_string())));
+
+        // Create the file
+        fs::write("shared_file.txt", "content").unwrap();
+
+        let handles: Vec<_> = (0..2).map(|i| {
+            let file_to_delete_clone = Arc::clone(&file_to_delete);
+            thread::spawn(move || {
+                let mut guard = file_to_delete_clone.lock().unwrap();
+                if let Some(file_name) = guard.take() { // Take ownership of the file name
+                    println!("Thread {} attempting to remove {}", i, file_name);
+                    match fs::remove_file(&file_name) {
+                        Ok(_) => println!("Thread {} successfully removed {}", i, file_name),
+                        Err(e) => eprintln!("Thread {} error removing {}: {}", i, file_name, e),
+                    }
+                } else {
+                    println!("Thread {} found no file to delete.", i);
+                }
+            })
+        }).collect();
+
+        for handle in handles {
+            handle.join().unwrap();
+        }
+    }
+
+    ///
+
+    pub fn handle_messages() {
+    let (tx, rx) = mpsc::channel();
+    std::thread::spawn(|| tcp_datagram_server(tx));
+    loop {
+        let message_from_tcp_server = rx.recv().unwrap();
+        println!("{}", message_from_tcp_server);
+    }
+}
