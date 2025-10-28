@@ -1,8 +1,9 @@
 use std::fs;
 use std::fs::File as std_file;
-use std::io::Write;
+use std::fs::OpenOptions;
+use std::io::{self, Read};
 
-use crate::task::{self, Task};
+use crate::task::Task;
 
 // https://medium.com/@aleksej.gudkov/rust-write-to-file-example-a-practical-guide-51c24695aa80
 
@@ -13,76 +14,72 @@ pub struct File<'a> {
 
 #[allow(dead_code)]
 impl<'a> File<'a> {
-    pub fn new(name: &'a str) -> Self {
-        // Try to open the file; if it doesn't exist, try to create it.
-        match std_file::create(name) {
-            Ok(mut f) => {
-                let nil_json_string =
-                    serde_json::to_string_pretty(&Vec::<task::Task>::new()).unwrap();
-                f.write_all(nil_json_string.as_bytes())
-                    .expect("Failed to write initial JSON");
-                f
-            }
-            Err(e) => panic!("Failed to open or create file '{}': {}", name, e),
-        };
-
-        File { file_name: name }
+    pub fn new(file_name: &'a str) -> Self {
+        File { file_name }
     }
 
     fn name(&self) -> &str {
         &self.file_name
     }
 
-    fn list(&self) -> Vec<Task> {
-        let tasks: Vec<Task> = vec![];
-        tasks
+    fn list(&self) -> io::Result<Vec<Task>> {
+        let mut tasks_file = std_file::open(&self.name())?;
+        let mut tasks_string = String::new();
+        tasks_file.read_to_string(&mut tasks_string)?;
+
+        // You probably want to deserialize tasks_string into Vec<Task>
+        let tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
+        Ok(tasks)
     }
 
-    fn update(&self, update_task: Vec<Task>) -> bool {
-        let json_string = serde_json::to_string_pretty(&update_task).unwrap();
+    fn add(&self, update_task: &Task) -> bool {
+        let mut tasks_file = OpenOptions::new()
+            .write(true)
+            .create_new(true) // Will error if file already exists
+            .open(&self.name())
+            .or_else(|_| OpenOptions::new().read(true).open(&self.name()))
+            .unwrap();
+
+        let mut tasks_string = String::new();
+        let _ = tasks_file.read_to_string(&mut tasks_string);
+
+        // You probably want to deserialize tasks_string into Vec<Task>
+        let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
+        tasks.push(update_task.clone());
+
+        let json_string = serde_json::to_string_pretty(&tasks).unwrap();
         if fs::write(&self.name(), json_string).is_err() {
             return false;
         }
 
-        return true;
+        true
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::{File, Task, fs};
+    use chrono::DateTime;
+    use std::sync::Arc;
+    use std::sync::Mutex;
 
     fn test_file_name() -> &'static str {
-        return "test-task-cli.json";
+        "test-task-cli.json"
     }
 
-    fn test_exists_file() {
-        if std::path::Path::new(&test_file_name()).exists() {
-            test_remove_file();
+    fn test_remove_file(file_name: &str) {
+        println!("Removing existing test: {}...\n", file_name);
+
+        // Remove the file
+        match fs::remove_file(file_name) {
+            Ok(_) => println!("File removed successfully."),
+            Err(e) => eprintln!("Error removing file: {}", e),
         }
     }
 
-    fn test_remove_file() {
-        std::fs::remove_file(&test_file_name()).expect("Failed to remove existing file");
-    }
-
     #[test]
-    fn test_file_new() {
-        test_exists_file();
-
-        let test_file = File::new(&test_file_name());
-        assert_eq!(test_file.name(), test_file.file_name);
-
-        let contents =
-            fs::read_to_string(&test_file_name()).expect("Should have been able to read the file");
-        assert_eq!(contents, "[]".to_string());
-
-        test_remove_file();
-    }
-
-    #[test]
-    fn test_file_update() {
-        let test_file = File::new(&test_file_name());
-        use chrono::{DateTime, FixedOffset};
+    fn test_new_file() {
+        let new_file = "new-file".to_string() + "-" + test_file_name();
 
         let created_at = DateTime::parse_from_str(
             "2025-10-13 14:07:06.072493 +07:00",
@@ -97,24 +94,116 @@ mod tests {
         .expect("Failed to parse updated_at");
 
         let update_task = Task {
+            id: 1,
+            description: "Buy cook dinner".to_string(),
+            status: "in-progress".to_string(),
+            created_at,
+            updated_at,
+        };
+
+        let json_string = serde_json::to_string_pretty(&vec![update_task.clone()]).unwrap();
+
+        // Create File instance
+        let test_file = File::new(&new_file);
+        assert_eq!(test_file.name(), test_file.file_name);
+
+        assert_eq!(
+            json_string,
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_string(),
+        );
+
+        test_remove_file(&new_file);
+    }
+
+    #[test]
+    fn test_add_file() {
+        let add_file = "add-file".to_string() + "-" + test_file_name();
+
+        let test_file = File::new(&add_file);
+
+        let created_at = DateTime::parse_from_str(
+            "2025-10-13 14:07:06.072493 +07:00",
+            "%Y-%m-%d %H:%M:%S%.f %z",
+        )
+        .expect("Failed to parse created_at");
+        let updated_at = DateTime::parse_from_str(
+            "2025-10-13 19:07:06.072493 +07:00",
+            "%Y-%m-%d %H:%M:%S%.f %z",
+        )
+        .expect("Failed to parse updated_at");
+
+        let mut update_task = Task {
             id: 2,
             description: "Buy cook dinner".to_string(),
             status: "in-progress".to_string(),
             created_at,
             updated_at,
         };
-        let updated = test_file.update(vec![update_task]);
+        let updated = test_file.add(&update_task);
         assert_eq!(updated, true);
 
-        let contents =
-            fs::read_to_string(&test_file_name()).expect("Should have been able to read the file");
-        assert_eq!(
-            contents,
-            String::from(
-                "[\n  {\n    \"id\": 2,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]"
-            )
-        );
+        let mut tasks = test_file.list().unwrap();
+        assert_eq!(tasks.len(), 1);
 
-        test_remove_file();
+        update_task = Task {
+            id: 3,
+            description: "Buy groceries".to_string(),
+            status: "done".to_string(),
+            created_at,
+            updated_at,
+        };
+        let updated = test_file.add(&update_task);
+        assert_eq!(updated, true);
+        tasks = test_file.list().unwrap();
+        assert_eq!(tasks.len(), 2);
+
+        test_remove_file(&add_file);
+    }
+
+    #[test]
+    fn test_file_list() {
+        let file_list = "file-list".to_string() + "-" + test_file_name();
+
+        let created_at = DateTime::parse_from_str(
+            "2025-10-13 14:07:06.072493 +07:00",
+            "%Y-%m-%d %H:%M:%S%.f %z",
+        )
+        .expect("Failed to parse created_at");
+        let updated_at = DateTime::parse_from_str(
+            "2025-10-13 19:07:06.072493 +07:00",
+            "%Y-%m-%d %H:%M:%S%.f %z",
+        )
+        .expect("Failed to parse updated_at");
+
+        let list_task = Task {
+            id: 1,
+            description: "Buy cook dinner".to_string(),
+            status: "in-progress".to_string(),
+            created_at,
+            updated_at,
+        };
+        let annother_list_task = Task {
+            id: 2,
+            description: "Buy groceries".to_string(),
+            status: "done".to_string(),
+            created_at,
+            updated_at,
+        };
+
+        let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
+        let json_string;
+        {
+            let mut data = tasks.lock().unwrap();
+            data.extend(vec![list_task, annother_list_task]);
+            json_string = serde_json::to_string_pretty(&*data).unwrap();
+            fs::write(&file_list, json_string.clone()).unwrap();
+        }
+
+        let test_file = File::new(&file_list);
+
+        let tasks = test_file.list().unwrap();
+        assert_eq!(tasks.len(), 2);
+
+        test_remove_file(&file_list);
     }
 }

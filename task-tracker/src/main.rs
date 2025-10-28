@@ -1,13 +1,12 @@
-mod helps;
-mod tasks;
-mod tasks_test;
+use core::result::Result;
+
 mod files;
-mod files_test;
+mod helps;
+mod task;
+mod task_test;
 
 use helps::help_all;
 // => add(...); v
-use tasks::add;
-
 use std::env::args;
 
 pub fn run(args: &Vec<String>) -> String {
@@ -15,115 +14,129 @@ pub fn run(args: &Vec<String>) -> String {
         return helps::help_all();
     }
 
-    // 1
-    let accept_args = &args[1];
+    // // 1
+    // let accept_args = &args[1];
 
-    // add <task>
-    if accept_args == "add" {
-        if args.len() != 3 {
-            return helps::help_add();
-        }
+    // // add <task>
+    // if accept_args == "add" {
+    //     if args.len() != 3 {
+    //         return helps::help_add();
+    //     }
 
-        // 2
-        let input_args = &args[2];
+    //     // 2
+    //     let input_args = &args[2];
 
-        let new_task = add(input_args);
+    //     // ??????
+    //     let new_task = task::add(input_args);
 
-        let new_task_str: Vec<String> = vec![
-            "Add tast:".to_string(),
-            String::from("------------------"),
-            format!("ID: {}", new_task.id),
-            format!("----- Description: {}", new_task.description),
-            format!("----- Status: {}", new_task.status),
-            format!("----- Created At: {:?}", new_task.created_at),
-            format!("----- Updated At: {:?}", new_task.updated_at),
-        ];
+    //     let new_task_str: Vec<String> = vec![
+    //         "Add tast:".to_string(),
+    //         String::from("------------------"),
+    //         format!("ID: {}", new_task.id),
+    //         format!("----- Description: {}", new_task.description),
+    //         format!("----- Status: {}", new_task.status),
+    //         format!("----- Created At: {:?}", new_task.created_at),
+    //         format!("----- Updated At: {:?}", new_task.updated_at),
+    //     ];
 
-        return new_task_str.join("\n");
-    }
+    //     return new_task_str.join("\n");
+    // }
 
-    // update <id> <task>
-    if accept_args == "update" {
-        if args.len() != 3 {
-            return helps::help_update();
-        }
+    // // update <id> <task>
+    // if accept_args == "update" {
+    //     if args.len() != 3 {
+    //         return helps::help_update();
+    //     }
 
-        // 2
-        let input_args = &args[2];
+    //     // 2
+    //     let input_args = &args[2];
 
-        let update_task = tasks::update(1, input_args);
+    //     let update_task = task::update(1, input_args);
 
-        return String::from("Update task:")
-            + "\n"
-            + "------------------"
-            + "\n"
-            + &format!("ID: {}", update_task.id)
-            + "\n"
-            + &format!("----- Description: {}", update_task.description)
-            + "\n"
-            + &format!("----- Status: {}", update_task.status)
-            + "\n"
-            + &format!("----- Created At: {:?}", update_task.created_at)
-            + "\n"
-            + &format!("----- Updated At: {:?}", update_task.updated_at);
-    }
+    //     return String::from("Update task:")
+    //         + "\n"
+    //         + "------------------"
+    //         + "\n"
+    //         + &format!("ID: {}", update_task.id)
+    //         + "\n"
+    //         + &format!("----- Description: {}", update_task.description)
+    //         + "\n"
+    //         + &format!("----- Status: {}", update_task.status)
+    //         + "\n"
+    //         + &format!("----- Created At: {:?}", update_task.created_at)
+    //         + "\n"
+    //         + &format!("----- Updated At: {:?}", update_task.updated_at);
+    // }
 
-    if accept_args == "delete" {
-        if args.len() != 3 {
-            return helps::help_delete();
-        }
+    // if accept_args == "delete" {
+    //     if args.len() != 3 {
+    //         return helps::help_delete();
+    //     }
 
-        // 2
-        let input_args = &args[2];
+    //     // 2
+    //     let input_args = &args[2];
 
-        let id: i32 = match input_args.parse() {
-            Ok(num) => num,
-            Err(_) => {
-                return String::from("Error: ID must be a number");
-            }
-        };
+    //     let id: i32 = match input_args.parse() {
+    //         Ok(num) => num,
+    //         Err(_) => {
+    //             return String::from("Error: ID must be a number");
+    //         }
+    //     };
 
-        let delete_task = tasks::delete(id);
-        if !delete_task {
-            return String::from("Delete task failed");
-        }
-        return String::from("Delete task success");
-    }
+    //     let delete_task = task::delete(id);
+    //     if !delete_task {
+    //         return String::from("Delete task failed");
+    //     }
+    //     return String::from("Delete task success");
+    // }
 
-    if accept_args == "mark-in-progress" {
-        return helps::help_all();
-    }
+    // if accept_args == "mark-in-progress" {
+    //     return helps::help_all();
+    // }
 
-    if accept_args == "mark-done" {
-        return helps::help_all();
-    }
+    // if accept_args == "mark-done" {
+    //     return helps::help_all();
+    // }
 
-    // list
-    if accept_args == "list" {
-        // func => tasks::list(); v
-        //         ^^^^^
-        //      => add(...); v
-        // func => list(); x
-        let list = tasks::list();
+    // // list
+    // if accept_args == "list" {
+    //     // func => tasks::list(); v
+    //     //         ^^^^^
+    //     //      => add(...); v
+    //     // func => list(); x
+    //     let list = task::list();
 
-        let mut list_str: Vec<String> =
-            vec!["Lists:".to_string(), String::from("------------------")];
-        for task in list {
-            list_str.push(format!("ID: {}", task.id));
-            list_str.push(format!("----- Description: {}", task.description));
-            list_str.push(format!("----- Status: {}", task.status));
-            list_str.push(format!("----- Created At: {:?}", task.created_at));
-            list_str.push(format!("----- Updated At: {:?}", task.updated_at));
-        }
-        return list_str.join("\n");
-    }
+    //     let mut list_str: Vec<String> =
+    //         vec!["Lists:".to_string(), String::from("------------------")];
+    //     for task in list {
+    //         list_str.push(format!("ID: {}", task.id));
+    //         list_str.push(format!("----- Description: {}", task.description));
+    //         list_str.push(format!("----- Status: {}", task.status));
+    //         list_str.push(format!("----- Created At: {:?}", task.created_at));
+    //         list_str.push(format!("----- Updated At: {:?}", task.updated_at));
+    //     }
+    //     return list_str.join("\n");
+    // }
 
     return help_all();
 }
 
-fn main() {
+fn main() -> Result<(), ()> {
     let args: Vec<String> = args().collect();
     println!("{}", run(&args));
+
+    main2();
+
+    Ok(())
+}
+
+use std::fs::File;
+use std::io::{self, Write};
+use std::thread;
+use std::time::Duration;
+
+fn main2() -> io::Result<()> {
+    Ok(())
 }
 
 // TDD
@@ -232,5 +245,65 @@ mod tests {
             "Lists:\n------------------\nID: 1\n----- Description: buy milk\n----- Status: todo\n----- Created At: 2025-04-10T10:10:10+07:00\n----- Updated At: 2025-04-10T10:10:10+07:00\nID: 2\n----- Description: buy bread\n----- Status: in-progress\n----- Created At: 2025-04-12T12:10:10+07:00\n----- Updated At: 2025-04-12T12:10:10+07:00",
         );
         assert_eq!(run(&args), expected_output);
+    }
+
+    use serde::{Deserialize, Serialize};
+    use std::fs;
+    use std::sync::{Arc, Mutex};
+
+    #[derive(Serialize, Deserialize, Debug, Clone)]
+    struct AppData {
+        counter: u32,
+        messages: Vec<String>,
+    }
+
+    #[test]
+    fn test_main() {
+        for _ in 0..3 {
+            hmmm();
+        }
+    }
+
+    fn hmmm() {
+        let file_path = "data.json";
+        test_exists_file(file_path);
+
+        let shared_data = Arc::new(Mutex::new(AppData {
+            counter: 0,
+            messages: Vec::new(),
+        }));
+
+        // --- Load data from file (if exists) ---
+        if let Ok(content) = fs::read_to_string(file_path) {
+            if let Ok(loaded_data) = serde_json::from_str(&content) {
+                *shared_data.lock().unwrap() = loaded_data;
+            }
+        }
+
+        // --- Example of modifying and saving data ---
+        {
+            let mut data = shared_data.lock().unwrap();
+            data.counter += 1;
+            let message_counter: u32 = data.counter;
+            data.messages.push(format!("Message {}", message_counter));
+            let json_string = serde_json::to_string_pretty(&*data).unwrap();
+            fs::write(file_path, json_string).unwrap();
+        }
+
+        // --- Example of reading data ---
+        let current_data = shared_data.lock().unwrap().clone();
+        println!("Current data: {:?}", current_data);
+
+        test_remove_file(file_path);
+    }
+
+    fn test_exists_file(file_path: &str) {
+        if std::path::Path::new(file_path).exists() {
+            std::fs::remove_file(file_path).expect("Failed to remove existing file");
+        }
+    }
+
+    fn test_remove_file(file_path: &str) {
+        std::fs::remove_file(file_path).expect("Failed to remove existing file");
     }
 }
