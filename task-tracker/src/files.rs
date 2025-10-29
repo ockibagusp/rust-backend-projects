@@ -1,7 +1,9 @@
+use core::result::Result;
 use std::fs;
 use std::fs::File as std_file;
 use std::fs::OpenOptions;
-use std::io::{self, Read};
+use std::io::Error;
+use std::io::Read;
 
 use crate::task::Task;
 
@@ -22,17 +24,20 @@ impl<'a> File<'a> {
         &self.file_name
     }
 
-    fn list(&self) -> io::Result<Vec<Task>> {
+    fn list(&self) -> Result<Vec<Task>, Error> {
         let mut tasks_file = std_file::open(&self.name())?;
         let mut tasks_string = String::new();
-        tasks_file.read_to_string(&mut tasks_string)?;
+        let err = tasks_file.read_to_string(&mut tasks_string);
+        if err.is_err() {
+            return Err(err.err().unwrap());
+        }
 
         // You probably want to deserialize tasks_string into Vec<Task>
         let tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
         Ok(tasks)
     }
 
-    fn add(&self, update_task: &Task) -> bool {
+    fn add(&self, update_task: &Task) -> Result<bool, Error> {
         let mut tasks_file = OpenOptions::new()
             .write(true)
             .create_new(true) // Will error if file already exists
@@ -49,10 +54,13 @@ impl<'a> File<'a> {
 
         let json_string = serde_json::to_string_pretty(&tasks).unwrap();
         if fs::write(&self.name(), json_string).is_err() {
-            return false;
+            return Err(Error::new(
+                std::io::ErrorKind::Other,
+                "Failed to write to file",
+            ));
         }
 
-        true
+        Ok(true)
     }
 }
 
@@ -139,7 +147,8 @@ mod tests {
             created_at,
             updated_at,
         };
-        let updated = test_file.add(&update_task);
+
+        let updated = test_file.add(&update_task).unwrap();
         assert_eq!(updated, true);
 
         let mut tasks = test_file.list().unwrap();
@@ -152,7 +161,7 @@ mod tests {
             created_at,
             updated_at,
         };
-        let updated = test_file.add(&update_task);
+        let updated = test_file.add(&update_task).unwrap();
         assert_eq!(updated, true);
         tasks = test_file.list().unwrap();
         assert_eq!(tasks.len(), 2);
