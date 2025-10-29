@@ -85,30 +85,33 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_new_file() {
-        let new_file = "new-file".to_string() + "-" + test_file_name();
-
-        let created_at = DateTime::parse_from_str(
+    fn setup_tasks(id: i32, desciption: &str) -> Task {
+        let _created_at = DateTime::parse_from_str(
             "2025-10-13 14:07:06.072493 +07:00",
             "%Y-%m-%d %H:%M:%S%.f %z",
         )
         .expect("Failed to parse created_at");
 
-        let updated_at = DateTime::parse_from_str(
+        let _updated_at = DateTime::parse_from_str(
             "2025-10-13 19:07:06.072493 +07:00",
             "%Y-%m-%d %H:%M:%S%.f %z",
         )
         .expect("Failed to parse updated_at");
 
-        let update_task = Task {
-            id: 1,
-            description: "Buy cook dinner".to_string(),
-            status: "in-progress".to_string(),
-            created_at,
-            updated_at,
-        };
+        Task {
+            id: id,
+            description: desciption.to_string(),
+            status: "todo".to_string(),
+            created_at: _created_at,
+            updated_at: _updated_at,
+        }
+    }
 
+    #[test]
+    fn test_new_file() {
+        let new_file = "new-file".to_string() + "-" + test_file_name();
+
+        let update_task = &setup_tasks(1, "Buy cook dinner");
         let json_string = serde_json::to_string_pretty(&vec![update_task.clone()]).unwrap();
 
         // Create File instance
@@ -117,7 +120,7 @@ mod tests {
 
         assert_eq!(
             json_string,
-            "[\n  {\n    \"id\": 1,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_string(),
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"todo\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_string(),
         );
 
         test_remove_file(&new_file);
@@ -129,24 +132,7 @@ mod tests {
 
         let test_file = File::new(&add_file);
 
-        let created_at = DateTime::parse_from_str(
-            "2025-10-13 14:07:06.072493 +07:00",
-            "%Y-%m-%d %H:%M:%S%.f %z",
-        )
-        .expect("Failed to parse created_at");
-        let updated_at = DateTime::parse_from_str(
-            "2025-10-13 19:07:06.072493 +07:00",
-            "%Y-%m-%d %H:%M:%S%.f %z",
-        )
-        .expect("Failed to parse updated_at");
-
-        let mut update_task = Task {
-            id: 2,
-            description: "Buy cook dinner".to_string(),
-            status: "in-progress".to_string(),
-            created_at,
-            updated_at,
-        };
+        let mut update_task = setup_tasks(2, "Buy cook dinner");
 
         let updated = test_file.add(&update_task).unwrap();
         assert_eq!(updated, true);
@@ -154,13 +140,7 @@ mod tests {
         let mut tasks = test_file.list().unwrap();
         assert_eq!(tasks.len(), 1);
 
-        update_task = Task {
-            id: 3,
-            description: "Buy groceries".to_string(),
-            status: "done".to_string(),
-            created_at,
-            updated_at,
-        };
+        update_task = setup_tasks(3, "Buy groceries");
         let updated = test_file.add(&update_task).unwrap();
         assert_eq!(updated, true);
         tasks = test_file.list().unwrap();
@@ -173,31 +153,8 @@ mod tests {
     fn test_file_list() {
         let file_list = "file-list".to_string() + "-" + test_file_name();
 
-        let created_at = DateTime::parse_from_str(
-            "2025-10-13 14:07:06.072493 +07:00",
-            "%Y-%m-%d %H:%M:%S%.f %z",
-        )
-        .expect("Failed to parse created_at");
-        let updated_at = DateTime::parse_from_str(
-            "2025-10-13 19:07:06.072493 +07:00",
-            "%Y-%m-%d %H:%M:%S%.f %z",
-        )
-        .expect("Failed to parse updated_at");
-
-        let list_task = Task {
-            id: 1,
-            description: "Buy cook dinner".to_string(),
-            status: "in-progress".to_string(),
-            created_at,
-            updated_at,
-        };
-        let annother_list_task = Task {
-            id: 2,
-            description: "Buy groceries".to_string(),
-            status: "done".to_string(),
-            created_at,
-            updated_at,
-        };
+        let list_task = setup_tasks(1, "Buy cook dinner");
+        let annother_list_task = setup_tasks(2, "Buy groceries");
 
         let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
         let json_string;
