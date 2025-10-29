@@ -71,8 +71,11 @@ mod tests {
     use std::sync::Arc;
     use std::sync::Mutex;
 
-    fn test_file_name() -> &'static str {
-        "test-task-cli.json"
+    fn test_file_name(name: Option<&str>) -> String {
+        match name {
+            None => "test-task-cli.json".to_string(),
+            Some(n) => format!("{}-test-task-cli.json", n),
+        }
     }
 
     fn test_remove_file(file_name: &str) {
@@ -109,13 +112,14 @@ mod tests {
 
     #[test]
     fn test_new_file() {
-        let new_file = "new-file".to_string() + "-" + test_file_name();
+        let new_file = Some("new-file");
+        let binding = test_file_name(new_file);
 
         let update_task = &setup_tasks(1, "Buy cook dinner");
         let json_string = serde_json::to_string_pretty(&vec![update_task.clone()]).unwrap();
 
         // Create File instance
-        let test_file = File::new(&new_file);
+        let test_file = File::new(&binding);
         assert_eq!(test_file.name(), test_file.file_name);
 
         assert_eq!(
@@ -123,17 +127,18 @@ mod tests {
             "[\n  {\n    \"id\": 1,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"todo\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_string(),
         );
 
-        test_remove_file(&new_file);
+        test_remove_file(test_file.name());
     }
 
     #[test]
     fn test_add_file() {
-        let add_file = "add-file".to_string() + "-" + test_file_name();
+        let add_file = Some("add-file");
+        let binding = test_file_name(add_file);
 
-        let test_file = File::new(&add_file);
+        // Create File instance
+        let test_file = File::new(&binding);
 
         let mut update_task = setup_tasks(2, "Buy cook dinner");
-
         let updated = test_file.add(&update_task).unwrap();
         assert_eq!(updated, true);
 
@@ -143,15 +148,17 @@ mod tests {
         update_task = setup_tasks(3, "Buy groceries");
         let updated = test_file.add(&update_task).unwrap();
         assert_eq!(updated, true);
+
         tasks = test_file.list().unwrap();
         assert_eq!(tasks.len(), 2);
 
-        test_remove_file(&add_file);
+        test_remove_file(test_file.name());
     }
 
     #[test]
     fn test_file_list() {
-        let file_list = "file-list".to_string() + "-" + test_file_name();
+        let file_list = Some("file-list");
+        let binding = test_file_name(file_list);
 
         let list_task = setup_tasks(1, "Buy cook dinner");
         let annother_list_task = setup_tasks(2, "Buy groceries");
@@ -162,14 +169,15 @@ mod tests {
             let mut data = tasks.lock().unwrap();
             data.extend(vec![list_task, annother_list_task]);
             json_string = serde_json::to_string_pretty(&*data).unwrap();
-            fs::write(&file_list, json_string.clone()).unwrap();
+            fs::write(&binding, json_string.clone()).unwrap();
         }
 
-        let test_file = File::new(&file_list);
+        // Create File instance
+        let test_file = File::new(&binding);
 
         let tasks = test_file.list().unwrap();
         assert_eq!(tasks.len(), 2);
 
-        test_remove_file(&file_list);
+        test_remove_file(test_file.name());
     }
 }
