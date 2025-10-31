@@ -24,7 +24,20 @@ impl<'a> File<'a> {
         &self.file_name
     }
 
-    fn list(&self) -> Result<Vec<Task>, Error> {
+    fn open_options(&self) -> String {
+        let mut tasks_file = OpenOptions::new()
+            .write(true)
+            .create_new(true) // Will error if file already exists
+            .open(self.name())
+            .or_else(|_| OpenOptions::new().read(true).open(self.name()))
+            .unwrap();
+
+        let mut tasks_string = String::new();
+        let _ = tasks_file.read_to_string(&mut tasks_string);
+        tasks_string
+    }
+
+    pub fn list(&self) -> Result<Vec<Task>, Error> {
         let mut tasks_file = std_file::open(self.name())?;
         let mut tasks_string = String::new();
         let err = tasks_file.read_to_string(&mut tasks_string);
@@ -37,7 +50,7 @@ impl<'a> File<'a> {
         Ok(tasks)
     }
 
-    fn add(&self, add_task: Task) -> Result<bool, Error> {
+    pub fn add(&self, add_task: Task) -> Result<(), Error> {
         if !add_task.is_validation() {
             return Err(Error::new(
                 std::io::ErrorKind::InvalidInput,
@@ -45,15 +58,7 @@ impl<'a> File<'a> {
             ));
         }
 
-        let mut tasks_file = OpenOptions::new()
-            .write(true)
-            .create_new(true) // Will error if file already exists
-            .open(self.name())
-            .or_else(|_| OpenOptions::new().read(true).open(self.name()))
-            .unwrap();
-
-        let mut tasks_string = String::new();
-        let _ = tasks_file.read_to_string(&mut tasks_string);
+        let tasks_string = self.open_options();
 
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
@@ -67,19 +72,11 @@ impl<'a> File<'a> {
             ));
         }
 
-        Ok(true)
+        Ok(())
     }
 
-    fn delete(&self, id: i32) -> Result<bool, Error> {
-        let mut tasks_file = OpenOptions::new()
-            .write(true)
-            .create_new(true) // Will error if file already exists
-            .open(self.name())
-            .or_else(|_| OpenOptions::new().read(true).open(self.name()))
-            .unwrap();
-
-        let mut tasks_string = String::new();
-        let _ = tasks_file.read_to_string(&mut tasks_string);
+    pub fn delete(&self, id: i32) -> Result<(), Error> {
+        let tasks_string = self.open_options();
 
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
@@ -97,7 +94,7 @@ impl<'a> File<'a> {
             ));
         }
 
-        Ok(true)
+        Ok(())
     }
 }
 
@@ -161,7 +158,7 @@ mod tests {
 
         assert_eq!(
             json_string,
-           "[\n  {\n    \"id\": 1,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"todo\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_string(),
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"todo\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_string(),
         );
 
         test_remove_file(test_file.name());
@@ -191,14 +188,14 @@ mod tests {
 
         let mut add_task = setup_task(2, "Buy cook dinner");
         let added = test_file.add(add_task).unwrap();
-        assert_eq!(added, true);
+        assert_eq!(added, ());
 
         let mut tasks = test_file.list().unwrap();
         assert_eq!(tasks.len(), 1);
 
         add_task = setup_task(3, "Buy groceries");
         let updated = test_file.add(add_task).unwrap();
-        assert_eq!(updated, true);
+        assert_eq!(updated, ());
 
         tasks = test_file.list().unwrap();
         assert_eq!(tasks.len(), 2);
@@ -239,40 +236,40 @@ mod tests {
         test_remove_file(test_file.name());
     }
 
-    // #[test]
-    // fn test_delete_file() {
-    //     let delete_file = Some("delete-file");
-    //     let binding = test_file_name(delete_file);
+    #[test]
+    fn test_delete_file() {
+        let delete_file = Some("delete-file");
+        let binding = test_file_name(delete_file);
 
-    //     let lists_task = vec![
-    //         setup_task(1, "test 1"),
-    //         setup_task(2, "test 2"),
-    //         setup_task(3, "test 3"),
-    //     ];
+        let lists_task = vec![
+            setup_task(1, "test 1"),
+            setup_task(2, "test 2"),
+            setup_task(3, "test 3"),
+        ];
 
-    //     let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
-    //     let json_string;
-    //     {
-    //         let mut data = tasks.lock().unwrap();
-    //         data.extend(lists_task);
-    //         json_string = serde_json::to_string_pretty(&*data).unwrap();
-    //         fs::write(&binding, json_string.clone()).unwrap();
-    //     }
+        let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
+        let json_string;
+        {
+            let mut data = tasks.lock().unwrap();
+            data.extend(lists_task);
+            json_string = serde_json::to_string_pretty(&*data).unwrap();
+            fs::write(&binding, json_string.clone()).unwrap();
+        }
 
-    //     // Create File instance
-    //     let test_file = File::new(&binding);
+        // Create File instance
+        let test_file = File::new(&binding);
 
-    //     let deleted = test_file.delete(2).unwrap();
-    //     assert_eq!(deleted, true);
+        let deleted = test_file.delete(2).unwrap();
+        assert_eq!(deleted, ());
 
-    //     let mut tasks = test_file.list().unwrap();
-    //     assert_eq!(tasks.len(), 2);
+        let mut tasks = test_file.list().unwrap();
+        assert_eq!(tasks.len(), 2);
 
-    //     tasks = test_file.list().unwrap();
-    //     assert_eq!(tasks.len(), 2);
+        tasks = test_file.list().unwrap();
+        assert_eq!(tasks.len(), 2);
 
-    //     test_remove_file(test_file.name());
-    // }
+        test_remove_file(test_file.name());
+    }
 
     #[test]
     fn test_file_list() {
