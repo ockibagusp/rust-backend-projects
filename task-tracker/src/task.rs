@@ -16,6 +16,22 @@ pub struct Task {
     pub updated_at: DateTime<FixedOffset>,
 }
 
+impl Task {
+    pub fn is_validation(&self) -> bool {
+        if self.id.is_negative() {
+            return false;
+        }
+        if self.description.trim().is_empty() || self.description.len() > 26 {
+            return false;
+        }
+        let valid_statuses = vec!["todo", "in-progress", "done"];
+        if !valid_statuses.contains(&self.status.as_str()) {
+            return false;
+        }
+        true
+    }
+}
+
 #[derive(PartialEq, Debug)]
 pub struct TaskManager {
     pub list: Vec<Task>,
