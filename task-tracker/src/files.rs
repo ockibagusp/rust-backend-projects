@@ -179,6 +179,59 @@ mod tests {
     }
 
     #[test]
+    fn test_file_list_no_such_file() {
+        let file_list_n = test_file_name(Some("file-list-no-such"));
+
+        let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
+        let json_string;
+        {
+            let mut data = tasks.lock().unwrap();
+            data.extend(vec![]);
+            json_string = serde_json::to_string_pretty(&*data).unwrap();
+            fs::write(&file_list_n, json_string.clone()).unwrap();
+        }
+
+        // Create File fail instance
+        let file_list_fail = &file_list_n[0..12];
+
+        // Create File instance
+        let test_file = File::new(&file_list_fail);
+
+        let tasks = test_file.list();
+        assert!(tasks.is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound));
+
+        test_remove_file(&file_list_n);
+    }
+
+    #[test]
+    fn test_file_list() {
+        let file_list = Some("file-list");
+        let binding = test_file_name(file_list);
+
+        let list_task = setup_task(1, "Buy cook dinner");
+        let annother_list_task = setup_task(2, "Buy groceries");
+
+        let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
+        let json_string;
+        {
+            let mut data = tasks.lock().unwrap();
+            data.extend(vec![list_task, annother_list_task]);
+            json_string = serde_json::to_string_pretty(&*data).unwrap();
+            fs::write(&binding, json_string.clone()).unwrap();
+        }
+
+        // Create File instance
+        let test_file = File::new(&binding);
+
+        {
+            let tasks = test_file.list().unwrap();
+            assert_eq!(tasks.len(), 2);
+        }
+
+        test_remove_file(test_file.name());
+    }
+
+    #[test]
     fn test_add_file() {
         let add_file = Some("add-file");
         let binding = test_file_name(add_file);
@@ -266,32 +319,6 @@ mod tests {
         assert_eq!(tasks.len(), 2);
 
         tasks = test_file.list().unwrap();
-        assert_eq!(tasks.len(), 2);
-
-        test_remove_file(test_file.name());
-    }
-
-    #[test]
-    fn test_file_list() {
-        let file_list = Some("file-list");
-        let binding = test_file_name(file_list);
-
-        let list_task = setup_task(1, "Buy cook dinner");
-        let annother_list_task = setup_task(2, "Buy groceries");
-
-        let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
-        let json_string;
-        {
-            let mut data = tasks.lock().unwrap();
-            data.extend(vec![list_task, annother_list_task]);
-            json_string = serde_json::to_string_pretty(&*data).unwrap();
-            fs::write(&binding, json_string.clone()).unwrap();
-        }
-
-        // Create File instance
-        let test_file = File::new(&binding);
-
-        let tasks = test_file.list().unwrap();
         assert_eq!(tasks.len(), 2);
 
         test_remove_file(test_file.name());
