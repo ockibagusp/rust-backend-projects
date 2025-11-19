@@ -1,53 +1,67 @@
+use crate::task::{Task, TaskTrait};
 use core::result::Result;
 use std::fs;
-use std::fs::File as std_file;
-use std::fs::OpenOptions;
-use std::io::Error;
-use std::io::Read;
-
-use crate::task::Task;
-
-// https://medium.com/@aleksej.gudkov/rust-write-to-file-example-a-practical-guide-51c24695aa80
+use std::fs::{File as std_file, OpenOptions};
+use std::io::{Error, Read};
 
 #[allow(dead_code)]
-pub struct File<'a> {
-    file_name: &'a str,
+#[derive(PartialEq, Debug)]
+pub struct File {
+    pub file_name: &'static str,
 }
 
 #[allow(dead_code)]
-impl<'a> File<'a> {
-    pub fn new(file_name: &'a str) -> Self {
-        File { file_name }
+impl File {
+    pub fn new(file_name: &'static str) -> Self {
+        if !fs::metadata(file_name).is_ok() {
+            let _ = OpenOptions::new()
+                .write(true)
+                .create_new(true) // Will error if file already exists
+                .open(file_name)
+                .unwrap();
+
+            Self::json_string(file_name, vec![]);
+        }
+        Self { file_name }
     }
 
     fn name(&self) -> &str {
         &self.file_name
     }
 
-    fn open_options(&self) -> String {
-        let mut tasks_file = OpenOptions::new()
+    fn open_options(&self) -> std_file {
+        OpenOptions::new()
             .write(true)
             .create_new(true) // Will error if file already exists
             .open(self.name())
             .or_else(|_| OpenOptions::new().read(true).open(self.name()))
-            .unwrap();
+            .unwrap()
+    }
+
+    fn tasks_str(&self) -> String {
+        let mut tasks_file = &self.open_options();
 
         let mut tasks_string = String::new();
         let _ = tasks_file.read_to_string(&mut tasks_string);
         tasks_string
     }
 
-    pub fn list(&self) -> Result<Vec<Task>, Error> {
-        let mut tasks_file = std_file::open(self.name())?;
-        let mut tasks_string = String::new();
-        let err = tasks_file.read_to_string(&mut tasks_string);
-        if err.is_err() {
-            return Err(err.err().unwrap());
+    fn json_string(file_name: &'static str, tasks: Vec<Task>) -> () {
+        let json_string = serde_json::to_string_pretty(&tasks).unwrap();
+        if fs::write(file_name, json_string).is_err() {
+            panic!(
+                "Error: {:?}",
+                Error::new(std::io::ErrorKind::Other, "Failed to write to file",)
+            );
         }
+    }
+
+    pub fn list(&self) -> Vec<Task> {
+        let tasks_string = self.tasks_str();
 
         // You probably want to deserialize tasks_string into Vec<Task>
-        let tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
-        Ok(tasks)
+        let tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap();
+        tasks
     }
 
     pub fn add(&self, add_task: Task) -> Result<(), Error> {
@@ -58,25 +72,19 @@ impl<'a> File<'a> {
             ));
         }
 
-        let tasks_string = self.open_options();
+        let tasks_string = self.tasks_str();
 
         // You probably want to deserialize tasks_string into Vec<Task>
-        let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
+        let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap();
         tasks.push(add_task.clone());
 
-        let json_string = serde_json::to_string_pretty(&tasks).unwrap();
-        if fs::write(self.name(), json_string).is_err() {
-            return Err(Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to write to file",
-            ));
-        }
+        Self::json_string(&self.file_name, tasks);
 
         Ok(())
     }
 
     pub fn delete(&self, id: i32) -> Result<(), Error> {
-        let tasks_string = self.open_options();
+        let tasks_string = self.tasks_str();
 
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
@@ -86,13 +94,7 @@ impl<'a> File<'a> {
 
         tasks.remove(id as usize - 1);
 
-        let json_string = serde_json::to_string_pretty(&tasks).unwrap();
-        if fs::write(self.name(), json_string).is_err() {
-            return Err(Error::new(
-                std::io::ErrorKind::Other,
-                "Failed to write to file",
-            ));
-        }
+        Self::json_string(&self.file_name, tasks);
 
         Ok(())
     }
@@ -101,23 +103,31 @@ impl<'a> File<'a> {
 #[cfg(test)]
 mod tests {
     use super::{File, Task, fs};
+    use crate::task::TODO;
     use chrono::DateTime;
-    use std::sync::Arc;
-    use std::sync::Mutex;
+    use std::sync::{Arc, Mutex};
 
-    fn test_file_name(name: Option<&str>) -> String {
+    fn test_start_file(file_name: Option<&str>) -> &str {
+        let name = test_file_name(file_name);
+        if fs::metadata(name).is_ok() {
+            test_remove_file(name);
+        }
+        name
+    }
+
+    fn test_file_name(name: Option<&str>) -> &str {
         match name {
-            None => "test-task-cli.json".to_string(),
-            Some(n) => format!("{}-test-task-cli.json", n),
+            None => "test-task-cli.json",
+            Some(n) => {
+                let new_name = format!("{}-test-task-cli.json", n);
+                return new_name.leak();
+            }
         }
     }
 
     fn test_remove_file(file_name: &str) {
-        println!("Removing existing test: {}...\n", file_name);
-
-        // Remove the file
         match fs::remove_file(file_name) {
-            Ok(_) => println!("File removed successfully."),
+            Ok(_) => println!("Removing existing test: {}...\n", file_name),
             Err(e) => eprintln!("Error removing file: {}", e),
         }
     }
@@ -138,7 +148,7 @@ mod tests {
         Task {
             id: id,
             description: desciption.to_string(),
-            status: "todo".to_string(),
+            status: String::from(TODO),
             created_at: _created_at,
             updated_at: _updated_at,
         }
@@ -146,14 +156,13 @@ mod tests {
 
     #[test]
     fn test_new_file() {
-        let new_file = Some("new-file");
-        let binding = test_file_name(new_file);
+        let new_file = test_start_file(Some("new-file"));
 
         let update_task = &setup_task(1, "Buy cook dinner");
         let json_string = serde_json::to_string_pretty(&vec![update_task.clone()]).unwrap();
 
         // Create File instance
-        let test_file = File::new(&binding);
+        let test_file = File::new(new_file);
         assert_eq!(test_file.name(), test_file.file_name);
 
         assert_eq!(
@@ -166,11 +175,10 @@ mod tests {
 
     #[test]
     fn test_add_file_not_found() {
-        let add_file_not_found = Some("add-file_not_found");
-        let binding = test_file_name(add_file_not_found);
+        let new_file = test_start_file(Some("add-file-not-found"));
 
         // Create File instance
-        let test_file = File::new(&binding);
+        let test_file = File::new(new_file);
 
         let added = test_file.add(setup_task(-1, "fail"));
         assert!(added.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput));
@@ -178,35 +186,11 @@ mod tests {
         test_remove_file(test_file.name());
     }
 
-    #[test]
-    fn test_file_list_no_such_file() {
-        let file_list_n = test_file_name(Some("file-list-no-such"));
-
-        let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
-        let json_string;
-        {
-            let mut data = tasks.lock().unwrap();
-            data.extend(vec![]);
-            json_string = serde_json::to_string_pretty(&*data).unwrap();
-            fs::write(&file_list_n, json_string.clone()).unwrap();
-        }
-
-        // Create File fail instance
-        let file_list_fail = &file_list_n[0..12];
-
-        // Create File instance
-        let test_file = File::new(&file_list_fail);
-
-        let tasks = test_file.list();
-        assert!(tasks.is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound));
-
-        test_remove_file(&file_list_n);
-    }
+    // #[should_panic(expected = "assertion failed")]
 
     #[test]
     fn test_file_list() {
-        let file_list = Some("file-list");
-        let binding = test_file_name(file_list);
+        let new_file = test_start_file(Some("file-list"));
 
         let list_task = setup_task(1, "Buy cook dinner");
         let annother_list_task = setup_task(2, "Buy groceries");
@@ -217,14 +201,14 @@ mod tests {
             let mut data = tasks.lock().unwrap();
             data.extend(vec![list_task, annother_list_task]);
             json_string = serde_json::to_string_pretty(&*data).unwrap();
-            fs::write(&binding, json_string.clone()).unwrap();
+            fs::write(new_file, json_string.clone()).unwrap();
         }
 
         // Create File instance
-        let test_file = File::new(&binding);
+        let test_file = File::new(new_file);
 
         {
-            let tasks = test_file.list().unwrap();
+            let tasks = test_file.list();
             assert_eq!(tasks.len(), 2);
         }
 
@@ -233,24 +217,23 @@ mod tests {
 
     #[test]
     fn test_add_file() {
-        let add_file = Some("add-file");
-        let binding = test_file_name(add_file);
+        let new_file = test_start_file(Some("add-file"));
 
         // Create File instance
-        let test_file = File::new(&binding);
+        let test_file = File::new(new_file);
 
         let mut add_task = setup_task(2, "Buy cook dinner");
         let added = test_file.add(add_task).unwrap();
         assert_eq!(added, ());
 
-        let mut tasks = test_file.list().unwrap();
+        let mut tasks = test_file.list();
         assert_eq!(tasks.len(), 1);
 
         add_task = setup_task(3, "Buy groceries");
         let updated = test_file.add(add_task).unwrap();
         assert_eq!(updated, ());
 
-        tasks = test_file.list().unwrap();
+        tasks = test_file.list();
         assert_eq!(tasks.len(), 2);
 
         test_remove_file(test_file.name());
@@ -258,8 +241,7 @@ mod tests {
 
     #[test]
     fn test_delete_file_not_found() {
-        let delete_file_not_found = Some("delete-file-not-found");
-        let binding = test_file_name(delete_file_not_found);
+        let new_file = test_start_file(Some("delete-file-not-found"));
 
         let lists_task = vec![
             setup_task(1, "test 1"),
@@ -273,17 +255,17 @@ mod tests {
             let mut data = tasks.lock().unwrap();
             data.extend(lists_task);
             json_string = serde_json::to_string_pretty(&*data).unwrap();
-            fs::write(&binding, json_string.clone()).unwrap();
+            fs::write(new_file, json_string.clone()).unwrap();
         }
 
         // Create File instance
-        let test_file = File::new(&binding);
+        let test_file = File::new(new_file);
 
         // Attempt to delete a non-existing task: 4
         let deleted = test_file.delete(4);
         assert!(deleted.is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound));
 
-        let tasks = test_file.list().unwrap();
+        let tasks = test_file.list();
         assert_eq!(tasks.len(), 3);
 
         test_remove_file(test_file.name());
@@ -291,8 +273,8 @@ mod tests {
 
     #[test]
     fn test_delete_file() {
-        let delete_file = Some("delete-file");
-        let binding = test_file_name(delete_file);
+        // ? bukan test_file_name(Some("..."));
+        let delete_file = "delete-file-test-task-cli.json";
 
         let lists_task = vec![
             setup_task(1, "test 1"),
@@ -306,19 +288,19 @@ mod tests {
             let mut data = tasks.lock().unwrap();
             data.extend(lists_task);
             json_string = serde_json::to_string_pretty(&*data).unwrap();
-            fs::write(&binding, json_string.clone()).unwrap();
+            fs::write(&delete_file, json_string.clone()).unwrap();
         }
 
         // Create File instance
-        let test_file = File::new(&binding);
+        let test_file = File::new(&delete_file);
 
         let deleted = test_file.delete(2).unwrap();
         assert_eq!(deleted, ());
 
-        let mut tasks = test_file.list().unwrap();
+        let mut tasks = test_file.list();
         assert_eq!(tasks.len(), 2);
 
-        tasks = test_file.list().unwrap();
+        tasks = test_file.list();
         assert_eq!(tasks.len(), 2);
 
         test_remove_file(test_file.name());
