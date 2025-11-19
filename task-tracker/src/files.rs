@@ -30,12 +30,7 @@ impl File {
     }
 
     fn open_options(&self) -> std_file {
-        OpenOptions::new()
-            .write(true)
-            .create_new(true) // Will error if file already exists
-            .open(self.name())
-            .or_else(|_| OpenOptions::new().read(true).open(self.name()))
-            .unwrap()
+        OpenOptions::new().read(true).open(self.name()).unwrap()
     }
 
     fn tasks_str(&self) -> String {

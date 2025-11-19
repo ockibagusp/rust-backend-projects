@@ -1,190 +1,116 @@
-use crate::task::Task;
-#[cfg(test)]
+use crate::task::TaskManager;
+use crate::task::TaskManagerTrait;
+use crate::task::{MockTaskManagerTrait, MockTaskTrait, Task, TaskTrait};
+use crate::task_test;
 use chrono::DateTime;
+use chrono_tz::Africa::Tripoli;
+use mockall::predicate::*;
 
-#[cfg(test)]
-use mockall::{automock, predicate::*};
-#[cfg_attr(test, automock)]
-// #[allow(dead_code)]
-trait Trait {
-    fn add(&self, input: &str) -> Task;
-    fn list(&self) -> Task;
+/*
+    Task
+*/
+#[test]
+fn test_task_trait_fail() {
+    let mut mock = MockTaskTrait::new();
+    mock.expect_is_validation().returning(|| false);
+    assert_eq!(mock.is_validation(), false);
 }
 
-#[cfg(test)]
-fn add(input: &str) -> Task {
-    return Task {
-        id: 1,
-        description: input.to_string(),
-        status: String::from("todo"),
-        created_at: DateTime::parse_from_str(
-            "2025-04-10 10:10:10.000000 +07:00",
-            "%Y-%m-%d %H:%M:%S%.6f %z",
-        )
-        .unwrap()
-        .into(),
-        updated_at: DateTime::parse_from_str(
-            "2025-04-10 10:10:10.000000 +07:00",
-            "%Y-%m-%d %H:%M:%S%.6f %z",
-        )
-        .unwrap()
-        .into(),
-    };
+#[test]
+fn test_task_trait_success() {
+    let mut mock = MockTaskTrait::new();
+    mock.expect_is_validation().returning(|| true);
+    assert_eq!(mock.is_validation(), true);
 }
 
-#[cfg(test)]
-fn update(id: i32, input: &str) -> Task {
-    let test_update = Task {
-        id,
-        description: input.to_string(),
-        status: String::from("todo"),
-        created_at: DateTime::parse_from_str(
-            "2025-04-10 10:10:10.000000 +07:00",
-            "%Y-%m-%d %H:%M:%S%.6f %z",
-        )
-        .unwrap()
-        .into(),
-        updated_at: DateTime::parse_from_str(
-            "2025-04-10 14:10:10.000000 +07:00",
-            "%Y-%m-%d %H:%M:%S%.6f %z",
-        )
-        .unwrap()
-        .into(),
-    };
-    test_update
+/*
+    TaskManager
+*/
+#[test]
+fn test_mock_list_fail() {
+    let mut t = <TaskManager as TaskManagerTrait>::new("test-task-cli.json");
+    let _ = t.list();
+    // test
+
+    // let task = Task {
+    //     id: 1,
+    //     description: String::from("buy milk"),
+    //     status: TaskStatus::Todo,
+    //     created_at: DateTime::parse_from_str(
+    //         "2025-04-10 10:10:10.000000 +07:00",
+    //         "%Y-%m-%d %H:%M:%S%.6f %z",
+    //     )
+    //     .unwrap()
+    //     .into(),
+    //     updated_at: DateTime::parse_from_str(
+    //         "2025-04-10 10:10:10.000000 +07:00",
+    //         "%Y-%m-%d %H:%M:%S%.6f %z",
+    //     )
+    //     .unwrap()
+    //     .into(),
+    // };
+
+    // let m = task.clone();
+
+    // let mut mock = MockTaskManagerTrait::new("test-task-cli.log");
+    // mock.expect_list()
+    //     .times(1)
+    //     .returning(move || vec![task.clone()]);
+    // assert_eq!(mock.list(), vec![m]);
 }
 
-#[cfg(test)]
-fn delete(id: i32) -> bool {
-    if id != 1 {
-        return false;
-    }
-    return true;
-}
+// #[test]
+// fn test_add_success() {
+//     let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+//         .unwrap()
+//         .into();
 
-#[cfg(test)]
-mod tests {
-    use chrono::{DateTime, Local, TimeZone, Utc};
+//     let _add_task = Task {
+//         id: 2,
+//         description: "test".to_string(),
+//         status: TaskStatus::Todo,
+//         created_at: created_at,
+//         updated_at: created_at,
+//     };
 
-    use crate::task_test::{self, add};
+//     let mut mock = MockTaskManagerTrait::new("test.json");
+//     mock.expect_add()
+//         .with(eq("test"))
+//         .returning(|_| Ok(_add_task.clone()));
+//     assert_eq!(mock.add("test"), Ok(_add_task));
+// }
 
-    use chrono_tz::{Asia, Tz};
+// #[test]
+// fn test_mock_add_success() {
+//     let mut mock = MockTaskTrait::new();
+//     mock.expect_add()
+//         .with(eq("test buy eggs 2"))
+//         .times(1)
+//         .returning(|x| get_task_add(2, x));
+//     assert_eq!(
+//         get_task_add(2, "test buy eggs 2"),
+//         mock.add("test buy eggs 2")
+//     );
+// }
 
-    fn get_task_add(id: i32, description: &str) -> Task {
-        return Task {
-            id,
-            description: String::from(description),
-            status: String::from("todo"),
-            created_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-            updated_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-        };
-    }
+// // #[test]
+// // fn test_update_success() {
+// //     let test_task = get_task_update(3, "test buy 3 eggs");
 
-    fn get_task_update(id: i32, description: &str) -> Task {
-        let mut test_add = get_task_add(id, description);
-        test_add.updated_at = DateTime::parse_from_str(
-            "2025-04-10 14:10:10.000000 +07:00",
-            "%Y-%m-%d %H:%M:%S%.6f %z",
-        )
-        .unwrap()
-        .into();
-        test_add
-    }
+// //     assert_eq!(test_task, update(3, "test buy 3 eggs"));
+// // }
 
-    #[test]
-    fn test_date_time_with_time_zone() {
-        let utc_date_time: DateTime<Utc> = Utc::now();
-        let asia_jakarta_date_time: DateTime<Tz> =
-            Asia::Jakarta.from_utc_datetime(&utc_date_time.naive_utc());
+// #[test]
+// fn test_delete_success() {
+//     let test_task = delete(1);
+//     assert_eq!(test_task, true);
+// }
 
-        println!("{}", utc_date_time);
-        println!("{}", asia_jakarta_date_time);
+// #[test]
+// fn test_delete_fail() {
+//     let test_task = delete(2);
+//     assert_eq!(test_task, false);
 
-        let local_date_time: DateTime<Local> = Local::now();
-        let asia_jakarta_date_time: DateTime<Tz> = Asia::Jakarta
-            .from_local_datetime(&local_date_time.naive_local())
-            .unwrap();
-
-        println!("{}", local_date_time);
-        println!("{}", asia_jakarta_date_time);
-    }
-
-    #[test]
-    fn test_add_success() {
-        let test_task = task_test::Task {
-            id: 1,
-            description: String::from("test buy eggs"),
-            status: String::from("todo"),
-            created_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-            updated_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-        };
-
-        assert_eq!(test_task, add("test buy eggs"));
-    }
-
-    use super::*;
-
-    #[test]
-    fn test_mock_add_success() {
-        let mut mock = MockTrait::new();
-        mock.expect_add()
-            .with(eq("test buy eggs 2"))
-            .times(1)
-            .returning(|x| get_task_add(2, x));
-        assert_eq!(
-            get_task_add(2, "test buy eggs 2"),
-            mock.add("test buy eggs 2")
-        );
-    }
-
-    #[test]
-    fn test_update_success() {
-        let test_task = get_task_update(3, "test buy 3 eggs");
-
-        assert_eq!(test_task, update(3, "test buy 3 eggs"));
-    }
-
-    #[test]
-    fn test_delete_success() {
-        let test_task = delete(1);
-        assert_eq!(test_task, true);
-    }
-
-    #[test]
-    fn test_delete_fail() {
-        let test_task = delete(2);
-        assert_eq!(test_task, false);
-
-        let test_task = delete(-1);
-        assert_eq!(test_task, false);
-    }
-
-    #[test]
-    fn test_mock_list_success() {
-        let mut mock = MockTrait::new();
-        mock.expect_list()
-            .times(1)
-            .returning(|| (get_task_add(2, "test buy eggs 4")));
-        assert_eq!(get_task_add(2, "test buy eggs 4"), mock.list());
-    }
-}
+//     let test_task = delete(-1);
+//     assert_eq!(test_task, false);
+// }

@@ -1,11 +1,44 @@
+use crate::files::{self, File};
 use chrono::DateTime;
 use chrono::prelude::FixedOffset;
 use core::result::Result;
-
 use serde::{Deserialize, Serialize};
+// use serde_with::{DeserializeFromStr, SerializeDisplay};
+// use std::fmt;
+use std::io::Error;
+
+use mockall::predicate::*;
+use mockall::*;
 
 pub(crate) static _FILE_NAME: &'static str = "task-cli.json";
 
+/*
+    Task
+*/
+
+// #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeFromStr)]
+// #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
+// pub enum TaskStatus {
+//     Todo,
+//     InProgress,
+//     Done,
+// }
+
+// impl fmt::Display for TaskStatus {
+//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+//         match self {
+//             TaskStatus::Todo => write!(f, "todo"),
+//             TaskStatus::InProgress => write!(f, "in-progress"),
+//             TaskStatus::Done => write!(f, "done"),
+//         }
+//     }
+// }
+
+pub const TODO: &str = "todo";
+pub const IN_PROGRESS: &str = "in-progress";
+pub const DONE: &str = "done";
+
+// #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeDisplay)]
 #[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub struct Task {
     pub id: i32,
@@ -16,29 +49,55 @@ pub struct Task {
     pub updated_at: DateTime<FixedOffset>,
 }
 
-impl Task {
-    pub fn is_validation(&self) -> bool {
+#[automock]
+pub trait TaskTrait {
+    fn is_validation(&self) -> bool;
+}
+
+impl TaskTrait for Task {
+    fn is_validation(&self) -> bool {
         if self.id.is_negative() {
             return false;
         }
         if self.description.trim().is_empty() || self.description.len() > 26 {
             return false;
         }
-        let valid_statuses = vec!["todo", "in-progress", "done"];
-        if !valid_statuses.contains(&self.status.as_str()) {
-            return false;
+        let _valid_statuses = vec![TODO, IN_PROGRESS, DONE];
+        if matches!(&self.status, _valid_statuses) {
+            return true;
         }
-        true
+        false
     }
 }
 
+/*
+    TaskManager
+*/
 #[derive(PartialEq, Debug)]
 pub struct TaskManager {
+    pub file: File,
     pub list: Vec<Task>,
     pub next_id: i32,
 }
 
-impl TaskManager {
+#[automock]
+pub trait TaskManagerTrait {
+    fn new(file_name: &'static str) -> Self;
+    fn get_next_id(&self) -> i32;
+    fn list(&self) -> Result<Vec<Task>, Error>;
+    fn add(&mut self, input: &str) -> Result<Task, Error>;
+}
+
+impl TaskManagerTrait for TaskManager {
+    fn new(file_name: &'static str) -> Self {
+        let file = files::File::new(file_name);
+        TaskManager {
+            file: file,
+            list: vec![],
+            next_id: 0,
+        }
+    }
+
     fn get_next_id(&self) -> i32 {
         let mut max_id = 0;
         for task in &self.list {
@@ -49,59 +108,12 @@ impl TaskManager {
         max_id + 1
     }
 
-    fn list() -> Vec<Task> {
-        let task1 = Task {
-            id: 1,
-            description: String::from("buy milk"),
-            status: String::from("todo"),
-            created_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-            updated_at: DateTime::parse_from_str(
-                "2025-04-10 10:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-        };
-        let task2 = Task {
-            id: 2,
-            description: "buy bread".to_string(),
-            status: "in-progress".to_string(),
-            created_at: DateTime::parse_from_str(
-                "2025-04-12 12:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-            updated_at: DateTime::parse_from_str(
-                "2025-04-12 12:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-        };
-        vec![task1, task2]
+    fn list(&self) -> Result<Vec<Task>, Error> {
+        let tasks_list = self.file.list();
+        Ok(tasks_list)
     }
 
-    fn validate(&self, task: &Task) -> Result<(), &'static str> {
-        if task.id.is_negative() {
-            return Err("ID must be a positive number");
-        }
-        if task.description.trim().is_empty() && task.description.len() <= 10 {
-            return Err("Description cannot be empty or exceed 10 characters");
-        }
-        let valid_statuses = vec!["todo", "in-progress", "done"];
-        if !valid_statuses.contains(&task.status.as_str()) {
-            return Err("Status must be one of: todo, in-progress, done");
-        }
-        Ok(())
-    }
-
-    pub fn add(&mut self, input: &str) -> Result<Task, &str> {
+    fn add(&mut self, input: &str) -> Result<Task, Error> {
         let next_id = self.get_next_id();
 
         let created_at =
@@ -112,46 +124,48 @@ impl TaskManager {
         let add_task = Task {
             id: next_id,
             description: String::from(input),
-            status: String::from("todo"),
+            status: TODO.to_string(),
             created_at: created_at,
             updated_at: created_at,
         };
 
-        let err = self.validate(&add_task);
-        if let Err(e) = err {
-            return Err(e);
+        if !add_task.is_validation() {
+            return Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Invalid task data",
+            ));
         }
 
-        &self.list.push(add_task.clone());
+        let _ = &self.list.push(add_task.clone());
 
         Ok(add_task)
     }
 
-    pub fn update(&self, up_task: &Task) -> Result<Task, &str> {
-        let err = self.validate(&up_task);
-        if let Err(e) = err {
-            return Err(e);
-        }
+    // pub fn update(&self, up_task: &Task) -> Result<Task, &str> {
+    //     let err = self.validate(&up_task);
+    //     if let Err(e) = err {
+    //         return Err(e);
+    //     }
 
-        let update_task = Task {
-            id: up_task.id,
-            description: up_task.description.to_string(),
-            status: up_task.status.to_string(),
-            created_at: up_task.created_at,
-            updated_at: DateTime::parse_from_str(
-                "2025-04-12 12:10:10.000000 +07:00",
-                "%Y-%m-%d %H:%M:%S%.6f %z",
-            )
-            .unwrap()
-            .into(),
-        };
-        Ok(update_task)
-    }
+    //     let update_task = Task {
+    //         id: up_task.id,
+    //         description: up_task.description.to_string(),
+    //         status: up_task.status.clone(),
+    //         created_at: up_task.created_at,
+    //         updated_at: DateTime::parse_from_str(
+    //             "2025-04-12 12:10:10.000000 +07:00",
+    //             "%Y-%m-%d %H:%M:%S%.6f %z",
+    //         )
+    //         .unwrap()
+    //         .into(),
+    //     };
+    //     Ok(update_task)
+    // }
 
-    pub fn delete(id: i32) -> bool {
-        if id != 1 {
-            return false;
-        }
-        true
-    }
+    // pub fn delete(id: i32) -> bool {
+    //     if id != 1 {
+    //         return false;
+    //     }
+    //     true
+    // }
 }
