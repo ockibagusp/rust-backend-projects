@@ -98,7 +98,7 @@ impl File {
 #[cfg(test)]
 mod tests {
     use super::{File, Task, fs};
-    use crate::task::TODO;
+    use crate::task::VALID_STATUSES;
     use chrono::DateTime;
     use std::sync::{Arc, Mutex};
 
@@ -143,7 +143,7 @@ mod tests {
         Task {
             id: id,
             description: desciption.to_string(),
-            status: String::from(TODO),
+            status: String::from(VALID_STATUSES[0]),
             created_at: _created_at,
             updated_at: _updated_at,
         }
