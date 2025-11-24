@@ -96,7 +96,7 @@ impl File {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::{File, Task, fs};
     use crate::task::VALID_STATUSES;
     use chrono::DateTime;
@@ -127,7 +127,7 @@ mod tests {
         }
     }
 
-    fn setup_task(id: i32, desciption: &str) -> Task {
+    pub fn setup_task(id: i32, desciption: &str) -> Task {
         let _created_at = DateTime::parse_from_str(
             "2025-10-13 14:07:06.072493 +07:00",
             "%Y-%m-%d %H:%M:%S%.f %z",
@@ -168,19 +168,6 @@ mod tests {
         test_remove_file(test_file.name());
     }
 
-    #[test]
-    fn test_add_file_not_found() {
-        let new_file = test_start_file(Some("add-file-not-found"));
-
-        // Create File instance
-        let test_file = File::new(new_file);
-
-        let added = test_file.add(setup_task(-1, "fail"));
-        assert!(added.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput));
-
-        test_remove_file(test_file.name());
-    }
-
     // #[should_panic(expected = "assertion failed")]
 
     #[test]
@@ -206,6 +193,19 @@ mod tests {
             let tasks = test_file.list();
             assert_eq!(tasks.len(), 2);
         }
+
+        test_remove_file(test_file.name());
+    }
+
+    #[test]
+    fn test_add_file_not_found() {
+        let new_file = test_start_file(Some("add-file-not-found"));
+
+        // Create File instance
+        let test_file = File::new(new_file);
+
+        let added = test_file.add(setup_task(-1, "fail"));
+        assert!(added.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput));
 
         test_remove_file(test_file.name());
     }
