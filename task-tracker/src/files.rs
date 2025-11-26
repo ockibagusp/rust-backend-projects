@@ -60,11 +60,9 @@ impl File {
     }
 
     pub fn add(&self, add_task: Task) -> Result<(), Error> {
-        if !add_task.is_validation() {
-            return Err(Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "All task cannot be empty",
-            ));
+        let is_valid = add_task.is_validation();
+        if is_valid.is_err() {
+            return Err(is_valid.unwrap_err());
         }
 
         let tasks_string = self.tasks_str();
@@ -233,6 +231,38 @@ pub mod tests {
 
         test_remove_file(test_file.name());
     }
+
+    // #[test]
+    // fn test_update_fail() {
+    //     let update_file = test_start_file(Some("update-fail"));
+
+    //     let list_task = setup_task(1, "Buy cook dinner");
+
+    //     let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
+    //     let json_string;
+    //     {
+    //         let mut data = tasks.lock().unwrap();
+    //         data.extend(vec![list_task]);
+    //         json_string = serde_json::to_string_pretty(&*data).unwrap();
+    //         fs::write(update_file, json_string.clone()).unwrap();
+    //     }
+
+    //     // Create File instance
+    //     let test_file = File::new(update_file);
+
+    //     let one_task = test_file.list();
+    //     assert_eq!(one_task.len(), 1);
+    //     assert_eq!(one_task[0].id, 1);
+    //     assert_eq!(one_task[0].description, "Buy cook dinner");
+
+    //     let update_fail = test_file.update(-1, setup_task(1, "fail update"));
+    //     assert_eq!(
+    //         update_fail.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput),
+    //         true
+    //     );
+
+    //     test_remove_file(update_file);
+    // }
 
     #[test]
     fn test_delete_file_not_found() {
