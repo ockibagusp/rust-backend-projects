@@ -4,7 +4,7 @@ use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
 
-fn panic_other(message: &str) -> ! {
+fn panic_invalid_input(message: &str) -> ! {
     panic!(
         "Error: {}",
         Error::new(std::io::ErrorKind::InvalidInput, message,)
@@ -51,7 +51,7 @@ impl File {
     fn json_string(file_name: &'static str, tasks: Vec<Task>) -> () {
         let json_string = serde_json::to_string_pretty(&tasks).unwrap();
         if fs::write(file_name, json_string).is_err() {
-            panic_other("Failed to write to file");
+            panic_invalid_input("Failed to write to file");
         }
     }
 
@@ -82,7 +82,7 @@ impl File {
 
     pub fn update(&self, id: i32, update_task: Task) -> Result<(), Error> {
         if id != update_task.id {
-            panic_other("Failed to update task: ID mismatch");
+            panic_invalid_input("Failed to update task: ID mismatch");
         }
 
         Ok(())
