@@ -266,12 +266,46 @@ pub mod tests {
         assert_eq!(one_task[0].id, 1);
         assert_eq!(one_task[0].description, "Buy cook dinner");
 
+        // Not the bottom, clean up
+        test_remove_file(test_file.name());
+
         // task id -1 == 1 should fail update
         let update_fail = test_file.update(-1, setup_task(1, "fail update"));
         // !!! This should panic
-        assert_eq!(update_fail.unwrap(), ());
+        assert!(update_fail.is_err());
+    }
 
-        test_remove_file(update_file);
+    #[test]
+    fn test_update() {
+        let update_file = test_start_file(Some("update"));
+
+        let list_task = setup_task(1, "Buy cook dinner");
+
+        let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
+        let json_string;
+        {
+            let mut data = tasks.lock().unwrap();
+            data.extend(vec![list_task]);
+            json_string = serde_json::to_string_pretty(&*data).unwrap();
+            fs::write(update_file, json_string.clone()).unwrap();
+        }
+
+        // Create File instance
+        let test_file = File::new(update_file);
+
+        let one_task = test_file.list();
+        assert_eq!(one_task.len(), 1);
+        assert_eq!(one_task[0].id, 1);
+        assert_eq!(one_task[0].description, "Buy cook dinner");
+
+        let update = test_file.update(1, setup_task(1, "Buy a pizza"));
+        assert!(update.is_ok());
+        let one_task_updated = test_file.list();
+        assert_eq!(one_task_updated.len(), 1);
+        assert_eq!(one_task_updated[0].id, 1);
+        assert_eq!(one_task_updated[0].description, "Buy a pizza");
+
+        test_remove_file(test_file.name());
     }
 
     #[test]
