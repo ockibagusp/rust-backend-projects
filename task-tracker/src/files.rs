@@ -4,6 +4,13 @@ use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
 
+fn panic_other(message: &str) -> ! {
+    panic!(
+        "Error: {}",
+        Error::new(std::io::ErrorKind::InvalidInput, message,)
+    )
+}
+
 #[allow(dead_code)]
 #[derive(PartialEq, Debug)]
 pub struct File {
@@ -44,10 +51,7 @@ impl File {
     fn json_string(file_name: &'static str, tasks: Vec<Task>) -> () {
         let json_string = serde_json::to_string_pretty(&tasks).unwrap();
         if fs::write(file_name, json_string).is_err() {
-            panic!(
-                "Error: {:?}",
-                Error::new(std::io::ErrorKind::Other, "Failed to write to file",)
-            );
+            panic_other("Failed to write to file");
         }
     }
 
@@ -72,6 +76,14 @@ impl File {
         tasks.push(add_task.clone());
 
         Self::json_string(&self.file_name, tasks);
+
+        Ok(())
+    }
+
+    pub fn update(&self, id: i32, update_task: Task) -> Result<(), Error> {
+        if id != update_task.id {
+            panic_other("Failed to update task: ID mismatch");
+        }
 
         Ok(())
     }
@@ -166,8 +178,6 @@ pub mod tests {
         test_remove_file(test_file.name());
     }
 
-    // #[should_panic(expected = "assertion failed")]
-
     #[test]
     fn test_file_list() {
         let new_file = test_start_file(Some("file-list"));
@@ -233,6 +243,7 @@ pub mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "Error: Failed to update task: ID mismatch")]
     fn test_update_fail() {
         let update_file = test_start_file(Some("update-fail"));
 
@@ -257,10 +268,8 @@ pub mod tests {
 
         // task id -1 == 1 should fail update
         let update_fail = test_file.update(-1, setup_task(1, "fail update"));
-        assert_eq!(
-            update_fail.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput),
-            true
-        );
+        // !!! This should panic
+        assert_eq!(update_fail.unwrap(), ());
 
         test_remove_file(update_file);
     }
