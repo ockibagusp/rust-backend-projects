@@ -1,4 +1,5 @@
 use crate::task::{Task, TaskTrait};
+use chrono::DateTime;
 use core::result::Result;
 use std::fs;
 use std::fs::{File as std_file, OpenOptions};
@@ -84,6 +85,23 @@ impl File {
         if id != update_task.id {
             panic_invalid_input("Failed to update task: ID mismatch");
         }
+
+        let tasks_string = self.tasks_str();
+
+        // You probably want to deserialize tasks_string into Vec<Task>
+        let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
+        for task in tasks.iter_mut() {
+            if task.id == id {
+                *task = update_task.clone();
+                task.updated_at =
+                    DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+                        .unwrap()
+                        .into();
+                break;
+            }
+        }
+
+        Self::json_string(&self.file_name, tasks);
 
         Ok(())
     }
