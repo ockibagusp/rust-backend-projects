@@ -1,6 +1,5 @@
 use crate::task::{Task, TaskTrait};
 use chrono::DateTime;
-use core::result::Result;
 use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
@@ -64,10 +63,10 @@ impl File {
         tasks
     }
 
-    pub fn add(&self, add_task: Task) -> Result<(), Error> {
+    pub fn add(&self, add_task: Task) -> () {
         let is_valid = add_task.is_validation();
         if is_valid.is_err() {
-            return Err(is_valid.unwrap_err());
+            panic_invalid_input(is_valid.unwrap_err().to_string().as_str());
         }
 
         let tasks_string = self.tasks_str();
@@ -77,11 +76,9 @@ impl File {
         tasks.push(add_task.clone());
 
         Self::json_string(&self.file_name, tasks);
-
-        Ok(())
     }
 
-    pub fn update(&self, id: i32, update_task: Task) -> Result<(), Error> {
+    pub fn update(&self, id: i32, update_task: Task) -> () {
         if id != update_task.id {
             panic_invalid_input("Failed to update task: ID mismatch");
         }
@@ -102,24 +99,20 @@ impl File {
         }
 
         Self::json_string(&self.file_name, tasks);
-
-        Ok(())
     }
 
-    pub fn delete(&self, id: i32) -> Result<(), Error> {
+    pub fn delete(&self, id: i32) -> () {
         let tasks_string = self.tasks_str();
 
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
         if tasks.get(id as usize - 1) == None {
-            return Err(Error::new(std::io::ErrorKind::NotFound, "Task not found"));
+            panic_invalid_input("Task not found");
         }
 
         tasks.remove(id as usize - 1);
 
         Self::json_string(&self.file_name, tasks);
-
-        Ok(())
     }
 }
 
@@ -224,16 +217,17 @@ pub mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "Error: error: `id` is negative")]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
         // Create File instance
         let test_file = File::new(new_file);
 
-        let added = test_file.add(setup_task(-1, "fail"));
-        assert!(added.is_err_and(|e| e.kind() == std::io::ErrorKind::InvalidInput));
-
         test_remove_file(test_file.name());
+
+        let added = test_file.add(setup_task(-1, "fail"));
+        assert_eq!(added, ());
     }
 
     #[test]
@@ -244,14 +238,14 @@ pub mod tests {
         let test_file = File::new(new_file);
 
         let mut add_task = setup_task(2, "Buy cook dinner");
-        let added = test_file.add(add_task).unwrap();
+        let added = test_file.add(add_task);
         assert_eq!(added, ());
 
         let mut tasks = test_file.list();
         assert_eq!(tasks.len(), 1);
 
         add_task = setup_task(3, "Buy groceries");
-        let updated = test_file.add(add_task).unwrap();
+        let updated = test_file.add(add_task);
         assert_eq!(updated, ());
 
         tasks = test_file.list();
@@ -290,7 +284,7 @@ pub mod tests {
         // task id -1 == 1 should fail update
         let update_fail = test_file.update(-1, setup_task(1, "fail update"));
         // !!! This should panic
-        assert!(update_fail.is_err());
+        assert_eq!(update_fail, ());
     }
 
     #[test]
@@ -316,8 +310,7 @@ pub mod tests {
         assert_eq!(one_task[0].id, 1);
         assert_eq!(one_task[0].description, "Buy cook dinner");
 
-        let update = test_file.update(1, setup_task(1, "Buy a pizza"));
-        assert!(update.is_ok());
+        let _update = test_file.update(1, setup_task(1, "Buy a pizza"));
         let one_task_updated = test_file.list();
         assert_eq!(one_task_updated.len(), 1);
         assert_eq!(one_task_updated[0].id, 1);
@@ -327,6 +320,7 @@ pub mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn test_delete_file_not_found() {
         let new_file = test_start_file(Some("delete-file-not-found"));
 
@@ -348,14 +342,12 @@ pub mod tests {
         // Create File instance
         let test_file = File::new(new_file);
 
-        // Attempt to delete a non-existing task: 4
-        let deleted = test_file.delete(4);
-        assert!(deleted.is_err_and(|e| e.kind() == std::io::ErrorKind::NotFound));
-
-        let tasks = test_file.list();
-        assert_eq!(tasks.len(), 3);
-
+        // Not the bottom, clean up
         test_remove_file(test_file.name());
+
+        // Attempt to delete a non-existing task: 4
+        let deleted_fail = test_file.delete(4);
+        assert_eq!(deleted_fail, ());
     }
 
     #[test]
@@ -381,7 +373,7 @@ pub mod tests {
         // Create File instance
         let test_file = File::new(&delete_file);
 
-        let deleted = test_file.delete(2).unwrap();
+        let deleted = test_file.delete(2);
         assert_eq!(deleted, ());
 
         let mut tasks = test_file.list();
