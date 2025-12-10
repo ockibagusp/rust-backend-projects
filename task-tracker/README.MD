@@ -76,18 +76,15 @@ The list of commands and their usage is given below:
 ### c. menambahkan berkas buru di task-cli.json ke file-nya
 
 ```
-{
-    "next_count": 2,
-    "tasks": [
-        {
-            "id": 1,
-            "description": "xxx",
-            "status": "xxx",
-            "created_at": xxx,
-            "updated_at": xxx
-        }
-    ]
-}
+[
+    {
+        "id": 1,
+        "description": "xxx",
+        "status": "xxx",
+        "created_at": xxx,
+        "updated_at": xxx
+    }
+]
 ```
 
 ## 1.2. perubahan tugas
