@@ -14,7 +14,7 @@ fn panic_invalid_input(message: &str) -> ! {
 #[allow(dead_code)]
 #[derive(PartialEq, Debug)]
 pub struct File {
-    pub json_str: &'static str,
+    json_str: &'static str,
 }
 
 #[allow(dead_code)]
