@@ -6,7 +6,7 @@ use std::io::{Error, Read};
 
 fn panic_invalid_input(message: &str) -> ! {
     panic!(
-        "Error: {}",
+        "Error: [TaskTrait] {}",
         Error::new(std::io::ErrorKind::InvalidInput, message,)
     )
 }
@@ -14,12 +14,21 @@ fn panic_invalid_input(message: &str) -> ! {
 #[allow(dead_code)]
 #[derive(PartialEq, Debug)]
 pub struct File {
-    pub file_name: &'static str,
+    pub json_str: &'static str,
 }
 
 #[allow(dead_code)]
 impl File {
-    pub fn new(file_name: &'static str) -> Self {
+    pub fn new(json_str: &'static str) -> Self {
+        Self::open_options_new(json_str);
+        Self { json_str }
+    }
+
+    fn name(&self) -> &str {
+        &self.json_str
+    }
+
+    fn open_options_new(file_name: &'static str) -> () {
         if !fs::metadata(file_name).is_ok() {
             let _ = OpenOptions::new()
                 .write(true)
@@ -29,15 +38,10 @@ impl File {
 
             Self::json_string(file_name, vec![]);
         }
-        Self { file_name }
-    }
-
-    fn name(&self) -> &str {
-        &self.file_name
     }
 
     fn open_options(&self) -> std_file {
-        OpenOptions::new().read(true).open(self.name()).unwrap()
+        OpenOptions::new().read(true).open(self.json_str).unwrap()
     }
 
     fn tasks_str(&self) -> String {
@@ -75,7 +79,7 @@ impl File {
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap();
         tasks.push(add_task.clone());
 
-        Self::json_string(&self.file_name, tasks);
+        Self::json_string(&self.json_str, tasks);
     }
 
     pub fn update(&self, id: i32, update_task: Task) -> () {
@@ -98,7 +102,7 @@ impl File {
             }
         }
 
-        Self::json_string(&self.file_name, tasks);
+        Self::json_string(&self.json_str, tasks);
     }
 
     pub fn delete(&self, id: i32) -> () {
@@ -112,7 +116,7 @@ impl File {
 
         tasks.remove(id as usize - 1);
 
-        Self::json_string(&self.file_name, tasks);
+        Self::json_string(&self.json_str, tasks);
     }
 }
 
@@ -179,7 +183,7 @@ pub mod tests {
 
         // Create File instance
         let test_file = File::new(new_file);
-        assert_eq!(test_file.name(), test_file.file_name);
+        assert_eq!(test_file.name(), test_file.json_str);
 
         assert_eq!(
             json_string,
@@ -217,7 +221,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Error: error: `id` is negative")]
+    #[should_panic(expected = "Error: [TaskTrait] `id` is negative")]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
@@ -255,7 +259,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Error: Failed to update task: ID mismatch")]
+    #[should_panic(expected = "Error: [TaskTrait] Failed to update task: ID mismatch")]
     fn test_update_fail() {
         let update_file = test_start_file(Some("update-fail"));
 
