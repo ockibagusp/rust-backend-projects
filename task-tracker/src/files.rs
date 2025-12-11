@@ -1,12 +1,12 @@
 use crate::task::{Task, TaskTrait};
-use chrono::DateTime;
+use chrono::offset::Local;
 use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
 
 fn panic_invalid_input(message: &str) -> ! {
     panic!(
-        "Error: {}",
+        "Error: [File] {}",
         Error::new(std::io::ErrorKind::InvalidInput, message,)
     )
 }
@@ -51,7 +51,7 @@ impl File {
     fn json_string(file_name: &'static str, tasks: Vec<Task>) -> () {
         let json_string = serde_json::to_string_pretty(&tasks).unwrap();
         if fs::write(file_name, json_string).is_err() {
-            panic_invalid_input("Failed to write to file");
+            panic_invalid_input("failed to write to file");
         }
     }
 
@@ -66,7 +66,8 @@ impl File {
     pub fn add(&self, add_task: Task) -> () {
         let is_valid = add_task.is_validation();
         if is_valid.is_err() {
-            panic_invalid_input(is_valid.unwrap_err().to_string().as_str());
+            // panic_invalid_input(is_valid.unwrap_err().to_string().as_str());
+            panic_invalid_input("`id` is negative");
         }
 
         let tasks_string = self.tasks_str();
@@ -78,9 +79,9 @@ impl File {
         Self::json_string(&self.file_name, tasks);
     }
 
-    pub fn update(&self, id: i32, update_task: Task) -> () {
+    pub fn update(&self, id: i32, update_task: &Task) -> () {
         if id != update_task.id {
-            panic_invalid_input("Failed to update task: ID mismatch");
+            panic_invalid_input("failed to update task: ID mismatch");
         }
 
         let tasks_string = self.tasks_str();
@@ -90,10 +91,7 @@ impl File {
         for task in tasks.iter_mut() {
             if task.id == id {
                 *task = update_task.clone();
-                task.updated_at =
-                    DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-                        .unwrap()
-                        .into();
+                task.updated_at = Local::now().into();
                 break;
             }
         }
@@ -107,7 +105,7 @@ impl File {
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
         if tasks.get(id as usize - 1) == None {
-            panic_invalid_input("Task not found");
+            panic_invalid_input("task not found");
         }
 
         tasks.remove(id as usize - 1);
@@ -217,7 +215,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Error: error: `id` is negative")]
+    #[should_panic(expected = "Error: [File] `id` is negative")]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
@@ -255,7 +253,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Error: Failed to update task: ID mismatch")]
+    #[should_panic(expected = "Error: [File] failed to update task: ID mismatch")]
     fn test_update_fail() {
         let update_file = test_start_file(Some("update-fail"));
 
@@ -282,7 +280,7 @@ pub mod tests {
         test_remove_file(test_file.name());
 
         // task id -1 == 1 should fail update
-        let update_fail = test_file.update(-1, setup_task(1, "fail update"));
+        let update_fail = test_file.update(-1, &setup_task(1, "fail update"));
         // !!! This should panic
         assert_eq!(update_fail, ());
     }
@@ -310,7 +308,7 @@ pub mod tests {
         assert_eq!(one_task[0].id, 1);
         assert_eq!(one_task[0].description, "Buy cook dinner");
 
-        let _update = test_file.update(1, setup_task(1, "Buy a pizza"));
+        let _update = test_file.update(1, &setup_task(1, "Buy a pizza"));
         let one_task_updated = test_file.list();
         assert_eq!(one_task_updated.len(), 1);
         assert_eq!(one_task_updated[0].id, 1);

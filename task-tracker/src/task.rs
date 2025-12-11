@@ -89,6 +89,7 @@ pub trait TaskManagerTrait {
     fn get_next_id(&self) -> i32;
     fn list(&self) -> Vec<Task>;
     fn add(&mut self, input: &str) -> Result<Task, Error>;
+    fn update(&self, id: i32, update_task: &Task) -> Result<Task, Error>;
 }
 
 impl TaskManagerTrait for TaskManager {
@@ -128,9 +129,10 @@ impl TaskManagerTrait for TaskManager {
             updated_at: now_created_at.into(),
         };
 
-        let is_valid = add_task.is_validation();
-        if is_valid.is_err() {
-            return Err(is_valid.unwrap_err());
+        let err = add_task.is_validation();
+        // if let Err(e) = err {...}
+        if err.is_err() {
+            return Err(err.unwrap_err());
         }
 
         let _ = &self.list.push(add_task.clone());
@@ -139,28 +141,28 @@ impl TaskManagerTrait for TaskManager {
         Ok(add_task)
     }
 
-    // pub fn update(&self, up_task: &Task) -> Result<Task, &str> {
-    //     self.valid_file();
-    //
-    //     let err = self.validate(&up_task);
-    //     if let Err(e) = err {
-    //         return Err(e);
-    //     }
+    fn update(&self, id: i32, update_task: &Task) -> Result<Task, Error> {
+        let err = update_task.is_validation();
+        if let Err(e) = err {
+            return Err(e);
+        }
 
-    //     let update_task = Task {
-    //         id: up_task.id,
-    //         description: up_task.description.to_string(),
-    //         status: up_task.status.clone(),
-    //         created_at: up_task.created_at,
-    //         updated_at: DateTime::parse_from_str(
-    //             "2025-04-12 12:10:10.000000 +07:00",
-    //             "%Y-%m-%d %H:%M:%S%.6f %z",
-    //         )
-    //         .unwrap()
-    //         .into(),
-    //     };
-    //     Ok(update_task)
-    // }
+        let old_task = self.list.iter().find(|&task| task.id == id).unwrap();
+        if old_task.id != update_task.id {
+            return Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Error: [TaskManagerTrait] `id` is not identical",
+            ));
+        }
+
+        if old_task.description == update_task.description {
+            return Err(Error::new(std::io::ErrorKind::InvalidInput, ""));
+        }
+
+        let _ = &self.file.update(id, update_task);
+
+        Ok(update_task.clone())
+    }
 
     // pub fn delete(id: i32) -> bool {
     //     self.valid_file();
