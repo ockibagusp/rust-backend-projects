@@ -80,7 +80,7 @@ impl File {
         Self::json_string(&self.json_str, tasks);
     }
 
-    pub fn update(&self, id: i32, update_task: Task) -> () {
+    pub fn update(&self, id: i32, update_task: &Task) -> () {
         if id != update_task.id {
             panic_invalid_input("failed to update task: ID mismatch");
         }
@@ -108,7 +108,7 @@ impl File {
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
         if tasks.get(id as usize - 1) == None {
-            panic_invalid_input("Task not found");
+            panic_invalid_input("task not found");
         }
 
         tasks.remove(id as usize - 1);
@@ -283,7 +283,7 @@ pub mod tests {
         test_remove_file(test_file.name());
 
         // task id -1 == 1 should fail update
-        let update_fail = test_file.update(-1, setup_task(1, "fail update"));
+        let update_fail = test_file.update(-1, &setup_task(1, "fail update"));
         // !!! This should panic
         assert_eq!(update_fail, ());
     }
@@ -311,7 +311,7 @@ pub mod tests {
         assert_eq!(one_task[0].id, 1);
         assert_eq!(one_task[0].description, "Buy cook dinner");
 
-        let _update = test_file.update(1, setup_task(1, "Buy a pizza"));
+        let _update = test_file.update(1, &setup_task(1, "Buy a pizza"));
         let one_task_updated = test_file.list();
         assert_eq!(one_task_updated.len(), 1);
         assert_eq!(one_task_updated[0].id, 1);
