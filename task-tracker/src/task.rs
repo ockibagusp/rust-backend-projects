@@ -1,10 +1,8 @@
 use crate::files::{self, File};
-use chrono::DateTime;
 use chrono::prelude::FixedOffset;
+use chrono::{DateTime, Local};
 use core::result::Result;
 use serde::{Deserialize, Serialize};
-// use serde_with::{DeserializeFromStr, SerializeDisplay};
-// use std::fmt;
 use std::io::Error;
 
 use mockall::predicate::*;
@@ -54,19 +52,22 @@ impl TaskTrait for Task {
     fn is_validation(&self) -> Result<(), Error> {
         let invalid_input = std::io::ErrorKind::InvalidInput;
         if self.id.is_negative() {
-            return Err(Error::new(invalid_input, "error: `id` is negative"));
+            return Err(Error::new(
+                invalid_input,
+                "Error: [TaskTrait] `id` is negative",
+            ));
         }
         if self.description.trim().is_empty() || self.description.len() > 26 {
             return Err(Error::new(
                 invalid_input,
-                "error: `description` is empty or too long",
+                "Error: [TaskTrait] `description` is empty or too long",
             ));
         }
         let _valid_statuses = VALID_STATUSES;
         if !matches!(&self.status, _valid_statuses) {
             return Err(Error::new(
                 invalid_input,
-                format!("error: `status` is invalid `{}`", &self.status),
+                format!("Error: [TaskTrait] `status` is invalid `{}`", &self.status),
             ));
         }
         Ok(())
@@ -79,36 +80,26 @@ impl TaskTrait for Task {
 #[derive(PartialEq, Debug)]
 pub struct TaskManager {
     pub file: File,
-    pub is_file: bool,
     pub list: Vec<Task>,
-    pub next_id: i32,
 }
 
 #[automock]
 pub trait TaskManagerTrait {
-    fn set_static_file(&mut self, file_name: &'static str) -> ();
-    fn valid_file(&self) -> ();
+    fn new(file_name: &'static str) -> Self;
     fn get_next_id(&self) -> i32;
     fn list(&self) -> Vec<Task>;
     fn add(&mut self, input: &str) -> Result<Task, Error>;
 }
 
 impl TaskManagerTrait for TaskManager {
-    fn set_static_file(&mut self, file_name: &'static str) -> () {
+    fn new(file_name: &'static str) -> Self {
         let file = files::File::new(file_name);
-        self.file = file;
-        self.is_file = true;
-    }
+        let _list = file.list();
 
-    fn valid_file(&self) -> () {
-        if self.is_file {
-            panic!("Error: File is not set")
-        }
+        Self { file, list: _list }
     }
 
     fn get_next_id(&self) -> i32 {
-        self.valid_file();
-
         let mut max_id = 0;
         for task in &self.list {
             if task.id > max_id {
@@ -119,29 +110,22 @@ impl TaskManagerTrait for TaskManager {
     }
 
     fn list(&self) -> Vec<Task> {
-        self.valid_file();
-
         let tasks_list = self.file.list();
         tasks_list
     }
 
     fn add(&mut self, input: &str) -> Result<Task, Error> {
-        self.valid_file();
-
         let next_id = self.get_next_id();
-
-        let created_at =
-            DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-                .unwrap()
-                .into();
+        // Convert UTC to Jakarta time
+        let now_created_at: DateTime<Local> = Local::now();
 
         let add_task = Task {
             id: next_id,
             description: String::from(input),
             // status: "todo"
             status: VALID_STATUSES[0].to_string(),
-            created_at: created_at,
-            updated_at: created_at,
+            created_at: now_created_at.into(),
+            updated_at: now_created_at.into(),
         };
 
         let is_valid = add_task.is_validation();
@@ -150,6 +134,7 @@ impl TaskManagerTrait for TaskManager {
         }
 
         let _ = &self.list.push(add_task.clone());
+        let _ = &self.file.add(add_task.clone());
 
         Ok(add_task)
     }
