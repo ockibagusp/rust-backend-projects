@@ -13,7 +13,7 @@ use mockall::predicate::*;
     Task
 */
 #[test]
-fn test_task_trait_fail() {
+fn test_task_trait_should_fail() {
     let mut mock = MockTaskTrait::new();
     let invalid_input = ErrorKind::InvalidInput;
 
@@ -23,7 +23,7 @@ fn test_task_trait_fail() {
 }
 
 #[test]
-fn test_task_trait_success() {
+fn test_task_trait_should_success() {
     let mut mock = MockTaskTrait::default();
     mock.expect_is_validation().returning(|| Ok(()));
     assert_eq!(mock.is_validation().unwrap(), ());
@@ -88,7 +88,7 @@ fn test_mock_list() {
 }
 
 #[test]
-fn test_mock_add_fail() {
+fn test_mock_add_should_fail() {
     let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
         .unwrap()
         .into();
@@ -155,18 +155,32 @@ fn test_mock_add_fail() {
     // Note: Since status is not passed in add function, this case is just for demonstration or is never used.
 }
 
-// #[test]
-// fn test_mock_add_success() {
-//     let mut mock = MockTaskTrait::new();
-//     mock.expect_add()
-//         .with(eq("test buy eggs 2"))
-//         .times(1)
-//         .returning(|x| get_task_add(2, x));
-//     assert_eq!(
-//         get_task_add(2, "test buy eggs 2"),
-//         mock.add("test buy eggs 2")
-//     );
-// }
+#[test]
+fn test_mock_add_should_success() {
+    let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+        .unwrap()
+        .into();
+
+    const TASK_DESC: &str = "test buy one";
+    let mut _add_task = crate::task::Task {
+        id: 2,
+        description: TASK_DESC.to_string(),
+        status: crate::task::VALID_STATUSES[0].to_string(),
+        created_at: created_at,
+        updated_at: created_at,
+    };
+
+    let mut mock = MockTaskManagerTrait::default();
+
+    mock.expect_add()
+        .with(eq(TASK_DESC))
+        .returning(move |_| Ok(_add_task.clone()));
+    let result = mock.add(TASK_DESC);
+    assert!(result.is_ok());
+    let task = result.unwrap();
+    assert_eq!(task.id, 2);
+    assert_eq!(task.description, TASK_DESC.to_string());
+}
 
 // // #[test]
 // // fn test_update_success() {
