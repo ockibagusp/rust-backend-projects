@@ -11,10 +11,14 @@ use mockall::*;
 pub(crate) static _FILE_NAME: &'static str = "task-cli.json";
 
 fn error_invalid_input(message: &str) -> Error {
-    Error::new(
+    return Error::new(
         std::io::ErrorKind::InvalidInput,
         format!("error : {}", message),
-    )
+    );
+}
+
+fn error_not_found_input(message: &str) -> Error {
+    Error::new(std::io::ErrorKind::NotFound, message)
 }
 
 /*
@@ -169,10 +173,7 @@ impl TaskManagerTrait for TaskManager {
     fn delete(&self, id: i32) -> Result<(), Error> {
         let task = self.list.iter().find(|&task| task.id == id);
         if task.is_none() {
-            return Err(Error::new(
-                std::io::ErrorKind::NotFound,
-                "Error: [TaskManagerTrait] `id` is not found",
-            ));
+            return Err(error_not_found_input("error: `id` is not found"));
         }
 
         let index = self.list().iter().position(|t| t.id == id).unwrap();
