@@ -210,7 +210,7 @@ fn test_mock_update_should_fail() {
                 "Error: [TaskTrait] `description` is empty or too long",
             ))
         });
-    let result = mock.update(1, &_update_task_fail);
+    let result = mock.update(1, &mut _update_task_fail);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
@@ -234,7 +234,69 @@ fn test_mock_update_should_fail() {
                 "Error: [TaskTrait] `description` is empty or too long",
             ))
         });
-    let result = mock.update(4, &_update_task_fail);
+    let result = mock.update(4, &mut _update_task_fail);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+    assert_eq!(
+        err.to_string(),
+        "Error: [TaskTrait] `description` is empty or too long"
+    );
+}
+
+#[test]
+fn test_mock_update_should_success() {
+    let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+        .unwrap()
+        .into();
+    let updated_at = DateTime::parse_from_str("1970-01-01 00:10:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+        .unwrap()
+        .into();
+
+    let mut _update_task_fail = crate::task::Task {
+        id: 1,
+        description: "".to_string(),
+        status: crate::task::VALID_STATUSES[0].to_string(),
+        created_at: created_at,
+        updated_at: updated_at,
+    };
+
+    let mut mock = MockTaskManagerTrait::default();
+
+    // is empty description
+    mock.expect_update()
+        .with(eq(1), eq(_update_task_fail.clone()))
+        .returning(|_, _| {
+            Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Error: [TaskTrait] `description` is empty or too long",
+            ))
+        });
+    let result = mock.update(1, &mut _update_task_fail);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+    assert_eq!(
+        err.to_string(),
+        "Error: [TaskTrait] `description` is empty or too long"
+    );
+
+    // is too long description
+    _update_task_fail.description = "a".repeat(30);
+    // // Note: Since updatad_at is not passed in update function, this case is just for demonstration or is never used.
+    // _update_task_fail.updated_at =
+    //     DateTime::parse_from_str("1970-01-01 00:00:02 +00:00", "%Y-%m-%d %H:%M:%S %z")
+    //         .unwrap()
+    //         .into();
+    mock.expect_update()
+        .with(eq(4), eq(_update_task_fail.clone()))
+        .returning(|_, _| {
+            Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Error: [TaskTrait] `description` is empty or too long",
+            ))
+        });
+    let result = mock.update(4, &mut _update_task_fail);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
