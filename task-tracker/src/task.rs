@@ -89,7 +89,7 @@ pub trait TaskManagerTrait {
     fn get_next_id(&self) -> i32;
     fn list(&self) -> Vec<Task>;
     fn add(&mut self, input: &str) -> Result<Task, Error>;
-    fn update(&self, id: i32, update_task: &Task) -> Result<Task, Error>;
+    fn update(&self, id: i32, update_task: &mut Task) -> Result<Task, Error>;
 }
 
 impl TaskManagerTrait for TaskManager {
@@ -141,7 +141,7 @@ impl TaskManagerTrait for TaskManager {
         Ok(add_task)
     }
 
-    fn update(&self, id: i32, update_task: &Task) -> Result<Task, Error> {
+    fn update(&self, id: i32, update_task: &mut Task) -> Result<Task, Error> {
         let err = update_task.is_validation();
         if let Err(e) = err {
             return Err(e);
@@ -154,10 +154,13 @@ impl TaskManagerTrait for TaskManager {
                 "Error: [TaskManagerTrait] `id` is not identical",
             ));
         }
-
         if old_task.description == update_task.description {
-            return Err(Error::new(std::io::ErrorKind::InvalidInput, ""));
+            return Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Error: [TaskManagerTrait] `description` is identical",
+            ));
         }
+        update_task.updated_at = Local::now().into();
 
         let _ = &self.file.update(id, update_task);
 
