@@ -10,6 +10,13 @@ use mockall::*;
 
 pub(crate) static _FILE_NAME: &'static str = "task-cli.json";
 
+fn error_invalid_input(message: &str) -> Error {
+    Error::new(
+        std::io::ErrorKind::InvalidInput,
+        format!("Error [TaskManagerTrait]: {}", message),
+    )
+}
+
 /*
     Task
 */
@@ -149,16 +156,10 @@ impl TaskManagerTrait for TaskManager {
 
         let old_task = self.list.iter().find(|&task| task.id == id).unwrap();
         if old_task.id != update_task.id {
-            return Err(Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "Error: [TaskManagerTrait] `id` is not identical",
-            ));
+            return Err(error_invalid_input("`id` is not identical"));
         }
         if old_task.description == update_task.description {
-            return Err(Error::new(
-                std::io::ErrorKind::InvalidInput,
-                "Error: [TaskManagerTrait] `description` is identical",
-            ));
+            return Err(error_invalid_input("`description` is identical"));
         }
         update_task.updated_at = Local::now().into();
 
