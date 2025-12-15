@@ -1,5 +1,4 @@
 use crate::task::{Task, TaskTrait};
-use chrono::DateTime;
 use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
@@ -94,10 +93,6 @@ impl File {
         for task in tasks.iter_mut() {
             if task.id == id {
                 *task = update_task.clone();
-                task.updated_at =
-                    DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-                        .unwrap()
-                        .into();
                 break;
             }
         }
