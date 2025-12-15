@@ -1,5 +1,4 @@
 use crate::task::{Task, TaskTrait};
-use chrono::offset::Local;
 use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
@@ -14,12 +13,21 @@ fn panic_invalid_input(message: &str) -> ! {
 #[allow(dead_code)]
 #[derive(PartialEq, Debug)]
 pub struct File {
-    pub file_name: &'static str,
+    json_str: &'static str,
 }
 
 #[allow(dead_code)]
 impl File {
-    pub fn new(file_name: &'static str) -> Self {
+    pub fn new(json_str: &'static str) -> Self {
+        Self::open_options_new(json_str);
+        Self { json_str }
+    }
+
+    fn name(&self) -> &str {
+        &self.json_str
+    }
+
+    fn open_options_new(file_name: &'static str) -> () {
         if !fs::metadata(file_name).is_ok() {
             let _ = OpenOptions::new()
                 .write(true)
@@ -29,15 +37,10 @@ impl File {
 
             Self::json_string(file_name, vec![]);
         }
-        Self { file_name }
-    }
-
-    fn name(&self) -> &str {
-        &self.file_name
     }
 
     fn open_options(&self) -> std_file {
-        OpenOptions::new().read(true).open(self.name()).unwrap()
+        OpenOptions::new().read(true).open(self.json_str).unwrap()
     }
 
     fn tasks_str(&self) -> String {
@@ -76,7 +79,7 @@ impl File {
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap();
         tasks.push(add_task.clone());
 
-        Self::json_string(&self.file_name, tasks);
+        Self::json_string(&self.json_str, tasks);
     }
 
     pub fn update(&self, id: i32, update_task: &Task) -> () {
@@ -91,12 +94,11 @@ impl File {
         for task in tasks.iter_mut() {
             if task.id == id {
                 *task = update_task.clone();
-                task.updated_at = Local::now().into();
                 break;
             }
         }
 
-        Self::json_string(&self.file_name, tasks);
+        Self::json_string(&self.json_str, tasks);
     }
 
     pub fn delete(&self, id: i32) -> () {
@@ -110,7 +112,7 @@ impl File {
 
         tasks.remove(id as usize - 1);
 
-        Self::json_string(&self.file_name, tasks);
+        Self::json_string(&self.json_str, tasks);
     }
 }
 
@@ -177,7 +179,7 @@ pub mod tests {
 
         // Create File instance
         let test_file = File::new(new_file);
-        assert_eq!(test_file.name(), test_file.file_name);
+        assert_eq!(test_file.name(), test_file.json_str);
 
         assert_eq!(
             json_string,
