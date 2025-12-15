@@ -107,20 +107,23 @@ fn test_mock_add_should_fail() {
     mock.expect_add().with(eq("test buy one")).returning(|_| {
         Err(Error::new(
             std::io::ErrorKind::InvalidInput,
-            "Error: [TaskTrait] `id` is negative",
+            "Error: [TaskManagerTrait] `id` is negative",
         ))
     });
     let result = mock.add("test buy one");
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
-    assert_eq!(err.to_string(), "Error: [TaskTrait] `id` is negative");
+    assert_eq!(
+        err.to_string(),
+        "Error: [TaskManagerTrait] `id` is negative"
+    );
 
     // is empty description
     mock.expect_add().with(eq("")).returning(|_| {
         Err(Error::new(
             std::io::ErrorKind::InvalidInput,
-            "Error: [TaskTrait] `description` is empty or too long",
+            "Error: [TaskManagerTrait] `description` is empty or too long",
         ))
     });
     let result = mock.add("");
@@ -129,7 +132,7 @@ fn test_mock_add_should_fail() {
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
     assert_eq!(
         err.to_string(),
-        "Error: [TaskTrait] `description` is empty or too long"
+        "Error: [TaskManagerTrait] `description` is empty or too long"
     );
 
     // is too long description
@@ -139,7 +142,7 @@ fn test_mock_add_should_fail() {
         .returning(|_| {
             Err(Error::new(
                 std::io::ErrorKind::InvalidInput,
-                "Error: [TaskTrait] `description` is empty or too long",
+                "Error: [TaskManagerTrait] `description` is empty or too long",
             ))
         });
     let result = mock.add(&long_description);
@@ -148,7 +151,7 @@ fn test_mock_add_should_fail() {
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
     assert_eq!(
         err.to_string(),
-        "Error: [TaskTrait] `description` is empty or too long"
+        "Error: [TaskManagerTrait] `description` is empty or too long"
     );
 
     // is invalid status
@@ -207,7 +210,7 @@ fn test_mock_update_should_fail() {
         .returning(|_, _| {
             Err(Error::new(
                 std::io::ErrorKind::InvalidInput,
-                "Error: [TaskTrait] `description` is empty or too long",
+                "Error: [TaskManagerTrait] `description` is empty or too long",
             ))
         });
     let result = mock.update(1, &mut _update_task_fail);
@@ -216,7 +219,7 @@ fn test_mock_update_should_fail() {
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
     assert_eq!(
         err.to_string(),
-        "Error: [TaskTrait] `description` is empty or too long"
+        "Error: [TaskManagerTrait] `description` is empty or too long"
     );
 
     // is too long description
@@ -231,7 +234,7 @@ fn test_mock_update_should_fail() {
         .returning(|_, _| {
             Err(Error::new(
                 std::io::ErrorKind::InvalidInput,
-                "Error: [TaskTrait] `description` is empty or too long",
+                "Error: [TaskManagerTrait] `description` is empty or too long",
             ))
         });
     let result = mock.update(4, &mut _update_task_fail);
@@ -240,7 +243,7 @@ fn test_mock_update_should_fail() {
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
     assert_eq!(
         err.to_string(),
-        "Error: [TaskTrait] `description` is empty or too long"
+        "Error: [TaskManagerTrait] `description` is empty or too long"
     );
 }
 
@@ -269,7 +272,7 @@ fn test_mock_update_should_success() {
         .returning(|_, _| {
             Err(Error::new(
                 std::io::ErrorKind::InvalidInput,
-                "Error: [TaskTrait] `description` is empty or too long",
+                "Error: [TaskManagerTrait] `description` is empty or too long",
             ))
         });
     let result = mock.update(1, &mut _update_task_fail);
@@ -278,7 +281,7 @@ fn test_mock_update_should_success() {
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
     assert_eq!(
         err.to_string(),
-        "Error: [TaskTrait] `description` is empty or too long"
+        "Error: [TaskManagerTrait] `description` is empty or too long"
     );
 
     // is too long description
@@ -293,7 +296,7 @@ fn test_mock_update_should_success() {
         .returning(|_, _| {
             Err(Error::new(
                 std::io::ErrorKind::InvalidInput,
-                "Error: [TaskTrait] `description` is empty or too long",
+                "Error: [TaskManagerTrait] `description` is empty or too long",
             ))
         });
     let result = mock.update(4, &mut _update_task_fail);
@@ -302,21 +305,32 @@ fn test_mock_update_should_success() {
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
     assert_eq!(
         err.to_string(),
-        "Error: [TaskTrait] `description` is empty or too long"
+        "Error: [TaskManagerTrait] `description` is empty or too long"
+    );
+}
+
+#[test]
+fn test_mock_delete_should_fail() {
+    let mut mock = MockTaskManagerTrait::default();
+
+    // negative id
+    mock.expect_delete().with(eq(-1)).returning(|_| {
+        Err(Error::new(
+            std::io::ErrorKind::NotFound,
+            "Error: [TaskManagerTrait] `id` is not found",
+        ))
+    });
+    let result = mock.delete(-1);
+    let err = result.unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::NotFound);
+    assert_eq!(
+        err.to_string(),
+        "Error: [TaskManagerTrait] `id` is not found"
     );
 }
 
 // #[test]
-// fn test_delete_success() {
+// fn test_mock_delete_should_success() {
 //     let test_task = delete(1);
 //     assert_eq!(test_task, true);
-// }
-
-// #[test]
-// fn test_delete_fail() {
-//     let test_task = delete(2);
-//     assert_eq!(test_task, false);
-
-//     let test_task = delete(-1);
-//     assert_eq!(test_task, false);
 // }
