@@ -218,7 +218,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Error: [TaskTrait] `id` is negative")]
+    #[should_panic(expected = "Error: [File] Error: [TaskTrait] `id` is negative")]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
