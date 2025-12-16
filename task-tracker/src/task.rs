@@ -97,6 +97,7 @@ pub trait TaskManagerTrait {
     fn list(&self) -> Vec<Task>;
     fn add(&mut self, input: &str) -> Result<Task, Error>;
     fn update(&self, id: i32, update_task: &mut Task) -> Result<Task, Error>;
+    fn delete(&self, id: i32) -> Result<(), Error>;
 }
 
 impl TaskManagerTrait for TaskManager {
@@ -168,12 +169,17 @@ impl TaskManagerTrait for TaskManager {
         Ok(update_task.clone())
     }
 
-    // pub fn delete(id: i32) -> bool {
-    //     self.valid_file();
-    //
-    //     if id != 1 {
-    //         return false;
-    //     }
-    //     true
-    // }
+    fn delete(&self, id: i32) -> Result<(), Error> {
+        let task = self.list.iter().find(|&task| task.id == id);
+        if task.is_none() {
+            return Err(Error::new(
+                std::io::ErrorKind::NotFound,
+                "Error: [TaskManagerTrait] `id` is not found",
+            ));
+        }
+
+        let index = self.list().iter().position(|t| t.id == id).unwrap();
+        self.list().remove(index);
+        Ok(())
+    }
 }
