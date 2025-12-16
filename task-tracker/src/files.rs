@@ -67,10 +67,8 @@ impl File {
     }
 
     pub fn add(&self, add_task: Task) -> () {
-        let is_valid = add_task.is_validation();
-        if is_valid.is_err() {
-            // panic_invalid_input(is_valid.unwrap_err().to_string().as_str());
-            panic_invalid_input("`id` is negative");
+        if let Err(is_valid) = add_task.is_validation() {
+            panic_invalid_input(is_valid.to_string().as_str());
         }
 
         let tasks_string = self.tasks_str();
@@ -85,6 +83,9 @@ impl File {
     pub fn update(&self, id: i32, update_task: &Task) -> () {
         if id != update_task.id {
             panic_invalid_input("failed to update task: ID mismatch");
+        }
+        if let Err(is_valid_err) = update_task.is_validation() {
+            panic_invalid_input(is_valid_err.to_string().as_str());
         }
 
         let tasks_string = self.tasks_str();
