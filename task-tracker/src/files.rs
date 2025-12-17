@@ -5,7 +5,15 @@ use std::io::{Error, Read};
 
 fn panic_invalid_input(message: &str) -> ! {
     panic!(
+<<<<<<< HEAD
         "error:  {}",
+=======
+<<<<<<< HEAD
+        "error: {}",
+=======
+        "error:  {}",
+>>>>>>> 4e5844f (Merge branch 'files' into tasks)
+>>>>>>> a0bd841 (Merge branch 'files' into tasks)
         Error::new(std::io::ErrorKind::InvalidInput, message,)
     )
 }
