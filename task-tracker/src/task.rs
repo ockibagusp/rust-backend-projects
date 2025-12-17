@@ -13,7 +13,7 @@ pub(crate) static _FILE_NAME: &'static str = "task-cli.json";
 fn error_invalid_input(message: &str) -> Error {
     Error::new(
         std::io::ErrorKind::InvalidInput,
-        format!("Error [TaskManagerTrait]: {}", message),
+        format!("error : {}", message),
     )
 }
 
