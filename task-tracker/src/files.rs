@@ -5,11 +5,7 @@ use std::io::{Error, Read};
 
 fn panic_invalid_input(message: &str) -> ! {
     panic!(
-<<<<<<< HEAD
-        "Error: [File] {}",
-=======
-        "error: {}",
->>>>>>> files
+        "error:  {}",
         Error::new(std::io::ErrorKind::InvalidInput, message,)
     )
 }
@@ -222,7 +218,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "error: `id` is negative")]
+    #[should_panic(expected = "Error: [File] Error: [TaskTrait] `id` is negative")]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
@@ -260,7 +256,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "error: failed to update task: ID mismatch")]
+    #[should_panic(expected = "Error: [File] failed to update task: ID mismatch")]
     fn test_update_fail() {
         let update_file = test_start_file(Some("update-fail"));
 
