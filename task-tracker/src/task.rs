@@ -59,22 +59,19 @@ impl TaskTrait for Task {
     fn is_validation(&self) -> Result<(), Error> {
         let invalid_input = std::io::ErrorKind::InvalidInput;
         if self.id.is_negative() {
-            return Err(Error::new(
-                invalid_input,
-                "Error: [TaskTrait] `id` is negative",
-            ));
+            return Err(Error::new(invalid_input, "`id` is negative"));
         }
         if self.description.trim().is_empty() || self.description.len() > 26 {
             return Err(Error::new(
                 invalid_input,
-                "Error: [TaskTrait] `description` is empty or too long",
+                "`description` is empty or too long",
             ));
         }
         let _valid_statuses = VALID_STATUSES;
         if !matches!(&self.status, _valid_statuses) {
             return Err(Error::new(
                 invalid_input,
-                format!("Error: [TaskTrait] `status` is invalid `{}`", &self.status),
+                format!("`status` is invalid `{}`", &self.status),
             ));
         }
         Ok(())
