@@ -5,7 +5,7 @@ use std::io::{Error, Read};
 
 fn panic_invalid_input(message: &str) -> ! {
     panic!(
-        "Error: [TaskTrait] {}",
+        "error: {}",
         Error::new(std::io::ErrorKind::InvalidInput, message,)
     )
 }
@@ -54,7 +54,7 @@ impl File {
     fn json_string(file_name: &'static str, tasks: Vec<Task>) -> () {
         let json_string = serde_json::to_string_pretty(&tasks).unwrap();
         if fs::write(file_name, json_string).is_err() {
-            panic_invalid_input("Failed to write to file");
+            panic_invalid_input("failed to write to file");
         }
     }
 
@@ -82,7 +82,7 @@ impl File {
 
     pub fn update(&self, id: i32, update_task: Task) -> () {
         if id != update_task.id {
-            panic_invalid_input("Failed to update task: ID mismatch");
+            panic_invalid_input("failed to update task: ID mismatch");
         }
         if let Err(is_valid_err) = update_task.is_validation() {
             panic_invalid_input(is_valid_err.to_string().as_str());
@@ -218,7 +218,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Error: [File] Error: [TaskTrait] `id` is negative")]
+    #[should_panic(expected = "error: `id` is negative")]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
@@ -256,7 +256,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Error: [TaskTrait] Failed to update task: ID mismatch")]
+    #[should_panic(expected = "error: failed to update task: ID mismatch")]
     fn test_update_fail() {
         let update_file = test_start_file(Some("update-fail"));
 
