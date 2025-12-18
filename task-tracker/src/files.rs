@@ -5,20 +5,15 @@ use std::io::{Error, Read};
 
 fn panic_invalid_input(message: &str) -> ! {
     panic!(
-<<<<<<< HEAD
-<<<<<<< HEAD
-        "error:  {}",
-=======
-<<<<<<< HEAD
         "error: {}",
-=======
-        "error:  {}",
->>>>>>> 4e5844f (Merge branch 'files' into tasks)
->>>>>>> a0bd841 (Merge branch 'files' into tasks)
-=======
-        "error: {}",
->>>>>>> 493dd2e (typo: panic_invalid_input method and tests should expect an error)
         Error::new(std::io::ErrorKind::InvalidInput, message,)
+    )
+}
+
+fn panic_not_found_input(message: &str) -> ! {
+    panic!(
+        "error: {}",
+        Error::new(std::io::ErrorKind::NotFound, message,)
     )
 }
 
@@ -120,7 +115,7 @@ impl File {
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
         if tasks.get(id as usize - 1) == None {
-            panic_invalid_input("task not found");
+            panic_not_found_input("task not found");
         }
 
         tasks.remove(id as usize - 1);

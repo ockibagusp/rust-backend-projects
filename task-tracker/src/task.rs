@@ -18,7 +18,7 @@ fn error_invalid_input(message: &str) -> Error {
 }
 
 fn error_not_found_input(message: &str) -> Error {
-    Error::new(std::io::ErrorKind::NotFound, message)
+    Error::new(std::io::ErrorKind::NotFound, format!("error : {}", message))
 }
 
 /*
