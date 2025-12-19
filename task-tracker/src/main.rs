@@ -1,17 +1,17 @@
 use core::result::Result;
 
-mod files;
-mod helps;
+mod file;
+mod help;
+mod list;
 mod task;
-mod task_test;
 
-use helps::help_all;
+use help::help_all;
 // => add(...); v
 use std::env::args;
 
 pub fn run(args: &Vec<String>) -> String {
     if args.len() == 1 || args.len() > 3 || (args.len() == 2 && &args[1] == "help") {
-        return helps::help_all();
+        return help::help_all();
     }
 
     // // 1
@@ -149,7 +149,7 @@ fn main2() -> io::Result<()> {
 #[cfg(test)]
 mod tests {
     use crate::{
-        helps::{self, help_all},
+        help::{self, help_all},
         run,
     };
 
@@ -177,7 +177,7 @@ mod tests {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("add")];
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "add");
-        assert_eq!(run(&args), helps::help_add());
+        assert_eq!(run(&args), help::help_add());
     }
 
     #[test]
@@ -202,7 +202,7 @@ mod tests {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("update")];
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "update");
-        assert_eq!(run(&args), helps::help_update());
+        assert_eq!(run(&args), help::help_update());
     }
 
     #[test]

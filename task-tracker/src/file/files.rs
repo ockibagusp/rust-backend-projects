@@ -1,4 +1,4 @@
-use crate::task::{Task, TaskTrait};
+use crate::task::task::{Task, TaskTrait};
 use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
@@ -127,7 +127,7 @@ impl File {
 #[cfg(test)]
 pub mod tests {
     use super::{File, Task, fs};
-    use crate::task::VALID_STATUSES;
+    use crate::task::task::VALID_STATUSES;
     use chrono::DateTime;
     use std::sync::{Arc, Mutex};
 

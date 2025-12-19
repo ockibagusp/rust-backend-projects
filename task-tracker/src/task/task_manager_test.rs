@@ -1,33 +1,11 @@
 use std::fs;
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 
-use crate::files;
-use crate::task::TaskManagerTrait;
-use crate::task::{MockTaskManagerTrait, MockTaskTrait, TaskTrait};
+use crate::file::files;
 // use mockall::mock;
-use crate::task::TaskManager;
+use crate::task::task_manager::{MockTaskManagerTrait, TaskManager, TaskManagerTrait};
 use chrono::DateTime;
 use mockall::predicate::*;
-
-/*
-    Task
-*/
-#[test]
-fn test_task_trait_should_fail() {
-    let mut mock = MockTaskTrait::new();
-    let invalid_input = ErrorKind::InvalidInput;
-
-    mock.expect_is_validation()
-        .returning(move || Err(Error::new(invalid_input, "error")));
-    assert_eq!(mock.is_validation().is_err(), true);
-}
-
-#[test]
-fn test_task_trait_should_success() {
-    let mut mock = MockTaskTrait::default();
-    mock.expect_is_validation().returning(|| Ok(()));
-    assert_eq!(mock.is_validation().unwrap(), ());
-}
 
 /*
     TaskManager
@@ -94,10 +72,10 @@ fn test_mock_add_should_fail() {
         .into();
 
     // negative id
-    let mut _add_task_fail = crate::task::Task {
+    let mut _add_task_fail = crate::task::task::Task {
         id: -1,
         description: "test buy one".to_string(),
-        status: crate::task::VALID_STATUSES[0].to_string(),
+        status: crate::task::task::VALID_STATUSES[0].to_string(),
         created_at: created_at,
         updated_at: created_at,
     };
@@ -156,10 +134,10 @@ fn test_mock_add_should_success() {
         .into();
 
     const TASK_DESC: &str = "test buy one";
-    let mut _add_task = crate::task::Task {
+    let mut _add_task = crate::task::task::Task {
         id: 2,
         description: TASK_DESC.to_string(),
-        status: crate::task::VALID_STATUSES[0].to_string(),
+        status: crate::task::task::VALID_STATUSES[0].to_string(),
         created_at: created_at,
         updated_at: created_at,
     };
@@ -185,10 +163,10 @@ fn test_mock_update_should_fail() {
         .unwrap()
         .into();
 
-    let mut _update_task_fail = crate::task::Task {
+    let mut _update_task_fail = crate::task::task::Task {
         id: 1,
         description: "".to_string(),
-        status: crate::task::VALID_STATUSES[0].to_string(),
+        status: crate::task::task::VALID_STATUSES[0].to_string(),
         created_at: created_at,
         updated_at: updated_at,
     };
@@ -241,10 +219,10 @@ fn test_mock_update_should_success() {
         .unwrap()
         .into();
 
-    let mut _update_task_fail = crate::task::Task {
+    let mut _update_task_fail = crate::task::task::Task {
         id: 1,
         description: "".to_string(),
-        status: crate::task::VALID_STATUSES[0].to_string(),
+        status: crate::task::task::VALID_STATUSES[0].to_string(),
         created_at: created_at,
         updated_at: updated_at,
     };
