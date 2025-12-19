@@ -1,14 +1,9 @@
-use crate::files::{self, File};
-use chrono::prelude::FixedOffset;
+use crate::file::files::File;
+use crate::task::task::{Task, TaskTrait, VALID_STATUSES};
 use chrono::{DateTime, Local};
 use core::result::Result;
-use serde::{Deserialize, Serialize};
-use std::io::Error;
-
-use mockall::predicate::*;
 use mockall::*;
-
-pub(crate) static _FILE_NAME: &'static str = "task-cli.json";
+use std::io::Error;
 
 fn error_invalid_input(message: &str) -> Error {
     return Error::new(
@@ -21,70 +16,6 @@ fn error_not_found_input(message: &str) -> Error {
     Error::new(std::io::ErrorKind::NotFound, format!("error : {}", message))
 }
 
-/*
-    Task
-*/
-
-// #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeFromStr)]
-// pub enum TaskStatus {
-//     Todo,
-//     InProgress,
-//     Done,
-// }
-
-// impl fmt::Display for TaskStatus {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         match self {
-//             TaskStatus::Todo => write!(f, "todo"),
-//             TaskStatus::InProgress => write!(f, "in-progress"),
-//             TaskStatus::Done => write!(f, "done"),
-//         }
-//     }
-// }
-pub const VALID_STATUSES: [&str; 3] = ["todo", "in-progress", "done"];
-
-// #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeDisplay)]
-#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
-pub struct Task {
-    pub id: i32,
-    pub description: String,
-    // status: todo, in-progress, done
-    pub status: String,
-    pub created_at: DateTime<FixedOffset>,
-    pub updated_at: DateTime<FixedOffset>,
-}
-
-#[automock]
-pub trait TaskTrait {
-    fn is_validation(&self) -> Result<(), Error>;
-}
-
-impl TaskTrait for Task {
-    fn is_validation(&self) -> Result<(), Error> {
-        let invalid_input = std::io::ErrorKind::InvalidInput;
-        if self.id.is_negative() {
-            return Err(Error::new(invalid_input, "`id` is negative"));
-        }
-        if self.description.trim().is_empty() || self.description.len() > 26 {
-            return Err(Error::new(
-                invalid_input,
-                "`description` is empty or too long",
-            ));
-        }
-        let _valid_statuses = VALID_STATUSES;
-        if !matches!(&self.status, _valid_statuses) {
-            return Err(Error::new(
-                invalid_input,
-                format!("`status` is invalid `{}`", &self.status),
-            ));
-        }
-        Ok(())
-    }
-}
-
-/*
-    TaskManager
-*/
 #[derive(PartialEq, Debug)]
 pub struct TaskManager {
     pub file: File,
@@ -103,7 +34,7 @@ pub trait TaskManagerTrait {
 
 impl TaskManagerTrait for TaskManager {
     fn new(file_name: &'static str) -> Self {
-        let file = files::File::new(file_name);
+        let file = File::new(file_name);
         let _list = file.list();
 
         Self { file, list: _list }
