@@ -8,12 +8,12 @@ use std::io::Error;
 fn error_invalid_input(message: &str) -> Error {
     return Error::new(
         std::io::ErrorKind::InvalidInput,
-        format!("error : {}", message),
+        format!("error: {}", message),
     );
 }
 
 fn error_not_found_input(message: &str) -> Error {
-    Error::new(std::io::ErrorKind::NotFound, format!("error : {}", message))
+    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
 }
 
 #[derive(PartialEq, Debug)]
@@ -104,7 +104,7 @@ impl TaskManagerTrait for TaskManager {
     fn delete(&self, id: i32) -> Result<(), Error> {
         let task = self.list.iter().find(|&task| task.id == id);
         if task.is_none() {
-            return Err(error_not_found_input("error: `id` is not found"));
+            return Err(error_not_found_input("`id` is not found"));
         }
 
         let index = self.list().iter().position(|t| t.id == id).unwrap();
