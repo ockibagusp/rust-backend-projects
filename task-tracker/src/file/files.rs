@@ -3,6 +3,22 @@ use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
 
+// TDD
+// ✅ ❔ ❌
+// 1. buatan dari berkas baru, lis, tambahan, perbarui, hapus untuk berkas
+// => 1. create from new file, list,add, update, delete for file
+// ---------------------------
+// 1.1. berkas baru ✅
+// => 1.1. new file
+// 1.2. berkas lis ✅
+// => 1.2. list file
+// 1.3. tambahkan file ✅
+// => 1.3. add file
+// 1.4. berkas perbarui ✅
+// => 1.4. update file
+// 1.5. berkas hapus ✅
+// => 1.5. delete file
+
 fn panic_invalid_input(message: &str) -> ! {
     panic!(
         "error: {}",
