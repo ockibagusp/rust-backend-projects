@@ -7,8 +7,6 @@ use std::io::Error;
 use mockall::predicate::*;
 use mockall::*;
 
-pub(crate) static _FILE_NAME: &'static str = "task-cli.json";
-
 // #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeFromStr)]
 // pub enum TaskStatus {
 //     Todo,
