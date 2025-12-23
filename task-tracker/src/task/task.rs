@@ -7,6 +7,23 @@ use std::io::Error;
 use mockall::predicate::*;
 use mockall::*;
 
+// TDD
+// ✅ ❔ ❌
+// 2. buatlah struktur data Task dengan field id, description, status, created_at, updated_at
+// => 2. create the Task data structure with fields id, description, status, created_at, updated_at
+// ------------------------------------------------
+// 2.1. buat field `id` bertipe integer ✅
+// => 2.1. create the `id` field with integer type
+// 2.2. buat field `description` bertipe string ✅
+// => 2.2. create the `description` field with string type
+// 2.3. buat field `status` bertipe string dengan nilai 'todo', 'in-progress', 'done' ✅
+// => 2.3. create the `status` field with string type with values 'todo', 'in-progress', 'done'
+// 2.4. buat field `created_at` bertipe DateTime dengan zona waktu tetap ✅
+// => 2.4. create the `created_at` field with DateTime type with fixed timezone
+// 2.5. buat field `updated_at` bertipe DateTime dengan zona waktu tetap ✅
+// => 2.5. create the `updated_at` field with DateTime type with fixed timezone
+// ------------------------------------------------
+
 // #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeFromStr)]
 // pub enum TaskStatus {
 //     Todo,
@@ -36,6 +53,17 @@ pub struct Task {
     pub updated_at: DateTime<FixedOffset>,
 }
 
+// TDD
+// ✅ ❔ ❌
+// 3. buatlah validasi untuk struktur data Task ✅
+// => 3. create the validation for the the Task data structure
+// ------------------------------------------------
+// 3.1. pastikan field `id` harus memiliki nilai positif ✅
+// => 3.1. make the `id` field should have a positive value
+// 3.2. pastikan field `description` tidak boleh kosong dan maksimal 26 karakter ✅
+// => 3.2. make the `description` field should not be empty and maximum 26 characters
+// 3.3. pastikan field `status` hanya boleh memiliki nilai 'todo', 'in-progress', atau 'done' ✅
+// => 3.3. make the `status` field should only have values 'todo', 'in-progress', or 'done'
 #[automock]
 pub trait TaskTrait {
     fn is_validation(&self) -> Result<(), Error>;
