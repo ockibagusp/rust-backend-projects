@@ -5,17 +5,15 @@ use core::result::Result;
 use mockall::*;
 use std::io::Error;
 
-fn error_invalid_input(message: &str) -> Error {
-    return Error::new(
-        std::io::ErrorKind::InvalidInput,
-        format!("error: {}", message),
-    );
-}
-
-fn error_not_found_input(message: &str) -> Error {
-    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
-}
-
+// TDD
+// ✅ ❔ ❌
+// 2.3. buatlah struktur data Task Manager dengan field `file` dan `list`
+// => 2.3. create the Task Manager data structure with field `file` and `list`
+// ------------------------------------------------
+// 1. field `file` di objek File ✅
+// => 1. field `file` in File object
+// 2. field `list` di daftar Task ✅
+// => 2. field `list` in Task list
 #[derive(PartialEq, Debug)]
 pub struct TaskManager {
     pub file: File,
@@ -32,6 +30,34 @@ pub trait TaskManagerTrait {
     fn delete(&self, id: i32) -> Result<(), Error>;
 }
 
+fn error_invalid_input(message: &str) -> Error {
+    return Error::new(
+        std::io::ErrorKind::InvalidInput,
+        format!("error: {}", message),
+    );
+}
+
+fn error_not_found_input(message: &str) -> Error {
+    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
+}
+
+// TDD
+// ✅ ❔ ❌
+// 2.4. implementasikan trait TaskManagerTrait untuk struct TaskManager ✅
+// => 2.4. implement the TaskManagerTrait trait for the TaskManager struct
+// ------------------------------------------------
+// 1. fungsi `new` untuk inisialisasi TaskManager ✅
+// => 1. `new` function for TaskManager initialization
+// 2. fungsi `get_next_id` untuk mendapatkan ID berikutnya ✅
+// => 2. `get_next_id` function to get the next ID
+// 3. fungsi `list` untuk mendapatkan daftar Task ✅
+// => 3. `list` function to get the Task list
+// 4. fungsi `add` untuk menambahkan Task baru ✅
+// => 4. `add` function to add a new Task
+// 5. fungsi `update` untuk memperbarui Task yang ada ✅
+// => 5. `update` function to update an existing Task
+// 6. fungsi `delete` untuk menghapus Task berdasarkan ID ✅
+// => 6. `delete` function to delete a Task by ID
 impl TaskManagerTrait for TaskManager {
     fn new(file_name: &'static str) -> Self {
         let file = File::new(file_name);
