@@ -10,14 +10,31 @@ use std::io::Error;
 // 2.3. buatlah struktur data Task Manager dengan field `file` dan `list`
 // => 2.3. create the Task Manager data structure with field `file` and `list`
 // ------------------------------------------------
-// 1. field `file` di objek File ✅
-// => 1. field `file` in File object
-// 2. field `list` di daftar Task ✅
-// => 2. field `list` in Task list
+// 1. buat field `file` bertipe objek File ✅
+// => 1. make a `file` field with an object type of File
+// 2. buat field `list` dengan tipe array meliputi Task ✅
+// => 2. make a `list` field with an array type of Tasks
 #[derive(PartialEq, Debug)]
 pub struct TaskManager {
     pub file: File,
     pub list: Vec<Task>,
+}
+
+// > It's me, not Github Copilot (AI)!
+// fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah
+// => function (not impl...for...): is to notify if the error message for an invalid input error
+fn error_invalid_input(message: &str) -> Error {
+    return Error::new(
+        std::io::ErrorKind::InvalidInput,
+        format!("error: {}", message),
+    );
+}
+
+// > It's me, not Github Copilot (AI)!
+// fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
+// => function: is to notify if the error message for a not found input error
+fn error_not_found_input(message: &str) -> Error {
+    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
 }
 
 #[automock]
@@ -30,34 +47,23 @@ pub trait TaskManagerTrait {
     fn delete(&self, id: i32) -> Result<(), Error>;
 }
 
-fn error_invalid_input(message: &str) -> Error {
-    return Error::new(
-        std::io::ErrorKind::InvalidInput,
-        format!("error: {}", message),
-    );
-}
-
-fn error_not_found_input(message: &str) -> Error {
-    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
-}
-
 // TDD
 // ✅ ❔ ❌
 // 2.4. implementasikan trait TaskManagerTrait untuk struct TaskManager ✅
 // => 2.4. implement the TaskManagerTrait trait for the TaskManager struct
 // ------------------------------------------------
-// 1. fungsi `new` untuk inisialisasi TaskManager ✅
-// => 1. `new` function for TaskManager initialization
-// 2. fungsi `get_next_id` untuk mendapatkan ID berikutnya ✅
-// => 2. `get_next_id` function to get the next ID
-// 3. fungsi `list` untuk mendapatkan daftar Task ✅
-// => 3. `list` function to get the Task list
-// 4. fungsi `add` untuk menambahkan Task baru ✅
-// => 4. `add` function to add a new Task
-// 5. fungsi `update` untuk memperbarui Task yang ada ✅
-// => 5. `update` function to update an existing Task
-// 6. fungsi `delete` untuk menghapus Task berdasarkan ID ✅
-// => 6. `delete` function to delete a Task by ID
+// 1. method `new` untuk inisialisasi TaskManager ✅
+// => 1. `new` method for TaskManager initialization
+// 2. method `get_next_id` untuk mendapatkan ID berikutnya ✅
+// => 2. `get_next_id` method to get the next ID
+// 3. method `list` untuk mendapatkan daftar Task ✅
+// => 3. `list` method to get the Task list
+// 4. method `add` untuk menambahkan Task baru ✅
+// => 4. `add` method to add a new Task
+// 5. method `update` untuk memperbarui Task yang ada ✅
+// => 5. `update` method to update an existing Task
+// 6. method `delete` untuk menghapus Task berdasarkan ID ✅
+// => 6. `delete` method to delete a Task by ID
 impl TaskManagerTrait for TaskManager {
     fn new(file_name: &'static str) -> Self {
         let file = File::new(file_name);
