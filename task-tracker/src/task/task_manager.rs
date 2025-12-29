@@ -22,7 +22,7 @@ pub struct TaskManager {
 
 // > It's me, not Github Copilot (AI)!
 // fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah
-// => function (not impl...for...): is to notify if the error message for an invalid input error
+// => function (not impl...for...): to notify if an error message for an invalid input error
 fn error_invalid_input(message: &str) -> Error {
     return Error::new(
         std::io::ErrorKind::InvalidInput,
@@ -32,7 +32,7 @@ fn error_invalid_input(message: &str) -> Error {
 
 // > It's me, not Github Copilot (AI)!
 // fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
-// => function: is to notify if the error message for a not found input error
+// => function: to notify that if an error message for a not found input error
 fn error_not_found_input(message: &str) -> Error {
     Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
 }
