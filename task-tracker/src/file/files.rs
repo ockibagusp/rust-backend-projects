@@ -3,22 +3,8 @@ use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::{Error, Read};
 
-// TDD
-// ✅ ❔ ❌
-// 1. buatan dari berkas baru, lis, tambahan, perbarui, hapus untuk berkas
-// => 1. create from new file, list,add, update, delete for file
-// ---------------------------
-// 1.1. berkas baru ✅
-// => 1.1. new file
-// 1.2. berkas lis ✅
-// => 1.2. list file
-// 1.3. tambahkan file ✅
-// => 1.3. add file
-// 1.4. berkas perbarui ✅
-// => 1.4. update file
-// 1.5. berkas hapus ✅
-// => 1.5. delete file
-
+// fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah
+// => function (not impl...for...): to notify if an error message for an invalid input error
 fn panic_invalid_input(message: &str) -> ! {
     panic!(
         "error: {}",
@@ -26,6 +12,8 @@ fn panic_invalid_input(message: &str) -> ! {
     )
 }
 
+// fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
+// => function: to notify that if an input error message is not found
 fn panic_not_found_input(message: &str) -> ! {
     panic!(
         "error: {}",
@@ -39,6 +27,21 @@ pub struct File {
     json_str: &'static str,
 }
 
+// TDD
+// ✅ ❔ ❌
+// 1. buatlah struktur data File dengan method new, list, add, update, delete
+// => 1. create the File data structure with methods new, list, add, update
+// ---------------------------
+// 1.1. buat method `new` untuk inisialisasi File ✅
+// => 1.1. create a `new` method to initialize the File
+// 1.2. buat method `list` untuk mendapatkan daftar Task ✅
+// => 1.2. create a `list` method to get a list of the Tasks
+// 1.3. buat method `add` untuk menambahkan Task baru ✅
+// => 1.3. create an `add` method to add a new Task
+// 1.4. buat method `update` untuk memperbarui Task berdasarkan ID ✅
+// => 1.4. create an `update` method to update the Task by ID
+// 1.5. buat method `delete` untuk menghapus Task berdasarkan ID ✅
+// => 1.5. create a `delete` method to delete Tasks based on its ID
 #[allow(dead_code)]
 impl File {
     pub fn new(json_str: &'static str) -> Self {
