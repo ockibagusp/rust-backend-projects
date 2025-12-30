@@ -68,5 +68,10 @@ impl TaskMarkTrait for TaskMark {
         if task_to_update.status == VALID_STATUSES[2] {
             return Err(error_invalid_input("Task is already in 'done' status"));
         }
+
+        task_to_update.status = VALID_STATUSES[2].to_string();
+
+        let _ = &self.task_manager.update(id, &mut task_to_update);
+        Ok(task_to_update)
     }
 }
