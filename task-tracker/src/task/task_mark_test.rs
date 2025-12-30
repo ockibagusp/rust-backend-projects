@@ -115,10 +115,7 @@ fn test_mock_done_should_fail() {
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
-    assert_eq!(
-        err.to_string(),
-        "error: Task is already in 'in-progress' status"
-    );
+    assert_eq!(err.to_string(), "error: Task is already in 'done' status");
 }
 
 #[test]
