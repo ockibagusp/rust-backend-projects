@@ -1,5 +1,5 @@
 use crate::file::files::File;
-use crate::task::task::{Task, TaskTrait};
+use crate::task::task::{Task, TaskTrait, VALID_STATUSES};
 use crate::task::task_manager::{TaskManager, TaskManagerTrait};
 use chrono::prelude::*;
 use mockall::*;
@@ -45,13 +45,13 @@ impl TaskMarkTrait for TaskMark {
             .ok_or_else(|| error_not_found_input("`id` is not found"))?
             .clone();
 
-        if task_to_update.status == "in-progress" {
+        if task_to_update.status == VALID_STATUSES[1] {
             return Err(error_invalid_input(
                 "Task is already in 'in-progress' status",
             ));
         }
 
-        task_to_update.status = "in-progress".to_string();
+        task_to_update.status = VALID_STATUSES[1].to_string();
 
         let _ = &self.task_manager.update(id, &mut task_to_update);
         Ok(task_to_update)

@@ -60,10 +60,26 @@ fn test_mock_in_progress_should_success() {
 
     mock.expect_mark_in_progress()
         .with(eq(1))
-        .returning(move |_| Ok(task_to_update.clone()));
+        .returning(move |_| {
+            let mut task_to_update_now = task_to_update.clone();
+
+            task_to_update_now.status = crate::task::task::VALID_STATUSES[1].to_string();
+            let updated_at_now =
+                DateTime::parse_from_str("1970-01-01 00:01:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+                    .unwrap()
+                    .into();
+            task_to_update_now.updated_at = updated_at_now;
+
+            Ok(task_to_update_now)
+        });
     let result = mock.mark_in_progress(1);
     assert!(result.is_ok());
     let task = result.unwrap();
     assert_eq!(task.id, 1);
     assert_eq!(task.description, TASK_DESC.to_string());
+    assert_eq!(task.status, "in-progress"); // VALID_STATUSES[1]
+    assert_eq!(
+        task.updated_at,
+        DateTime::parse_from_str("1970-01-01 00:01:00 +00:00", "%Y-%m-%d %H:%M:%S %z").unwrap(),
+    );
 }
