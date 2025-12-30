@@ -83,3 +83,40 @@ fn test_mock_in_progress_should_success() {
         DateTime::parse_from_str("1970-01-01 00:01:00 +00:00", "%Y-%m-%d %H:%M:%S %z").unwrap(),
     );
 }
+
+#[test]
+fn test_mock_done_should_fail() {
+    let mut mock = MockTaskMarkTrait::default();
+    /*
+     * Task not found
+     */
+    mock.expect_mark_done().with(eq(10)).returning(|_| {
+        Err(Error::new(
+            std::io::ErrorKind::NotFound,
+            "error: `id` is not found",
+        ))
+    });
+    let result = mock.mark_done(10);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::NotFound);
+    assert_eq!(err.to_string(), "error: `id` is not found");
+
+    /*
+     * Task is already in 'done' status
+     */
+    mock.expect_mark_in_progress().with(eq(2)).returning(|_| {
+        Err(Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "error: Task is already in 'done' status",
+        ))
+    });
+    let result = mock.mark_in_progress(2);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+    assert_eq!(
+        err.to_string(),
+        "error: Task is already in 'in-progress' status"
+    );
+}
