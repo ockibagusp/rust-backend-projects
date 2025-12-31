@@ -1,4 +1,4 @@
-use crate::task::task_mark::{MockTaskMarkTrait, TaskMark, TaskMarkTrait};
+use crate::task::task_mark::{MockTaskMarkTrait, TaskMarkTrait};
 
 use chrono::DateTime;
 use mockall::predicate::*;
@@ -43,21 +43,10 @@ fn test_mock_in_progress_should_fail() {
 
 #[test]
 fn test_mock_in_progress_should_success() {
-    let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-        .unwrap()
-        .into();
-
-    const TASK_DESC: &str = "test buy one";
-    let task_to_update = crate::task::task::Task {
-        id: 1,
-        description: TASK_DESC.to_string(),
-        status: crate::task::task::VALID_STATUSES[0].to_string(),
-        created_at: created_at,
-        updated_at: created_at,
-    };
-
     let mut mock = MockTaskMarkTrait::default();
 
+    const TASK_DESC: &str = "test buy one";
+    let task_to_update = crate::task::task_test::setup_task(1, TASK_DESC);
     mock.expect_mark_in_progress()
         .with(eq(1))
         .returning(move |_| {
@@ -120,18 +109,8 @@ fn test_mock_done_should_fail() {
 
 #[test]
 fn test_mock_done_should_success() {
-    let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-        .unwrap()
-        .into();
-
     const TASK_DESC: &str = "test buy one";
-    let task_to_update = crate::task::task::Task {
-        id: 1,
-        description: TASK_DESC.to_string(),
-        status: crate::task::task::VALID_STATUSES[1].to_string(),
-        created_at: created_at,
-        updated_at: created_at,
-    };
+    let task_to_update = crate::task::task_test::setup_task_status(1, TASK_DESC, "in-progress");
 
     let mut mock = MockTaskMarkTrait::default();
 

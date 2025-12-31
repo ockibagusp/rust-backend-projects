@@ -1,5 +1,4 @@
-use crate::file::files::File;
-use crate::task::task::{Task, TaskTrait, VALID_STATUSES};
+use crate::task::task::{Task, VALID_STATUSES};
 use crate::task::task_manager::{TaskManager, TaskManagerTrait};
 use chrono::prelude::*;
 use mockall::*;

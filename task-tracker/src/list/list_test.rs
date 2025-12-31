@@ -1,5 +1,6 @@
-use crate::file::files;
-use crate::list::list::{List, ListTrait, MockListTrait};
+use crate::list::list::{ListTrait, MockListTrait};
+use crate::task::task::VALID_STATUSES;
+use crate::task::task_test::{setup_task, setup_task_status};
 use mockall::predicate::*;
 
 #[test]
@@ -16,7 +17,7 @@ fn test_mock_list() {
      * one task in list
      */
     // test with one task
-    let task = files::tests::setup_task(1, "test one");
+    let task = setup_task(1, "test one");
     let task_one = task.clone();
 
     mock.expect_index()
@@ -27,71 +28,38 @@ fn test_mock_list() {
 
 #[test]
 fn test_mock_todo() {
-    let created_at =
-        chrono::DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-            .unwrap()
-            .into();
-
     const TASK_DESC: &str = "test buy one";
-    let mut _task = crate::task::task::Task {
-        id: 2,
-        description: TASK_DESC.to_string(),
-        status: crate::task::task::VALID_STATUSES[0].to_string(),
-        created_at: created_at,
-        updated_at: created_at,
-    };
+    let mut _task = setup_task_status(1, TASK_DESC, "todo");
 
     let mut mock = MockListTrait::default();
     mock.expect_todo()
         .with()
         .returning(move || vec![_task.clone()]);
     let result = mock.todo();
-    assert_eq!(result[0].id, 2);
+    assert_eq!(result[0].id, 1);
     assert_eq!(result[0].description, TASK_DESC);
-    assert_eq!(result[0].status, crate::task::task::VALID_STATUSES[0]);
+    assert_eq!(result[0].status, VALID_STATUSES[0]);
 }
 
 #[test]
 fn test_mock_in_progress() {
-    let created_at =
-        chrono::DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-            .unwrap()
-            .into();
-
     const TASK_DESC: &str = "test buy two";
-    let mut _task = crate::task::task::Task {
-        id: 3,
-        description: TASK_DESC.to_string(),
-        status: crate::task::task::VALID_STATUSES[1].to_string(),
-        created_at: created_at,
-        updated_at: created_at,
-    };
+    let mut _task = setup_task_status(2, TASK_DESC, "in-progress");
 
     let mut mock = MockListTrait::default();
     mock.expect_in_progress()
         .with()
         .returning(move || vec![_task.clone()]);
     let result = mock.in_progress();
-    assert_eq!(result[0].id, 3);
+    assert_eq!(result[0].id, 2);
     assert_eq!(result[0].description, TASK_DESC);
-    assert_eq!(result[0].status, crate::task::task::VALID_STATUSES[1]);
+    assert_eq!(result[0].status, VALID_STATUSES[1]);
 }
 
 #[test]
 fn test_mock_done() {
-    let created_at =
-        chrono::DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-            .unwrap()
-            .into();
-
     const TASK_DESC: &str = "test buy three";
-    let mut _task = crate::task::task::Task {
-        id: 4,
-        description: TASK_DESC.to_string(),
-        status: crate::task::task::VALID_STATUSES[2].to_string(),
-        created_at: created_at,
-        updated_at: created_at,
-    };
+    let mut _task = setup_task_status(4, TASK_DESC, "done");
 
     let mut mock = MockListTrait::default();
     mock.expect_done()

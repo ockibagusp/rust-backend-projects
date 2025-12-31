@@ -146,8 +146,7 @@ impl File {
 #[cfg(test)]
 pub mod tests {
     use super::{File, Task, fs};
-    use crate::task::task::VALID_STATUSES;
-    use chrono::DateTime;
+    use crate::task::task_test::setup_task;
     use std::sync::{Arc, Mutex};
 
     fn test_start_file(file_name: Option<&str>) -> &str {
@@ -172,28 +171,6 @@ pub mod tests {
         match fs::remove_file(file_name) {
             Ok(_) => println!("Removing existing test: {}...\n", file_name),
             Err(e) => eprintln!("Error removing file: {}", e),
-        }
-    }
-
-    pub fn setup_task(id: i32, desciption: &str) -> Task {
-        let _created_at = DateTime::parse_from_str(
-            "2025-10-13 14:07:06.072493 +07:00",
-            "%Y-%m-%d %H:%M:%S%.f %z",
-        )
-        .expect("Failed to parse created_at");
-
-        let _updated_at = DateTime::parse_from_str(
-            "2025-10-13 19:07:06.072493 +07:00",
-            "%Y-%m-%d %H:%M:%S%.f %z",
-        )
-        .expect("Failed to parse updated_at");
-
-        Task {
-            id: id,
-            description: desciption.to_string(),
-            status: String::from(VALID_STATUSES[0]),
-            created_at: _created_at,
-            updated_at: _updated_at,
         }
     }
 

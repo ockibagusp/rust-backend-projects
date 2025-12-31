@@ -1,7 +1,6 @@
 use std::fs;
 use std::io::Error;
 
-use crate::file::files;
 // use mockall::mock;
 use crate::task::task_manager::{MockTaskManagerTrait, TaskManager, TaskManagerTrait};
 use chrono::DateTime;
@@ -56,7 +55,7 @@ fn test_mock_list() {
      * one task in list
      */
     // test with one task
-    let task = files::tests::setup_task(1, "test one");
+    let task = crate::task::task_test::setup_task(1, "test one");
     let task_one = task.clone();
 
     mock.expect_list()
@@ -67,21 +66,8 @@ fn test_mock_list() {
 
 #[test]
 fn test_mock_add_should_fail() {
-    let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-        .unwrap()
-        .into();
-
-    // negative id
-    let mut _add_task_fail = crate::task::task::Task {
-        id: -1,
-        description: "test buy one".to_string(),
-        status: crate::task::task::VALID_STATUSES[0].to_string(),
-        created_at: created_at,
-        updated_at: created_at,
-    };
-
     let mut mock = MockTaskManagerTrait::default();
-
+    // negative id
     mock.expect_add().with(eq("test buy one")).returning(|_| {
         Err(Error::new(
             std::io::ErrorKind::InvalidInput,
@@ -129,21 +115,10 @@ fn test_mock_add_should_fail() {
 
 #[test]
 fn test_mock_add_should_success() {
-    let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-        .unwrap()
-        .into();
-
-    const TASK_DESC: &str = "test buy one";
-    let mut _add_task = crate::task::task::Task {
-        id: 2,
-        description: TASK_DESC.to_string(),
-        status: crate::task::task::VALID_STATUSES[0].to_string(),
-        created_at: created_at,
-        updated_at: created_at,
-    };
-
     let mut mock = MockTaskManagerTrait::default();
 
+    const TASK_DESC: &str = "test buy one";
+    let mut _add_task = crate::task::task_test::setup_task(2, TASK_DESC);
     mock.expect_add()
         .with(eq(TASK_DESC))
         .returning(move |_| Ok(_add_task.clone()));
@@ -156,23 +131,9 @@ fn test_mock_add_should_success() {
 
 #[test]
 fn test_mock_update_should_fail() {
-    let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-        .unwrap()
-        .into();
-    let updated_at = DateTime::parse_from_str("1970-01-01 00:00:01 +00:00", "%Y-%m-%d %H:%M:%S %z")
-        .unwrap()
-        .into();
-
-    let mut _update_task_fail = crate::task::task::Task {
-        id: 1,
-        description: "".to_string(),
-        status: crate::task::task::VALID_STATUSES[0].to_string(),
-        created_at: created_at,
-        updated_at: updated_at,
-    };
-
     let mut mock = MockTaskManagerTrait::default();
 
+    let mut _update_task_fail = crate::task::task_test::setup_task(1, "");
     // is empty description
     mock.expect_update()
         .with(eq(1), eq(_update_task_fail.clone()))
@@ -212,20 +173,31 @@ fn test_mock_update_should_fail() {
 
 #[test]
 fn test_mock_update_should_success() {
-    let created_at = DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-        .unwrap()
-        .into();
-    let updated_at = DateTime::parse_from_str("1970-01-01 00:10:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
-        .unwrap()
-        .into();
+    let mut mock = MockTaskManagerTrait::default();
 
-    let mut _update_task_fail = crate::task::task::Task {
-        id: 1,
-        description: "".to_string(),
-        status: crate::task::task::VALID_STATUSES[0].to_string(),
-        created_at: created_at,
-        updated_at: updated_at,
-    };
+    // is empty description
+    let mut _update_task_fail = crate::task::task_test::setup_task(1, "");
+    mock.expect_update()
+        .with(eq(1), eq(_update_task_fail.clone()))
+        .returning(|_, _| {
+            Err(Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "error: `description` is empty or too long",
+            ))
+        });
+    let result = mock.update(1, &mut _update_task_fail);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
+    assert_eq!(err.to_string(), "error: `description` is empty or too long");
+
+    // is too long description
+    _update_task_fail.description = "a".repeat(30);
+    // // Note: Since updatad_at is not passed in update function, this case is just for demonstration or is never used.
+    // _update_task_fail.updated_at =
+    //     DateTime::parse_from_str("1970-01-01 00:00:02 +00:00", "%Y-%m-%d %H:%M:%S %z")
+    //         .unwrap()
+    //         .into();
 
     let mut mock = MockTaskManagerTrait::default();
 
@@ -269,7 +241,6 @@ fn test_mock_update_should_success() {
 #[test]
 fn test_mock_delete_should_fail() {
     let mut mock = MockTaskManagerTrait::default();
-
     // negative id
     mock.expect_delete().with(eq(-1)).returning(|_| {
         Err(Error::new(
