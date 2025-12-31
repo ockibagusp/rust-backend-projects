@@ -4,17 +4,6 @@ use std::io::Error;
 
 use mockall::automock;
 
-fn error_invalid_input(message: &str) -> Error {
-    return Error::new(
-        std::io::ErrorKind::InvalidInput,
-        format!("error: {}", message),
-    );
-}
-
-fn error_not_found_input(message: &str) -> Error {
-    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
-}
-
 // TDD
 // ✅ ❔ ❌
 // 3.1. buatlah struktur data List dengan objek task_manager ✅
