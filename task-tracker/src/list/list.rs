@@ -34,6 +34,7 @@ pub trait ListTrait {
     fn new(file_name: &'static str) -> Self;
     fn index(&self) -> Vec<Task>;
     fn todo(&self) -> Vec<Task>;
+    fn in_progress(&self) -> Vec<Task>;
 }
 
 // TDD
@@ -60,6 +61,17 @@ impl ListTrait for List {
             .list
             .iter()
             .filter(|&task| task.status == VALID_STATUSES[0])
+            .cloned()
+            .collect();
+        task_lists
+    }
+    // Mark task to 'in-progress' status
+    fn in_progress(&self) -> Vec<Task> {
+        let task_lists = self
+            .task_manager
+            .list
+            .iter()
+            .filter(|&task| task.status == VALID_STATUSES[1])
             .cloned()
             .collect();
         task_lists
