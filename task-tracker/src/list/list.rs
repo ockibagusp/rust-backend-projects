@@ -28,13 +28,15 @@ pub struct List {
 
 // TDD
 // ✅ ❔ ❌
-// 3.2. buat trait ListTrait dengan method new, index, todo ✅
+// 3.2. buat trait ListTrait dengan method new, index, todo, in_progress, done ✅
+// => 3.2. create the ListTrait trait with methods new, index, todo, in_progress, done
 #[automock]
 pub trait ListTrait {
     fn new(file_name: &'static str) -> Self;
     fn index(&self) -> Vec<Task>;
     fn todo(&self) -> Vec<Task>;
     fn in_progress(&self) -> Vec<Task>;
+    fn done(&self) -> Vec<Task>;
 }
 
 // TDD
@@ -42,7 +44,16 @@ pub trait ListTrait {
 // 3.3. implementasikan trait ListTrait untuk struct List ✅
 // => 3.3. implement the ListTrait trait for the List struct
 // ------------------------------------------------
-// 1. fungsi `new` untuk inisialisasi List ✅
+// 1. method `new` untuk inisialisasi List ✅
+// => 1. the `new` method for initialize the List
+// 2. method `index` atau `list` untuk mendapatkan semua task ✅
+// => 2. the `index` or `list` method to get all tasks
+// 3. method `todo` untuk mendapatkan task dengan status 'todo' ✅
+// => 3. the `todo` method to get tasks with 'todo' status
+// 4. method `in_progress` untuk mendapatkan task dengan status 'in-progress' ✅
+// => 4. the `in_progress` method to get tasks with 'in-progress' status
+// 5. method `done` untuk mendapatkan task dengan status 'done' ✅
+// => 5. the `done` method to get tasks with 'done' status
 impl ListTrait for List {
     fn new(file_name: &'static str) -> Self {
         let _task_manager = TaskManager::new(file_name);
@@ -72,6 +83,17 @@ impl ListTrait for List {
             .list
             .iter()
             .filter(|&task| task.status == VALID_STATUSES[1])
+            .cloned()
+            .collect();
+        task_lists
+    }
+    // Mark task to 'done' status
+    fn done(&self) -> Vec<Task> {
+        let task_lists = self
+            .task_manager
+            .list
+            .iter()
+            .filter(|&task| task.status == VALID_STATUSES[2])
             .cloned()
             .collect();
         task_lists
