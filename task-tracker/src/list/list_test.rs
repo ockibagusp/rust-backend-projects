@@ -50,3 +50,29 @@ fn test_mock_todo() {
     assert_eq!(result[0].description, TASK_DESC);
     assert_eq!(result[0].status, crate::task::task::VALID_STATUSES[0]);
 }
+
+#[test]
+fn test_mock_in_progress() {
+    let created_at =
+        chrono::DateTime::parse_from_str("1970-01-01 00:00:00 +00:00", "%Y-%m-%d %H:%M:%S %z")
+            .unwrap()
+            .into();
+
+    const TASK_DESC: &str = "test buy two";
+    let mut _task = crate::task::task::Task {
+        id: 3,
+        description: TASK_DESC.to_string(),
+        status: crate::task::task::VALID_STATUSES[1].to_string(),
+        created_at: created_at,
+        updated_at: created_at,
+    };
+
+    let mut mock = MockListTrait::default();
+    mock.expect_in_progress()
+        .with()
+        .returning(move || vec![_task.clone()]);
+    let result = mock.in_progress();
+    assert_eq!(result[0].id, 3);
+    assert_eq!(result[0].description, TASK_DESC);
+    assert_eq!(result[0].status, crate::task::task::VALID_STATUSES[1]);
+}
