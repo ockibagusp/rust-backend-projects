@@ -1,7 +1,19 @@
-use crate::task::task::Task;
+use crate::task::task::{Task, VALID_STATUSES};
 use crate::task::task_manager::{TaskManager, TaskManagerTrait};
+use std::io::Error;
 
 use mockall::automock;
+
+fn error_invalid_input(message: &str) -> Error {
+    return Error::new(
+        std::io::ErrorKind::InvalidInput,
+        format!("error: {}", message),
+    );
+}
+
+fn error_not_found_input(message: &str) -> Error {
+    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
+}
 
 // TDD
 // ✅ ❔ ❌
@@ -16,11 +28,12 @@ pub struct List {
 
 // TDD
 // ✅ ❔ ❌
-// 3.2. buat trait ListTrait dengan method new dan index ✅
+// 3.2. buat trait ListTrait dengan method new, index, todo ✅
 #[automock]
 pub trait ListTrait {
     fn new(file_name: &'static str) -> Self;
     fn index(&self) -> Vec<Task>;
+    fn todo(&self) -> Vec<Task>;
 }
 
 // TDD
@@ -39,5 +52,16 @@ impl ListTrait for List {
     // Get all task list
     fn index(&self) -> Vec<Task> {
         return self.task_manager.list();
+    }
+    // Mark task to 'todo' status
+    fn todo(&self) -> Vec<Task> {
+        let task_lists = self
+            .task_manager
+            .list
+            .iter()
+            .filter(|&task| task.status == VALID_STATUSES[0])
+            .cloned()
+            .collect();
+        task_lists
     }
 }
