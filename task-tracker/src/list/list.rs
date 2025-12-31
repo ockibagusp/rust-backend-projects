@@ -33,6 +33,7 @@ pub struct List {
 #[automock]
 pub trait ListTrait {
     fn new(file_name: &'static str) -> Self;
+    fn get_status_tasks(&self, status: &str) -> Vec<Task>;
     fn index(&self) -> Vec<Task>;
     fn todo(&self) -> Vec<Task>;
     fn in_progress(&self) -> Vec<Task>;
@@ -65,37 +66,25 @@ impl ListTrait for List {
     fn index(&self) -> Vec<Task> {
         return self.task_manager.list();
     }
-    // Mark task to 'todo' status
-    fn todo(&self) -> Vec<Task> {
-        let task_lists = self
+    fn get_status_tasks(&self, status: &str) -> Vec<Task> {
+        return self
             .task_manager
             .list
             .iter()
-            .filter(|&task| task.status == VALID_STATUSES[0])
+            .filter(|&task| task.status == status)
             .cloned()
             .collect();
-        task_lists
+    }
+    // Mark task to 'todo' status
+    fn todo(&self) -> Vec<Task> {
+        return self.get_status_tasks(VALID_STATUSES[0]);
     }
     // Mark task to 'in-progress' status
     fn in_progress(&self) -> Vec<Task> {
-        let task_lists = self
-            .task_manager
-            .list
-            .iter()
-            .filter(|&task| task.status == VALID_STATUSES[1])
-            .cloned()
-            .collect();
-        task_lists
+        return self.get_status_tasks(VALID_STATUSES[1]);
     }
     // Mark task to 'done' status
     fn done(&self) -> Vec<Task> {
-        let task_lists = self
-            .task_manager
-            .list
-            .iter()
-            .filter(|&task| task.status == VALID_STATUSES[2])
-            .cloned()
-            .collect();
-        task_lists
+        return self.get_status_tasks(VALID_STATUSES[2]);
     }
 }
