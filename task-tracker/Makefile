@@ -1,4 +1,4 @@
-link := task-tarcker
+link := task-tracker
 link_after := task-cli
 
 run:
