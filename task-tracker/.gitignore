@@ -20,3 +20,4 @@ target/
 
 /target
 task-cli
+tasks.json
