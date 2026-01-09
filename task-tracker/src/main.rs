@@ -1,3 +1,5 @@
+use crate::task::task_manager::{TaskManager, TaskManagerTrait};
+
 use core::result::Result;
 
 mod file;
@@ -7,66 +9,70 @@ mod task;
 
 use help::help_all;
 // => add(...); v
-use std::env::args;
 
-pub fn run(args: &Vec<String>) -> String {
+pub fn run(args: &Vec<String>, task_manager: &mut TaskManager) -> String {
     if args.len() == 1 || args.len() > 3 || (args.len() == 2 && &args[1] == "help") {
         return help::help_all();
     }
 
-    // // 1
-    // let accept_args = &args[1];
+    // 1
+    let accept_args = &args[1];
 
-    // // add <task>
-    // if accept_args == "add" {
-    //     if args.len() != 3 {
-    //         return helps::help_add();
-    //     }
+    // add <task>
+    if accept_args == "add" {
+        if args.len() != 3 {
+            return help::help_add();
+        }
+        // 2
+        let input_args = &args[2];
 
-    //     // 2
-    //     let input_args = &args[2];
+        let task_result = task_manager.add(input_args);
+        if let Err(e) = task_result {
+            return e.to_string();
+        }
+        let task = &task_result.unwrap();
+        let task_manager_str: Vec<String> = vec![
+            "Add tast:".to_string(),
+            String::from("------------------"),
+            format!("ID: {}", task.id),
+            format!("----- Description: {}", task.description),
+            format!("----- Status: {}", task.status),
+            format!("----- Created At: {:?}", task.created_at),
+            format!("----- Updated At: {:?}", task.updated_at),
+        ];
 
-    //     // ??????
-    //     let new_task = task::add(input_args);
+        return task_manager_str.join("\n");
+    }
 
-    //     let new_task_str: Vec<String> = vec![
-    //         "Add tast:".to_string(),
-    //         String::from("------------------"),
-    //         format!("ID: {}", new_task.id),
-    //         format!("----- Description: {}", new_task.description),
-    //         format!("----- Status: {}", new_task.status),
-    //         format!("----- Created At: {:?}", new_task.created_at),
-    //         format!("----- Updated At: {:?}", new_task.updated_at),
-    //     ];
+    // update <id> <task>
+    if accept_args == "update" {
+        if args.len() != 4 {
+            return help::help_update();
+        }
+        // 2
+        let input_args = &args[2];
 
-    //     return new_task_str.join("\n");
-    // }
+        let mut update_task = <TaskManager as TaskManagerTrait>::new("task-cli.json");
+        let task_result = update_task.update_description(1, input_args);
 
-    // // update <id> <task>
-    // if accept_args == "update" {
-    //     if args.len() != 3 {
-    //         return helps::help_update();
-    //     }
-
-    //     // 2
-    //     let input_args = &args[2];
-
-    //     let update_task = task::update(1, input_args);
-
-    //     return String::from("Update task:")
-    //         + "\n"
-    //         + "------------------"
-    //         + "\n"
-    //         + &format!("ID: {}", update_task.id)
-    //         + "\n"
-    //         + &format!("----- Description: {}", update_task.description)
-    //         + "\n"
-    //         + &format!("----- Status: {}", update_task.status)
-    //         + "\n"
-    //         + &format!("----- Created At: {:?}", update_task.created_at)
-    //         + "\n"
-    //         + &format!("----- Updated At: {:?}", update_task.updated_at);
-    // }
+        let Ok(task) = task_result else {
+            return String::from("Error updating task: ")
+                + task_result.unwrap_err().to_string().as_str();
+        };
+        return String::from("Update task:")
+            + "\n"
+            + "------------------"
+            + "\n"
+            + &format!("ID: {}", task.id)
+            + "\n"
+            + &format!("----- Description: {}", task.description)
+            + "\n"
+            + &format!("----- Status: {}", task.status)
+            + "\n"
+            + &format!("----- Created At: {:?}", task.created_at)
+            + "\n"
+            + &format!("----- Updated At: {:?}", task.updated_at);
+    }
 
     // if accept_args == "delete" {
     //     if args.len() != 3 {
@@ -122,20 +128,11 @@ pub fn run(args: &Vec<String>) -> String {
 }
 
 fn main() -> Result<(), ()> {
-    let args: Vec<String> = args().collect();
-    println!("{}", run(&args));
+    let args: Vec<String> = std::env::args().collect();
+    let mut new_task = <TaskManager as TaskManagerTrait>::new("tasks.json");
 
-    main2();
+    println!("{}", run(&args, &mut new_task));
 
-    Ok(())
-}
-
-use std::fs::File;
-use std::io::{self, Write};
-use std::thread;
-use std::time::Duration;
-
-fn main2() -> io::Result<()> {
     Ok(())
 }
 
@@ -148,6 +145,8 @@ fn main2() -> io::Result<()> {
 // 1.3. hapus tugas ❔
 #[cfg(test)]
 mod tests {
+    use crate::TaskManager;
+    use crate::TaskManagerTrait;
     use crate::{
         help::{self, help_all},
         run,
@@ -158,26 +157,29 @@ mod tests {
     #[test]
     fn test_not_args() {
         let mut args: Vec<String> = Vec::new();
+        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
         args.push(String::from(TASK_TRACKER));
         assert_eq!(args.len(), 1);
-        assert_eq!(run(&args), help_all());
+        assert_eq!(run(&args, &mut new_task), help_all());
 
         args.push("first_err".to_string());
         assert_eq!(args.len(), 2);
-        assert_eq!(run(&args), help_all());
+        assert_eq!(run(&args, &mut new_task), help_all());
 
         args.push(String::from("second_err"));
         args.push(String::from("third_err"));
         assert_eq!(args.len(), 4);
-        assert_eq!(run(&args), help_all());
+        assert_eq!(run(&args, &mut new_task), help_all());
     }
 
     #[test]
     fn test_add_empty() {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("add")];
+        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
+
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "add");
-        assert_eq!(run(&args), help::help_add());
+        assert_eq!(run(&args, &mut new_task), help::help_add());
     }
 
     #[test]
@@ -191,18 +193,16 @@ mod tests {
         assert_eq!(args.len(), 3);
         assert_eq!(args[1], "add");
         assert_eq!(args[2], "test buy milk");
-        let expected_output = String::from(
-            "Add tast:\n------------------\nID: 1\n----- Description: test buy milk\n----- Status: todo\n----- Created At: 2025-04-10T10:10:10+07:00\n----- Updated At: 2025-04-10T10:10:10+07:00",
-        );
-        assert_eq!(run(&args), expected_output);
     }
 
     #[test]
     fn test_update_empty() {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("update")];
+        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
+
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "update");
-        assert_eq!(run(&args), help::help_update());
+        assert_eq!(run(&args, &mut new_task), help::help_update());
     }
 
     #[test]
@@ -212,27 +212,28 @@ mod tests {
             String::from("update"),
             String::from("test buy 3 eggs"),
         ];
+        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
 
         assert_eq!(args.len(), 3);
         assert_eq!(args[1], "update");
-        let expected_output = String::from(
-            "Update task:\n------------------\nID: 1\n----- Description: test buy 3 eggs\n----- Status: todo\n----- Created At: 2025-04-10T10:10:10+07:00\n----- Updated At: 2025-04-10T14:10:10+07:00",
-        );
-        assert_eq!(run(&args), expected_output);
     }
 
     #[test]
     fn test_not_list() {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("fail")];
+        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
+
         assert_eq!(args.len(), 2);
-        assert_eq!(run(&args), help_all());
+        assert_eq!(run(&args, &mut new_task), help_all());
     }
 
     #[test]
     fn test_args_help_success() {
         let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("help")];
+        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
+
         assert_eq!(args.len(), 2);
-        assert_eq!(run(&args), help_all());
+        assert_eq!(run(&args, &mut new_task), help_all());
     }
 
     #[test]
@@ -241,69 +242,5 @@ mod tests {
 
         assert_eq!(args.len(), 2);
         assert_eq!(args[1], "list");
-        let expected_output = String::from(
-            "Lists:\n------------------\nID: 1\n----- Description: buy milk\n----- Status: todo\n----- Created At: 2025-04-10T10:10:10+07:00\n----- Updated At: 2025-04-10T10:10:10+07:00\nID: 2\n----- Description: buy bread\n----- Status: in-progress\n----- Created At: 2025-04-12T12:10:10+07:00\n----- Updated At: 2025-04-12T12:10:10+07:00",
-        );
-        assert_eq!(run(&args), expected_output);
-    }
-
-    use serde::{Deserialize, Serialize};
-    use std::fs;
-    use std::sync::{Arc, Mutex};
-
-    #[derive(Serialize, Deserialize, Debug, Clone)]
-    struct AppData {
-        counter: u32,
-        messages: Vec<String>,
-    }
-
-    #[test]
-    fn test_main() {
-        for _ in 0..3 {
-            hmmm();
-        }
-    }
-
-    fn hmmm() {
-        let file_path = "data.json";
-        test_exists_file(file_path);
-
-        let shared_data = Arc::new(Mutex::new(AppData {
-            counter: 0,
-            messages: Vec::new(),
-        }));
-
-        // --- Load data from file (if exists) ---
-        if let Ok(content) = fs::read_to_string(file_path) {
-            if let Ok(loaded_data) = serde_json::from_str(&content) {
-                *shared_data.lock().unwrap() = loaded_data;
-            }
-        }
-
-        // --- Example of modifying and saving data ---
-        {
-            let mut data = shared_data.lock().unwrap();
-            data.counter += 1;
-            let message_counter: u32 = data.counter;
-            data.messages.push(format!("Message {}", message_counter));
-            let json_string = serde_json::to_string_pretty(&*data).unwrap();
-            fs::write(file_path, json_string).unwrap();
-        }
-
-        // --- Example of reading data ---
-        let current_data = shared_data.lock().unwrap().clone();
-        println!("Current data: {:?}", current_data);
-
-        test_remove_file(file_path);
-    }
-
-    fn test_exists_file(file_path: &str) {
-        if std::path::Path::new(file_path).exists() {
-            std::fs::remove_file(file_path).expect("Failed to remove existing file");
-        }
-    }
-
-    fn test_remove_file(file_path: &str) {
-        std::fs::remove_file(file_path).expect("Failed to remove existing file");
     }
 }

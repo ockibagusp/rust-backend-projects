@@ -1,26 +1,25 @@
+use crate::file::files::File;
 use crate::task::task::{Task, VALID_STATUSES};
-use crate::task::task_manager::{TaskManager, TaskManagerTrait};
-use std::io::Error;
 
 use mockall::automock;
 
 // TDD
 // ✅ ❔ ❌
-// 3.1. buatlah struktur data List dengan objek task_manager ✅
-// => 3.1. create the List data structure with an object of task_manager
+// 3.1. buatlah struktur data ListManager dengan objek file ✅
+// => 3.1. create the ListManager data structure with an object of file
 // ------------------------------------------------
-// 1. buat field `task_manager` bertipe objek TaskManager ✅
-// => 1. make the `task_manager` field with a type of TaskManager object
-pub struct List {
-    pub task_manager: TaskManager,
+// 1. buat field `list` bertipe objek File ✅
+// => 1. make the `list` field with a type of File object
+pub struct ListManager {
+    pub list: Vec<Task>,
 }
 
 // TDD
 // ✅ ❔ ❌
-// 3.2. buat trait ListTrait dengan method new, index, todo, in_progress, done ✅
-// => 3.2. create the ListTrait trait with methods new, index, todo, in_progress, done
+// 3.2. buat trait ListManagerTrait dengan method new, index, todo, in_progress, done ✅
+// => 3.2. create the ListManagerTrait trait with methods new, index, todo, in_progress, done
 #[automock]
-pub trait ListTrait {
+pub trait ListManagerTrait {
     fn new(file_name: &'static str) -> Self;
     fn get_status_tasks(&self, status: &str) -> Vec<Task>;
     fn index(&self) -> Vec<Task>;
@@ -44,20 +43,17 @@ pub trait ListTrait {
 // => 4. the `in_progress` method to get tasks with 'in-progress' status
 // 5. method `done` untuk mendapatkan task dengan status 'done' ✅
 // => 5. the `done` method to get tasks with 'done' status
-impl ListTrait for List {
+impl ListManagerTrait for ListManager {
     fn new(file_name: &'static str) -> Self {
-        let _task_manager = TaskManager::new(file_name);
-        List {
-            task_manager: _task_manager,
-        }
+        let file = File::new(file_name);
+        ListManager { list: file.list() }
     }
-    // Get all task list
+    // Get all tasks list
     fn index(&self) -> Vec<Task> {
-        return self.task_manager.list();
+        return self.list.clone();
     }
     fn get_status_tasks(&self, status: &str) -> Vec<Task> {
         return self
-            .task_manager
             .list
             .iter()
             .filter(|&task| task.status == status)

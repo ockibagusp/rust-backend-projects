@@ -1,4 +1,4 @@
-use crate::list::list::{ListTrait, MockListTrait};
+use crate::list::list::{ListManagerTrait, MockListManagerTrait};
 use crate::task::task::VALID_STATUSES;
 use crate::task::task_test::{setup_task, setup_task_status};
 use mockall::predicate::*;
@@ -9,7 +9,7 @@ fn test_mock_list() {
     /*
      * empty list
      */
-    let mut mock = MockListTrait::default();
+    let mut mock = MockListManagerTrait::default();
     mock.expect_index().times(1).return_once(|| vec![]);
     assert_eq!(mock.index(), vec![]);
 
@@ -31,7 +31,7 @@ fn test_mock_todo() {
     const TASK_DESC: &str = "test buy one";
     let mut _task = setup_task_status(1, TASK_DESC, "todo");
 
-    let mut mock = MockListTrait::default();
+    let mut mock = MockListManagerTrait::default();
     mock.expect_todo()
         .with()
         .returning(move || vec![_task.clone()]);
@@ -46,7 +46,7 @@ fn test_mock_in_progress() {
     const TASK_DESC: &str = "test buy two";
     let mut _task = setup_task_status(2, TASK_DESC, "in-progress");
 
-    let mut mock = MockListTrait::default();
+    let mut mock = MockListManagerTrait::default();
     mock.expect_in_progress()
         .with()
         .returning(move || vec![_task.clone()]);
@@ -61,7 +61,7 @@ fn test_mock_done() {
     const TASK_DESC: &str = "test buy three";
     let mut _task = setup_task_status(4, TASK_DESC, "done");
 
-    let mut mock = MockListTrait::default();
+    let mut mock = MockListManagerTrait::default();
     mock.expect_done()
         .with()
         .returning(move || vec![_task.clone()]);

@@ -1,6 +1,5 @@
 use crate::task::task::{Task, VALID_STATUSES};
 use crate::task::task_manager::{TaskManager, TaskManagerTrait};
-use chrono::prelude::*;
 use mockall::*;
 use std::io::Error;
 
@@ -11,39 +10,33 @@ fn error_invalid_input(message: &str) -> Error {
     );
 }
 
-fn error_not_found_input(message: &str) -> Error {
-    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
-}
-
 #[derive(PartialEq, Debug)]
-pub struct TaskMark {
+pub struct Mark {
     pub task_manager: TaskManager,
 }
 
 #[automock]
-pub trait TaskMarkTrait {
+pub trait MarkTrait {
     fn new(file_name: &'static str) -> Self;
-    fn mark_in_progress(&self, id: i32) -> Result<Task, Error>;
-    fn mark_done(&self, id: i32) -> Result<Task, Error>;
+    fn find_by_id(&self, id: i32) -> Result<Task, Error>;
+    fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error>;
+    fn mark_done(&mut self, id: i32) -> Result<Task, Error>;
 }
 
-impl TaskMarkTrait for TaskMark {
+impl MarkTrait for Mark {
     fn new(file_name: &'static str) -> Self {
-        let task_manager = TaskManager::new(file_name);
-
-        TaskMark {
-            task_manager: task_manager,
+        Mark {
+            task_manager: TaskManager::new(file_name),
         }
     }
 
-    fn mark_in_progress(&self, id: i32) -> Result<Task, Error> {
-        let mut task_to_update = self
-            .task_manager
-            .list
-            .iter()
-            .find(|&task| task.id == id)
-            .ok_or_else(|| error_not_found_input("`id` is not found"))?
-            .clone();
+    fn find_by_id(&self, id: i32) -> Result<Task, Error> {
+        let task = self.task_manager.find_by_id(id);
+        return task;
+    }
+
+    fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error> {
+        let mut task_to_update = self.find_by_id(id)?;
 
         if task_to_update.status == VALID_STATUSES[1] {
             return Err(error_invalid_input("Task is already in 'done' status"));
@@ -55,14 +48,8 @@ impl TaskMarkTrait for TaskMark {
         Ok(task_to_update)
     }
 
-    fn mark_done(&self, id: i32) -> Result<Task, Error> {
-        let mut task_to_update = self
-            .task_manager
-            .list
-            .iter()
-            .find(|&task| task.id == id)
-            .ok_or_else(|| error_not_found_input("`id` is not found"))?
-            .clone();
+    fn mark_done(&mut self, id: i32) -> Result<Task, Error> {
+        let mut task_to_update = self.find_by_id(id)?;
 
         if task_to_update.status == VALID_STATUSES[2] {
             return Err(error_invalid_input("Task is already in 'done' status"));

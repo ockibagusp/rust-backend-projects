@@ -1,4 +1,4 @@
-use crate::task::task_mark::{MockTaskMarkTrait, TaskMarkTrait};
+use crate::mark::mark::{MarkTrait, MockMarkTrait};
 
 use chrono::DateTime;
 use mockall::predicate::*;
@@ -6,7 +6,7 @@ use std::io::Error;
 
 #[test]
 fn test_mock_in_progress_should_fail() {
-    let mut mock = MockTaskMarkTrait::default();
+    let mut mock = MockMarkTrait::default();
     /*
      * Task not found
      */
@@ -43,7 +43,7 @@ fn test_mock_in_progress_should_fail() {
 
 #[test]
 fn test_mock_in_progress_should_success() {
-    let mut mock = MockTaskMarkTrait::default();
+    let mut mock = MockMarkTrait::default();
 
     const TASK_DESC: &str = "test buy one";
     let task_to_update = crate::task::task_test::setup_task(1, TASK_DESC);
@@ -75,7 +75,7 @@ fn test_mock_in_progress_should_success() {
 
 #[test]
 fn test_mock_done_should_fail() {
-    let mut mock = MockTaskMarkTrait::default();
+    let mut mock = MockMarkTrait::default();
     /*
      * Task not found
      */
@@ -112,7 +112,7 @@ fn test_mock_done_should_success() {
     const TASK_DESC: &str = "test buy one";
     let task_to_update = crate::task::task_test::setup_task_status(1, TASK_DESC, "in-progress");
 
-    let mut mock = MockTaskMarkTrait::default();
+    let mut mock = MockMarkTrait::default();
 
     mock.expect_mark_in_progress()
         .with(eq(1))

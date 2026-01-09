@@ -3,7 +3,7 @@ use crate::task::task::{Task, TaskTrait, VALID_STATUSES};
 use chrono::{DateTime, Local};
 use core::result::Result;
 use mockall::*;
-use std::io::Error;
+use std::io::{Error, ErrorKind};
 
 // TDD
 // ✅ ❔ ❌
@@ -17,6 +17,7 @@ use std::io::Error;
 #[derive(PartialEq, Debug)]
 pub struct TaskManager {
     pub file: File,
+    // func.: get_next_id() is only for getting the next id
     pub list: Vec<Task>,
 }
 
@@ -24,27 +25,31 @@ pub struct TaskManager {
 // fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah
 // => function (not impl...for...): to notify if an error message for an invalid input error
 fn error_invalid_input(message: &str) -> Error {
-    return Error::new(
-        std::io::ErrorKind::InvalidInput,
-        format!("error: {}", message),
-    );
+    return Error::new(ErrorKind::InvalidInput, format!("error: {}", message));
 }
 
 // > It's me, not Github Copilot (AI)!
 // fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
 // => function: to notify that if an error message for a not found input error
 fn error_not_found_input(message: &str) -> Error {
-    Error::new(std::io::ErrorKind::NotFound, format!("error: {}", message))
+    return Error::new(ErrorKind::NotFound, format!("error: {}", message));
+}
+
+fn error_kind(err: Error) -> Error {
+    Error::new(err.kind(), format!("error: {}", err))
 }
 
 #[automock]
 pub trait TaskManagerTrait {
     fn new(file_name: &'static str) -> Self;
     fn get_next_id(&self) -> i32;
-    fn list(&self) -> Vec<Task>;
+    fn find_by_id(&self, id: i32) -> Result<Task, Error>;
+    // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> ();
+    // some operations with CRUD
     fn add(&mut self, input: &str) -> Result<Task, Error>;
-    fn update(&self, id: i32, update_task: &mut Task) -> Result<Task, Error>;
-    fn delete(&self, id: i32) -> Result<(), Error>;
+    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error>;
+    fn update(&mut self, id: i32, update_task: &mut Task) -> Result<Task, Error>;
+    fn delete(&mut self, id: i32) -> Result<(), Error>;
 }
 
 // TDD
@@ -60,16 +65,18 @@ pub trait TaskManagerTrait {
 // => 3. `list` method to get the Task list
 // 4. method `add` untuk menambahkan Task baru ✅
 // => 4. `add` method to add a new Task
-// 5. method `update` untuk memperbarui Task yang ada ✅
-// => 5. `update` method to update an existing Task
-// 6. method `delete` untuk menghapus Task berdasarkan ID ✅
-// => 6. `delete` method to delete a Task by ID
+// 5. method `update_description` untuk memperbarui deskripsi Task berdasarkan ID ✅
+// => 5. `update_description` method to update the Task description by ID
+// 6. method `update` untuk memperbarui Task yang ada ✅
+// => 6. `update` method to update an existing Task
+// 7. method `delete` untuk menghapus Task berdasarkan ID ✅
+// => 7. `delete` method to delete a Task by ID
 impl TaskManagerTrait for TaskManager {
     fn new(file_name: &'static str) -> Self {
         let file = File::new(file_name);
-        let _list = file.list();
+        let list = file.list();
 
-        Self { file, list: _list }
+        Self { file, list }
     }
 
     fn get_next_id(&self) -> i32 {
@@ -82,10 +89,19 @@ impl TaskManagerTrait for TaskManager {
         max_id + 1
     }
 
-    fn list(&self) -> Vec<Task> {
-        let tasks_list = self.file.list();
-        tasks_list
+    fn find_by_id(&self, id: i32) -> Result<Task, Error> {
+        let task = self.list.iter().find(|&task| task.id == id).cloned();
+        match task {
+            Some(task) => Ok(task),
+            None => Err(error_not_found_input("`id` is not found")),
+        }
     }
+
+    // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> () {
+    //     self.list.iter_mut().find(|task| task.id == id).map(|task| {
+    //         *task = update_task.clone();
+    //     });
+    // }
 
     fn add(&mut self, input: &str) -> Result<Task, Error> {
         let next_id = self.get_next_id();
@@ -104,43 +120,56 @@ impl TaskManagerTrait for TaskManager {
         let err = add_task.is_validation();
         // if let Err(e) = err {...}
         if err.is_err() {
-            return Err(err.unwrap_err());
+            return Err(error_kind(err.unwrap_err()));
         }
 
-        let _ = &self.list.push(add_task.clone());
         let _ = &self.file.add(add_task.clone());
+        // ? let _ = &self.list.push(add_task.clone());
 
         Ok(add_task)
     }
 
-    fn update(&self, id: i32, update_task: &mut Task) -> Result<Task, Error> {
-        let err = update_task.is_validation();
-        if let Err(e) = err {
-            return Err(e);
+    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error> {
+        let task = self.find_by_id(id);
+        if let Err(e) = task {
+            return Err(error_kind(e));
         }
 
-        let old_task = self.list.iter().find(|&task| task.id == id).unwrap();
+        let mut task_to_update = task.unwrap();
+        task_to_update.description = description.to_string();
+        match self.update(id, &mut task_to_update) {
+            Ok(updated_task) => Ok(updated_task),
+            Err(e) => Err(error_kind(e)),
+        }
+    }
+
+    fn update(&mut self, id: i32, update_task: &mut Task) -> Result<Task, Error> {
+        let err = update_task.is_validation();
+        if let Err(e) = err {
+            return Err(error_kind(e));
+        }
+
+        let old_task = self.find_by_id(id).unwrap();
         if old_task.id != update_task.id {
             return Err(error_invalid_input("`id` is not identical"));
         }
-        if old_task.description == update_task.description {
-            return Err(error_invalid_input("`description` is identical"));
-        }
         update_task.updated_at = Local::now().into();
 
-        let _ = &self.file.update(id, update_task);
+        let _ = self.file.update(id, update_task);
+        // ? let _ = self.find_by_id_mut(id, update_task);
 
         Ok(update_task.clone())
     }
 
-    fn delete(&self, id: i32) -> Result<(), Error> {
+    fn delete(&mut self, id: i32) -> Result<(), Error> {
         let task = self.list.iter().find(|&task| task.id == id);
         if task.is_none() {
             return Err(error_not_found_input("`id` is not found"));
         }
 
-        let index = self.list().iter().position(|t| t.id == id).unwrap();
-        self.list().remove(index);
+        let _ = self.file.delete(id);
+        // tidak perlu menghapus
+        // ? self.list.remove(index);
         Ok(())
     }
 }
