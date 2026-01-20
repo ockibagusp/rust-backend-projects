@@ -54,3 +54,39 @@ pub fn help_delete() -> String {
     "
     );
 }
+
+pub fn help_mark_in_progress() -> String {
+    return format!(
+        "Usage: 
+        $ task-cli mark-in-progress <id>
+        
+        Example:
+        $ task-cli mark-in-progress 1
+    "
+    );
+}
+
+pub fn help_mark_done() -> String {
+    return format!(
+        "Usage: 
+        $ task-cli mark-done <id>
+        
+        Example:
+        $ task-cli mark-done 1
+    "
+    );
+}
+
+pub fn help_list() -> String {
+    return format!(
+        "Usage: 
+        $ task-cli list [status]
+        
+        Example:
+        $ task-cli list
+        $ task-cli list done
+        $ task-cli list todo
+        $ task-cli list in-progress
+    "
+    );
+}

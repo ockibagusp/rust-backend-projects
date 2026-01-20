@@ -1,246 +1,490 @@
-use crate::task::task_manager::{TaskManager, TaskManagerTrait};
-
-use core::result::Result;
-
 mod file;
 mod help;
 mod list;
+mod mark;
 mod task;
 
-use help::help_all;
+use mockall::*;
+
+use crate::list::list::{ListManager, ListManagerTrait};
+use crate::mark::mark::{Mark, MarkTrait};
+use crate::task::task_manager::{TaskManager, TaskManagerTrait};
+use core::result::Result;
+use std::io::{Error, ErrorKind};
 // => add(...); v
 
-pub fn run(args: &Vec<String>, task_manager: &mut TaskManager) -> String {
-    if args.len() == 1 || args.len() > 3 || (args.len() == 2 && &args[1] == "help") {
-        return help::help_all();
-    }
-
-    // 1
-    let accept_args = &args[1];
-
-    // add <task>
-    if accept_args == "add" {
-        if args.len() != 3 {
-            return help::help_add();
-        }
-        // 2
-        let input_args = &args[2];
-
-        let task_result = task_manager.add(input_args);
-        if let Err(e) = task_result {
-            return e.to_string();
-        }
-        let task = &task_result.unwrap();
-        let task_manager_str: Vec<String> = vec![
-            "Add tast:".to_string(),
-            String::from("------------------"),
-            format!("ID: {}", task.id),
-            format!("----- Description: {}", task.description),
-            format!("----- Status: {}", task.status),
-            format!("----- Created At: {:?}", task.created_at),
-            format!("----- Updated At: {:?}", task.updated_at),
-        ];
-
-        return task_manager_str.join("\n");
-    }
-
-    // update <id> <task>
-    if accept_args == "update" {
-        if args.len() != 4 {
-            return help::help_update();
-        }
-        // 2
-        let input_args = &args[2];
-
-        let mut update_task = <TaskManager as TaskManagerTrait>::new("task-cli.json");
-        let task_result = update_task.update_description(1, input_args);
-
-        let Ok(task) = task_result else {
-            return String::from("Error updating task: ")
-                + task_result.unwrap_err().to_string().as_str();
-        };
-        return String::from("Update task:")
-            + "\n"
-            + "------------------"
-            + "\n"
-            + &format!("ID: {}", task.id)
-            + "\n"
-            + &format!("----- Description: {}", task.description)
-            + "\n"
-            + &format!("----- Status: {}", task.status)
-            + "\n"
-            + &format!("----- Created At: {:?}", task.created_at)
-            + "\n"
-            + &format!("----- Updated At: {:?}", task.updated_at);
-    }
-
-    // if accept_args == "delete" {
-    //     if args.len() != 3 {
-    //         return helps::help_delete();
-    //     }
-
-    //     // 2
-    //     let input_args = &args[2];
-
-    //     let id: i32 = match input_args.parse() {
-    //         Ok(num) => num,
-    //         Err(_) => {
-    //             return String::from("Error: ID must be a number");
-    //         }
-    //     };
-
-    //     let delete_task = task::delete(id);
-    //     if !delete_task {
-    //         return String::from("Delete task failed");
-    //     }
-    //     return String::from("Delete task success");
-    // }
-
-    // if accept_args == "mark-in-progress" {
-    //     return helps::help_all();
-    // }
-
-    // if accept_args == "mark-done" {
-    //     return helps::help_all();
-    // }
-
-    // // list
-    // if accept_args == "list" {
-    //     // func => tasks::list(); v
-    //     //         ^^^^^
-    //     //      => add(...); v
-    //     // func => list(); x
-    //     let list = task::list();
-
-    //     let mut list_str: Vec<String> =
-    //         vec!["Lists:".to_string(), String::from("------------------")];
-    //     for task in list {
-    //         list_str.push(format!("ID: {}", task.id));
-    //         list_str.push(format!("----- Description: {}", task.description));
-    //         list_str.push(format!("----- Status: {}", task.status));
-    //         list_str.push(format!("----- Created At: {:?}", task.created_at));
-    //         list_str.push(format!("----- Updated At: {:?}", task.updated_at));
-    //     }
-    //     return list_str.join("\n");
-    // }
-
-    return help_all();
+struct Main {
+    task_manager: TaskManager,
+    mark: Mark,
+    list_manager: ListManager,
 }
 
-fn main() -> Result<(), ()> {
+#[automock]
+trait MainTrait {
+    fn new(file_name: &'static str) -> Self;
+    fn command_of_task_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
+    fn run(&mut self, args: &Vec<String>) -> Result<String, Error>;
+}
+
+impl MainTrait for Main {
+    fn new(file_name: &'static str) -> Self {
+        Main {
+            task_manager: TaskManager::new(file_name),
+            mark: Mark::new(file_name),
+            list_manager: ListManager::new(file_name),
+        }
+    }
+
+    /*
+        Task Manager Operations
+    */
+    fn command_of_task_cli(&mut self, args: &Vec<String>) -> Result<String, Error> {
+        let accept_args = &args[1];
+        // $ task-cli add <task>
+        if accept_args == "add" {
+            if args.len() == 2 || args.len() > 3 {
+                return Err(Error::new(ErrorKind::ConnectionRefused, help::help_add()));
+            }
+            // 2
+            let input_args = &args[2];
+            let task_result = self.task_manager.add(input_args);
+            if let Err(e) = &task_result {
+                return Err(Error::new(ErrorKind::ConnectionAborted, e.to_string()));
+            }
+            let task = task_result.unwrap();
+            let task_manager_str: Vec<String> = vec![
+                "Add tast:".to_string(),
+                "------------------".to_string(),
+                format!("ID: {}", task.id),
+                format!("----- Description: {}", task.description),
+                format!("----- Status: {}", task.status),
+                format!("----- Created At: {:?}", task.created_at),
+                format!("----- Updated At: {:?}", task.updated_at),
+            ];
+
+            return Ok(task_manager_str.join("\n"));
+        }
+
+        // $ task-cli update <id> <task>
+        if accept_args == "update" {
+            if args.len() == 3 || args.len() > 4 {
+                return Err(Error::new(
+                    ErrorKind::ConnectionRefused,
+                    help::help_update(),
+                ));
+            }
+            // 2
+            let input_args = &args[2];
+            let id: i32 = match input_args.parse() {
+                Ok(num) => num,
+                Err(e) => {
+                    return Err(Error::new(
+                        ErrorKind::ConnectionRefused,
+                        format!("Error updating task: {}", e),
+                    ));
+                }
+            };
+
+            // 3
+            let input_args = &args[3];
+            let task_result = self.task_manager.update_description(id, input_args);
+            let Ok(task) = task_result else {
+                return Err(Error::new(
+                    ErrorKind::ConnectionAborted,
+                    format!("Error updating task: {}", task_result.unwrap_err()),
+                ));
+            };
+
+            let task_manager_str: Vec<String> = vec![
+                String::from("Update tast:"),
+                String::from("------------------"),
+                format!("ID: {}", task.id),
+                format!("----- Description: {}", task.description),
+                format!("----- Status: {}", task.status),
+                format!("----- Created At: {:?}", task.created_at),
+                format!("----- Updated At: {:?}", task.updated_at),
+            ];
+
+            return Ok(task_manager_str.join("\n"));
+        }
+
+        // $ task-cli delete <id>
+        if accept_args == "delete" {
+            if args.len() == 2 || args.len() > 3 {
+                return Err(Error::new(
+                    ErrorKind::ConnectionRefused,
+                    help::help_delete(),
+                ));
+            }
+
+            // 2
+            let input_args = &args[2];
+            let id: i32 = match input_args.parse() {
+                Ok(num) => num,
+                Err(_) => {
+                    return Err(Error::new(
+                        ErrorKind::ConnectionRefused,
+                        "Error deleting task: ID must be a number",
+                    ));
+                }
+            };
+
+            let delete_task = self.task_manager.delete(id);
+            if let Err(e) = delete_task {
+                return Err(Error::new(
+                    ErrorKind::ConnectionAborted,
+                    format!("Error deleting task: {}", e),
+                ));
+            }
+
+            return Ok(String::from("Delete task success"));
+        }
+
+        return Err(Error::new(ErrorKind::ConnectionAborted, help::help_all()));
+    }
+
+    fn run(&mut self, args: &Vec<String>) -> Result<String, Error> {
+        if args.len() == 1 || (args.len() == 2 && &args[1] == "help") {
+            return Err(Error::new(ErrorKind::ConnectionRefused, help::help_all()));
+        }
+
+        let accept_args = &args[1];
+
+        /*
+            Task Operations
+        */
+        if accept_args == "add" || accept_args == "update" || accept_args == "delete" {
+            match self.command_of_task_cli(args) {
+                Ok(data) => return Ok(data),
+                Err(e) => return Err(e),
+            }
+        }
+
+        /*
+            List Task Operations
+        */
+        // -------------------------------
+        // $ task-cli list
+        if accept_args == "list" {
+            // func => tasks::list(); v
+            //         ^^^^^
+            //      => add(...); v
+            // func => list(); x
+            if args.len() == 2 {
+                let list = self.list_manager.index();
+
+                let mut list_str: Vec<String> =
+                    vec!["Lists:".to_string(), "------------------".to_string()];
+                if list.is_empty() {
+                    list_str.push("No lists found.".to_string());
+                } else {
+                    for task in list {
+                        list_str.push(format!("ID: {}", task.id));
+                        list_str.push(format!("----- Description: {}", task.description));
+                        list_str.push(format!("----- Status: {}", task.status));
+                        list_str.push(format!("----- Created At: {:?}", task.created_at));
+                        list_str.push(format!("----- Updated At: {:?}", task.updated_at));
+                    }
+                    list_str.push(String::from("++++++++++++++++++"));
+                }
+
+                return Ok(list_str.join("\n"));
+            }
+
+            return Err(Error::new(ErrorKind::ConnectionRefused, help::help_list()));
+        }
+        // -------------------------------
+
+        return Ok(help::help_all());
+    }
+}
+
+fn main() {
     let args: Vec<String> = std::env::args().collect();
-    let mut new_task = <TaskManager as TaskManagerTrait>::new("tasks.json");
 
-    println!("{}", run(&args, &mut new_task));
-
-    Ok(())
+    let mut main = Main::new("tasks.json");
+    let result = main.run(&args);
+    match result {
+        Ok(data) => {
+            println!("{}", data);
+        }
+        Err(e) => {
+            println!("{}", e);
+        }
+    }
 }
 
-// TDD
-// ✅ ❔ ❌
-// 1. tambah, perubahan, hapus untuk tugas
-// ---------------------------
-// 1.1. tambah tugas ❔
-// 1.2. perubahan tugas ❔
-// 1.3. hapus tugas ❔
-#[cfg(test)]
 mod tests {
-    use crate::TaskManager;
-    use crate::TaskManagerTrait;
-    use crate::{
-        help::{self, help_all},
-        run,
-    };
-
-    static TASK_TRACKER: &str = "task-tracker";
+    use crate::{MainTrait, MockMainTrait};
+    use mockall::predicate::*;
+    use std::{io::Error, vec};
 
     #[test]
-    fn test_not_args() {
-        let mut args: Vec<String> = Vec::new();
-        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
-        args.push(String::from(TASK_TRACKER));
-        assert_eq!(args.len(), 1);
-        assert_eq!(run(&args, &mut new_task), help_all());
+    fn test_mock_run_no_args() {
+        let args: Vec<String> = vec![String::from("task-cli")];
 
-        args.push("first_err".to_string());
-        assert_eq!(args.len(), 2);
-        assert_eq!(run(&args, &mut new_task), help_all());
+        let mut mock = MockMainTrait::default();
 
-        args.push(String::from("second_err"));
-        args.push(String::from("third_err"));
-        assert_eq!(args.len(), 4);
-        assert_eq!(run(&args, &mut new_task), help_all());
+        mock.expect_run().with(eq(args.clone())).returning(|_| {
+            Err(Error::new(
+                std::io::ErrorKind::ConnectionRefused,
+                "Usage:...$ task-cli <accept> <input>",
+            ))
+        });
+        let result = mock.run(&args);
+        assert!(result.is_err());
+        let err = result.unwrap_err();
+
+        assert_eq!(err.kind(), std::io::ErrorKind::ConnectionRefused);
+        let output_err = err.to_string();
+        assert!(output_err.contains("Usage:"));
+        assert!(output_err.contains("$ task-cli <accept> <input>"));
     }
 
     #[test]
-    fn test_add_empty() {
-        let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("add")];
-        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
+    fn test_mock_run_task_add_should_fail() {
+        struct TestCase {
+            name: &'static str,
+            args: Vec<String>,
+            error_kind: std::io::ErrorKind,
+        }
 
-        assert_eq!(args.len(), 2);
-        assert_eq!(args[1], "add");
-        assert_eq!(run(&args, &mut new_task), help::help_add());
+        let test_cases = vec![
+            TestCase {
+                name: "fail 1: no description provided",
+                args: vec![String::from("task-cli"), String::from("add")],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 1: too many arguments",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("add"),
+                    String::from("Task One"),
+                    String::from("Extra Arg"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 2: too many description provided",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("add"),
+                    String::from("Task One Two Three Four Five"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionAborted,
+            },
+        ];
+
+        for test_case in test_cases {
+            let mut mock = MockMainTrait::default();
+            mock.expect_command_of_task_cli()
+                .with(always())
+                .returning(move |_| {
+                    Err(Error::new(
+                        test_case.error_kind,
+                        "Usage:...$ task-cli add <task>",
+                    ))
+                });
+            let output = mock.command_of_task_cli(&test_case.args).unwrap_err();
+            assert!(output.kind() == test_case.error_kind);
+            assert!(
+                output
+                    .to_string()
+                    .contains("Usage:...$ task-cli add <task>"),
+                "{} failed",
+                test_case.name
+            );
+        }
     }
 
     #[test]
-    fn test_args_add_success() {
+    fn test_mock_run_task_add_should_success() {
         let args: Vec<String> = vec![
-            String::from(TASK_TRACKER),
+            String::from("task-cli"),
             String::from("add"),
-            String::from("test buy milk"),
+            String::from("Test task"),
         ];
 
-        assert_eq!(args.len(), 3);
-        assert_eq!(args[1], "add");
-        assert_eq!(args[2], "test buy milk");
+        let mut mock = MockMainTrait::default();
+        mock.expect_command_of_task_cli()
+            .with(always())
+            .returning(|_| Ok(String::from("Add task success")));
+        let output = mock.command_of_task_cli(&args).unwrap();
+        assert_eq!(output, "Add task success");
     }
 
     #[test]
-    fn test_update_empty() {
-        let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("update")];
-        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
+    fn test_mock_run_task_update_should_fail() {
+        struct TestCase {
+            name: &'static str,
+            args: Vec<String>,
+            error_kind: std::io::ErrorKind,
+        }
 
-        assert_eq!(args.len(), 2);
-        assert_eq!(args[1], "update");
-        assert_eq!(run(&args, &mut new_task), help::help_update());
+        let test_cases = vec![
+            TestCase {
+                name: "fail 1: no description provided",
+                args: vec![String::from("task-cli"), String::from("update")],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 1: too many arguments",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("update"),
+                    String::from("1"),
+                    String::from("foo bar"),
+                    // too many args
+                    String::from("extra-arg"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 2: Id not a number",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("update"),
+                    // id should be number
+                    String::from("i"),
+                    String::from("foo bar"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 3: Id not found",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("update"),
+                    // id should not be found
+                    String::from("2"),
+                    String::from("foo bar"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionAborted,
+            },
+        ];
+
+        for test_case in test_cases {
+            let mut mock = MockMainTrait::default();
+            mock.expect_command_of_task_cli()
+                .with(always())
+                .returning(move |_| {
+                    Err(Error::new(
+                        test_case.error_kind,
+                        "Usage:...$ task-cli update <id> <task>",
+                    ))
+                });
+            let output = mock.command_of_task_cli(&test_case.args).unwrap_err();
+            assert!(output.kind() == test_case.error_kind);
+            assert!(
+                output
+                    .to_string()
+                    .contains("Usage:...$ task-cli update <id> <task>"),
+                "{} failed",
+                test_case.name
+            );
+        }
     }
 
     #[test]
-    fn test_update_success() {
+    fn test_mock_run_task_update_should_success() {
         let args: Vec<String> = vec![
-            String::from(TASK_TRACKER),
+            String::from("task-cli"),
             String::from("update"),
-            String::from("test buy 3 eggs"),
+            String::from("1"),
+            String::from("foo bar baz"),
         ];
-        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
 
-        assert_eq!(args.len(), 3);
-        assert_eq!(args[1], "update");
+        let mut mock = MockMainTrait::default();
+        mock.expect_command_of_task_cli()
+            .with(always())
+            .returning(|_| Ok(String::from("Update task success")));
+        let output = mock.command_of_task_cli(&args).unwrap();
+        assert_eq!(output, "Update task success");
     }
 
     #[test]
-    fn test_not_list() {
-        let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("fail")];
-        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
+    fn test_mock_run_task_delete_should_fail() {
+        struct TestCase {
+            name: &'static str,
+            args: Vec<String>,
+            error_kind: std::io::ErrorKind,
+        }
 
-        assert_eq!(args.len(), 2);
-        assert_eq!(run(&args, &mut new_task), help_all());
+        let test_cases = vec![
+            TestCase {
+                name: "fail 1: no description provided",
+                args: vec![String::from("task-cli"), String::from("delete")],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 1: too many arguments",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("delete"),
+                    String::from("1"),
+                    // too many args
+                    String::from("extra-arg"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 2: ID must be a number",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("delete"),
+                    // id should be number
+                    String::from("i"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 3: ID not found",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("delete"),
+                    // id should not be found
+                    String::from("2"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionAborted,
+            },
+        ];
+
+        for test_case in test_cases {
+            let mut mock = MockMainTrait::default();
+            mock.expect_command_of_task_cli()
+                .with(always())
+                .returning(|_| {
+                    Err(Error::new(
+                        std::io::ErrorKind::ConnectionRefused,
+                        "Usage:...$ task-cli update <id> <task>",
+                    ))
+                });
+            let output = mock.command_of_task_cli(&test_case.args).unwrap_err();
+            assert!(output.kind() == std::io::ErrorKind::ConnectionRefused);
+            assert!(
+                output
+                    .to_string()
+                    .contains("Usage:...$ task-cli update <id> <task>"),
+                "{} failed",
+                test_case.name
+            );
+        }
     }
 
     #[test]
-    fn test_args_help_success() {
-        let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("help")];
-        let mut new_task = <TaskManager as TaskManagerTrait>::new("test-tasks.json");
+    fn test_mock_run_task_delete_should_success() {
+        let args: Vec<String> = vec![
+            String::from("task-cli"),
+            String::from("delete"),
+            String::from("1"),
+        ];
 
-        assert_eq!(args.len(), 2);
-        assert_eq!(run(&args, &mut new_task), help_all());
-    }
-
-    #[test]
-    fn test_args_list_success() {
-        let args: Vec<String> = vec![String::from(TASK_TRACKER), String::from("list")];
-
-        assert_eq!(args.len(), 2);
-        assert_eq!(args[1], "list");
+        let mut mock = MockMainTrait::default();
+        mock.expect_command_of_task_cli()
+            .with(always())
+            .returning(|_| Ok(String::from("Delete task success")));
+        let output = mock.command_of_task_cli(&args).unwrap();
+        assert_eq!(output, "Delete task success");
     }
 }
