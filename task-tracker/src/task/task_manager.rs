@@ -25,18 +25,18 @@ pub struct TaskManager {
 // fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah
 // => function (not impl...for...): to notify if an error message for an invalid input error
 fn error_invalid_input(message: &str) -> Error {
-    return Error::new(ErrorKind::InvalidInput, format!("error: {}", message));
+    return Error::new(ErrorKind::InvalidInput, format!("{}", message));
 }
 
 // > It's me, not Github Copilot (AI)!
 // fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
 // => function: to notify that if an error message for a not found input error
 fn error_not_found_input(message: &str) -> Error {
-    return Error::new(ErrorKind::NotFound, format!("error: {}", message));
+    return Error::new(ErrorKind::NotFound, format!("{}", message));
 }
 
 fn error_kind(err: Error) -> Error {
-    Error::new(err.kind(), format!("error: {}", err))
+    return Error::new(err.kind(), format!("{}", err));
 }
 
 #[automock]

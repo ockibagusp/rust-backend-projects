@@ -75,10 +75,13 @@ impl TaskTrait for Task {
         if self.id.is_negative() {
             return Err(Error::new(invalid_input, "`id` is negative"));
         }
-        if self.description.trim().is_empty() || self.description.len() > 26 {
+        if self.description.trim().is_empty()
+            || self.description.len() < 2
+            || self.description.len() > 50
+        {
             return Err(Error::new(
                 invalid_input,
-                "`description` is empty or too long",
+                "`description` is empty or too short or too long",
             ));
         }
         let _valid_statuses = VALID_STATUSES;

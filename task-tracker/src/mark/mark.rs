@@ -4,10 +4,7 @@ use mockall::*;
 use std::io::Error;
 
 fn error_invalid_input(message: &str) -> Error {
-    return Error::new(
-        std::io::ErrorKind::InvalidInput,
-        format!("error: {}", message),
-    );
+    return Error::new(std::io::ErrorKind::InvalidInput, format!("{}", message));
 }
 
 #[derive(PartialEq, Debug)]
@@ -39,7 +36,9 @@ impl MarkTrait for Mark {
         let mut task_to_update = self.find_by_id(id)?;
 
         if task_to_update.status == VALID_STATUSES[1] {
-            return Err(error_invalid_input("Task is already in 'done' status"));
+            return Err(error_invalid_input(
+                "task is already in 'in-progress' status",
+            ));
         }
 
         task_to_update.status = VALID_STATUSES[1].to_string();
@@ -52,7 +51,7 @@ impl MarkTrait for Mark {
         let mut task_to_update = self.find_by_id(id)?;
 
         if task_to_update.status == VALID_STATUSES[2] {
-            return Err(error_invalid_input("Task is already in 'done' status"));
+            return Err(error_invalid_input("task is already in 'done' status"));
         }
 
         task_to_update.status = VALID_STATUSES[2].to_string();

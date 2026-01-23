@@ -6,19 +6,13 @@ use std::io::{Error, Read};
 // fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah
 // => function (not impl...for...): to notify if an error message for an invalid input error
 fn panic_invalid_input(message: &str) -> ! {
-    panic!(
-        "error: {}",
-        Error::new(std::io::ErrorKind::InvalidInput, message,)
-    )
+    panic!("{}", Error::new(std::io::ErrorKind::InvalidInput, message,))
 }
 
 // fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
 // => function: to notify that if an input error message is not found
 fn panic_not_found_input(message: &str) -> ! {
-    panic!(
-        "error: {}",
-        Error::new(std::io::ErrorKind::NotFound, message,)
-    )
+    panic!("{}", Error::new(std::io::ErrorKind::NotFound, message,))
 }
 
 #[allow(dead_code)]
@@ -133,13 +127,20 @@ impl File {
 
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
-        if tasks.get(id as usize - 1) == None {
-            panic_not_found_input("task not found");
+        // if tasks.get(id as usize - 1) == None {}
+        let mut index_to_remove = false;
+        for (_, task) in tasks.iter().enumerate() {
+            if task.id == id {
+                index_to_remove = true;
+                tasks.remove(index_to_remove as usize);
+                Self::json_string(&self.json_str, tasks);
+                break;
+            }
         }
 
-        tasks.remove(id as usize - 1);
-
-        Self::json_string(&self.json_str, tasks);
+        if !index_to_remove {
+            panic_not_found_input("failed to delete task: ID not found");
+        }
     }
 }
 
@@ -221,7 +222,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "error: `id` is negative")]
+    #[should_panic(expected = "`id` is negative")]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
@@ -259,7 +260,7 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "error: failed to update task: ID mismatch")]
+    #[should_panic(expected = "failed to update task: ID mismatch")]
     fn test_update_fail() {
         let update_file = test_start_file(Some("update-fail"));
 
