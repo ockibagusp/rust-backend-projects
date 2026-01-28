@@ -1,3 +1,4 @@
+mod error;
 mod file;
 mod help;
 mod list;
@@ -68,6 +69,7 @@ struct Main {
 trait MainTrait {
     fn new(file_name: &'static str) -> Self;
     fn command_of_task_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
+    fn command_of_mark_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
     fn run(&mut self, args: &Vec<String>) -> Result<String, Error>;
 }
 
@@ -158,6 +160,61 @@ impl MainTrait for Main {
         return Err(error_kind_refused(help::help_all()));
     }
 
+    /*
+        Mark Task Operations
+    */
+    fn command_of_mark_cli(&mut self, args: &Vec<String>) -> Result<String, Error> {
+        if "mark-in-progress" == args.get(1).unwrap() && args.len() == 2 {
+            return Err(error_kind_refused(help::help_mark_in_progress()));
+        }
+
+        let accept_args = args.get(1).unwrap();
+        let input_args = args.get(2).unwrap();
+
+        // $ task-cli mark-in-progress <id>
+        if accept_args == "mark-in-progress" {
+            let id: i32 = match input_args.parse() {
+                Ok(num) => num,
+                Err(e) => {
+                    return Err(error_kind_refused(format!(
+                        "Error marking task in progress: {}",
+                        e
+                    )));
+                }
+            };
+            let task_result = self.mark.mark_in_progress(id);
+            if let Err(e) = &task_result {
+                return Err(error_kind_aborted(format!(
+                    "Error marking task in progress: {}",
+                    e.to_string()
+                )));
+            }
+            let task = task_result.unwrap();
+            return Ok(open_task_title_str("Mark task in progress", task));
+        } else if accept_args == "mark-done" {
+            let id: i32 = match input_args.parse() {
+                Ok(num) => num,
+                Err(e) => {
+                    return Err(error_kind_refused(format!(
+                        "Error marking task done: {}",
+                        e
+                    )));
+                }
+            };
+            let task_result = self.mark.mark_done(id);
+            if let Err(e) = &task_result {
+                return Err(error_kind_aborted(format!(
+                    "Error marking task done: {}",
+                    e.to_string()
+                )));
+            }
+            let task = task_result.unwrap();
+            return Ok(open_task_title_str("Mark task done", task));
+        }
+
+        Err(error_kind_refused(help::help_all()))
+    }
+
     fn run(&mut self, args: &Vec<String>) -> Result<String, Error> {
         if args.len() == 1 {
             return Err(error_kind_refused(help::help_all()));
@@ -176,8 +233,17 @@ impl MainTrait for Main {
                 }
             }
         }
-        // -------------------------------
-
+        /*
+            Mark Task Operations
+        */
+        else if accept_args == "mark-in-progress" || accept_args == "mark-done" {
+            match self.command_of_mark_cli(args) {
+                Ok(data) => return Ok(data),
+                Err(e) => {
+                    return Err(error_kind_refused(e.to_string()));
+                }
+            }
+        }
         /*
             List Task Operations
         */
@@ -205,6 +271,16 @@ impl MainTrait for Main {
 fn main() {
     let mut main = Main::new("tasks.json");
     let args: Vec<String> = std::env::args().collect();
+    // let args: Vec<String> = vec![
+    //     String::from("task-cli"),
+    //     String::from("mark-done"),
+    //     String::from("1"),
+    //     // String::from("buy a eggs and a milk"), // String::from("update"),
+    //     // String::from("4"),
+    //     // String::from("add"),
+    //     // String::from("learn rust programming language"),
+    //     // String::from("3"),
+    // ];
     let result = main.run(&args);
     match result {
         Ok(data) => {
@@ -402,7 +478,7 @@ mod tests {
     fn test_mock_run_task_update_should_success() {
         let args: Vec<String> = vec![
             String::from("task-cli"),
-            String::from("update"),
+            String::from("mark-in-progress"),
             String::from("1"),
             String::from("foo bar baz"),
         ];
@@ -498,5 +574,74 @@ mod tests {
             .returning(|_| Ok(String::from("Delete task success")));
         let output = mock.command_of_task_cli(&args).unwrap();
         assert_eq!(output, "Delete task success");
+    }
+
+    // -------------------------------
+    //test mark-in-progress
+    #[test]
+    fn test_mock_run_task_in_progress_should_fail() {
+        struct TestCase {
+            name: &'static str,
+            args: Vec<String>,
+            error_kind: std::io::ErrorKind,
+        }
+
+        let test_cases = vec![
+            TestCase {
+                name: "fail 1: no description provided",
+                args: vec![String::from("task-cli"), String::from("mark-in-progress")],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 1: too many arguments",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("mark-in-progress"),
+                    String::from("1"),
+                    // too many args
+                    String::from("extra-arg"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 2: ID must be a number",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("mark-in-progress"),
+                    // id should be number
+                    String::from("i"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionRefused,
+            },
+            TestCase {
+                name: "fail 3: ID not found",
+                args: vec![
+                    String::from("task-cli"),
+                    String::from("mark-in-progress"),
+                    // id should not be found
+                    String::from("2"),
+                ],
+                error_kind: std::io::ErrorKind::ConnectionAborted,
+            },
+        ];
+
+        for test_case in test_cases {
+            let mut mock = MockMainTrait::default();
+            mock.expect_run().with(always()).returning(move |_| {
+                Err(Error::new(
+                    test_case.error_kind,
+                    "Usage:...$ task-cli mark-in-progress <id>",
+                ))
+            });
+            let output = mock.run(&test_case.args).unwrap_err();
+            assert!(output.kind() == test_case.error_kind);
+            assert!(
+                output
+                    .to_string()
+                    .contains("Usage:...$ task-cli mark-in-progress <id>"),
+                "{} failed",
+                test_case.name
+            );
+        }
     }
 }
