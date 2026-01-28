@@ -70,6 +70,7 @@ trait MainTrait {
     fn new(file_name: &'static str) -> Self;
     fn command_of_task_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
     fn command_of_mark_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
+    fn command_of_list_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
     fn run(&mut self, args: &Vec<String>) -> Result<String, Error>;
 }
 
@@ -215,6 +216,36 @@ impl MainTrait for Main {
         Err(error_kind_refused(help::help_all()))
     }
 
+    fn command_of_list_cli(&mut self, args: &Vec<String>) -> Result<String, Error> {
+        // func => tasks::list(); v
+        //         ^^^^^
+        //      => add(...); v
+        // func => list(); x
+        if args.len() == 2 {
+            let list = self.list_manager.index();
+            let list_str = open_task_list_for_title_str("Lists", list);
+            return Ok(list_str);
+        }
+
+        // $ task-cli list done
+        let input_args = &args[2];
+        if input_args == "todo" {
+            let todo = self.list_manager.todo();
+            let list_str = open_task_list_for_title_str("Todos Task", todo);
+            return Ok(list_str);
+        } else if input_args == "in-progress" {
+            let in_progress = self.list_manager.in_progress();
+            let list_str = open_task_list_for_title_str("In-Progresses Task", in_progress);
+            return Ok(list_str);
+        } else if input_args == "done" {
+            let done = self.list_manager.done();
+            let done_str = open_task_list_for_title_str("Dones Task", done);
+            return Ok(done_str);
+        }
+
+        return Err(error_kind_refused(help::help_list()));
+    }
+
     fn run(&mut self, args: &Vec<String>) -> Result<String, Error> {
         if args.len() == 1 {
             return Err(error_kind_refused(help::help_all()));
@@ -250,19 +281,13 @@ impl MainTrait for Main {
         // -------------------------------
         // $ task-cli list
         else if accept_args == "list" {
-            // func => tasks::list(); v
-            //         ^^^^^
-            //      => add(...); v
-            // func => list(); x
-            if args.len() == 2 {
-                let list = self.list_manager.index();
-                let list_str = open_task_list_for_title_str("Lists", list);
-                return Ok(list_str);
+            match self.command_of_list_cli(args) {
+                Ok(data) => return Ok(data),
+                Err(e) => {
+                    return Err(error_kind_refused(e.to_string()));
+                }
             }
-
-            return Err(error_kind_refused(help::help_list()));
         }
-        // -------------------------------
 
         return Ok(help::help_all());
     }
@@ -271,16 +296,6 @@ impl MainTrait for Main {
 fn main() {
     let mut main = Main::new("tasks.json");
     let args: Vec<String> = std::env::args().collect();
-    // let args: Vec<String> = vec![
-    //     String::from("task-cli"),
-    //     String::from("mark-done"),
-    //     String::from("1"),
-    //     // String::from("buy a eggs and a milk"), // String::from("update"),
-    //     // String::from("4"),
-    //     // String::from("add"),
-    //     // String::from("learn rust programming language"),
-    //     // String::from("3"),
-    // ];
     let result = main.run(&args);
     match result {
         Ok(data) => {
@@ -643,5 +658,63 @@ mod tests {
                 test_case.name
             );
         }
+    }
+
+    // -------------------------------
+    // $ task list
+    #[test]
+    fn test_mock_run_task_list_should_success() {
+        let args: Vec<String> = vec![String::from("task-cli"), String::from("list")];
+        let mut mock = MockMainTrait::default();
+        mock.expect_run()
+            .with(always())
+            .returning(|_| Ok(String::from("List task success")));
+        let output = mock.run(&args).unwrap();
+        assert_eq!(output, "List task success");
+    }
+
+    #[test]
+    fn test_mock_run_task_list_todo_should_success() {
+        let args: Vec<String> = vec![
+            String::from("task-cli"),
+            String::from("list"),
+            String::from("todo"),
+        ];
+        let mut mock = MockMainTrait::default();
+        mock.expect_run()
+            .with(always())
+            .returning(|_| Ok(String::from("List todo task success")));
+        let output = mock.run(&args).unwrap();
+        assert_eq!(output, "List todo task success");
+    }
+
+    #[test]
+    fn test_mock_run_task_list_in_progress_should_success() {
+        let args: Vec<String> = vec![
+            String::from("task-cli"),
+            String::from("list"),
+            String::from("in-progress"),
+        ];
+        let mut mock = MockMainTrait::default();
+        mock.expect_run()
+            .with(always())
+            .returning(|_| Ok(String::from("List in progress task success")));
+        let output = mock.run(&args).unwrap();
+        assert_eq!(output, "List in progress task success");
+    }
+
+    #[test]
+    fn test_mock_run_task_list_done_should_success() {
+        let args: Vec<String> = vec![
+            String::from("task-cli"),
+            String::from("list"),
+            String::from("done"),
+        ];
+        let mut mock = MockMainTrait::default();
+        mock.expect_run()
+            .with(always())
+            .returning(|_| Ok(String::from("List done task success")));
+        let output = mock.run(&args).unwrap();
+        assert_eq!(output, "List done task success");
     }
 }
