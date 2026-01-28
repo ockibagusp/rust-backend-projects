@@ -1,11 +1,10 @@
+use crate::error::error_invalid_input;
 use crate::task::task::{Task, VALID_STATUSES};
 use crate::task::task_manager::{TaskManager, TaskManagerTrait};
 use mockall::*;
 use std::io::Error;
 
-fn error_invalid_input(message: &str) -> Error {
-    return Error::new(std::io::ErrorKind::InvalidInput, format!("{}", message));
-}
+const FILE_NAME: &str = "MARK";
 
 #[derive(PartialEq, Debug)]
 pub struct Mark {
@@ -36,7 +35,8 @@ impl MarkTrait for Mark {
         let mut task_to_update = self.find_by_id(id)?;
 
         if task_to_update.status == VALID_STATUSES[1] {
-            return Err(error_invalid_input(
+            return Err(error_invalid_input::<&str>(
+                FILE_NAME,
                 "task is already in 'in-progress' status",
             ));
         }
@@ -51,7 +51,10 @@ impl MarkTrait for Mark {
         let mut task_to_update = self.find_by_id(id)?;
 
         if task_to_update.status == VALID_STATUSES[2] {
-            return Err(error_invalid_input("task is already in 'done' status"));
+            return Err(error_invalid_input::<&str>(
+                FILE_NAME,
+                "task is already in 'done' status",
+            ));
         }
 
         task_to_update.status = VALID_STATUSES[2].to_string();

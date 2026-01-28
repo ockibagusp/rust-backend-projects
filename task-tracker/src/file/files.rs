@@ -1,19 +1,11 @@
+use crate::error::{panic_invalid_input, panic_not_found_input};
 use crate::task::task::{Task, TaskTrait};
+
 use std::fs;
 use std::fs::{File as std_file, OpenOptions};
-use std::io::{Error, Read};
+use std::io::Read;
 
-// fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah
-// => function (not impl...for...): to notify if an error message for an invalid input error
-fn panic_invalid_input(message: &str) -> ! {
-    panic!("{}", Error::new(std::io::ErrorKind::InvalidInput, message,))
-}
-
-// fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
-// => function: to notify that if an input error message is not found
-fn panic_not_found_input(message: &str) -> ! {
-    panic!("{}", Error::new(std::io::ErrorKind::NotFound, message,))
-}
+const FILE_NAME: &str = "FILE";
 
 #[allow(dead_code)]
 #[derive(PartialEq, Debug)]
@@ -60,7 +52,12 @@ impl File {
     }
 
     fn open_options(&self) -> std_file {
-        OpenOptions::new().read(true).open(self.json_str).unwrap()
+        let file = OpenOptions::new().read(true).open(self.json_str);
+        if file.is_err() {
+            panic_not_found_input(FILE_NAME, "failed to open file");
+        }
+
+        file.unwrap()
     }
 
     fn tasks_str(&self) -> String {
@@ -74,7 +71,7 @@ impl File {
     fn json_string(file_name: &'static str, tasks: Vec<Task>) -> () {
         let json_string = serde_json::to_string_pretty(&tasks).unwrap();
         if fs::write(file_name, json_string).is_err() {
-            panic_invalid_input("failed to write to file");
+            panic_invalid_input::<&str>(FILE_NAME, "failed to write to file");
         }
     }
 
@@ -88,7 +85,8 @@ impl File {
 
     pub fn add(&self, add_task: Task) -> () {
         if let Err(is_valid) = add_task.is_validation() {
-            panic_invalid_input(is_valid.to_string().as_str());
+            // TODO: change to proper str or error type later
+            panic_invalid_input(FILE_NAME, is_valid.to_string());
         }
 
         let tasks_string = self.tasks_str();
@@ -102,21 +100,30 @@ impl File {
 
     pub fn update(&self, id: i32, update_task: &Task) -> () {
         if id != update_task.id {
-            panic_invalid_input("failed to update task: ID mismatch");
+            panic_invalid_input::<&str>(FILE_NAME, "failed to update task ID due to mismatch");
         }
         if let Err(is_valid_err) = update_task.is_validation() {
-            panic_invalid_input(is_valid_err.to_string().as_str());
+            panic_invalid_input::<String>(FILE_NAME, is_valid_err.to_string());
         }
 
         let tasks_string = self.tasks_str();
 
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
+        let mut index_to_update = false;
         for task in tasks.iter_mut() {
             if task.id == id {
                 *task = update_task.clone();
+                index_to_update = true;
                 break;
             }
+        }
+
+        if !index_to_update {
+            panic_not_found_input::<String>(
+                FILE_NAME,
+                format!("failed to update task: ID not found (id: {})", id),
+            );
         }
 
         Self::json_string(&self.json_str, tasks);
@@ -127,19 +134,21 @@ impl File {
 
         // You probably want to deserialize tasks_string into Vec<Task>
         let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
-        // if tasks.get(id as usize - 1) == None {}
         let mut index_to_remove = false;
-        for (_, task) in tasks.iter().enumerate() {
+        for (i, task) in tasks.iter().enumerate() {
             if task.id == id {
+                tasks.remove(i);
                 index_to_remove = true;
-                tasks.remove(index_to_remove as usize);
                 Self::json_string(&self.json_str, tasks);
                 break;
             }
         }
 
         if !index_to_remove {
-            panic_not_found_input("failed to delete task: ID not found");
+            panic_not_found_input::<String>(
+                FILE_NAME,
+                format!("failed to delete task: ID not found (id: {})", id),
+            );
         }
     }
 }
@@ -222,7 +231,9 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "`id` is negative")]
+    #[should_panic(
+        expected = "Error { code: \"FILE\", kind: InvalidInput, message: \"`id` is negative\" }"
+    )]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
@@ -260,7 +271,9 @@ pub mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "failed to update task: ID mismatch")]
+    #[should_panic(
+        expected = "Error { code: \"FILE\", kind: InvalidInput, message: \"failed to update task ID due to mismatch\" }"
+    )]
     fn test_update_fail() {
         let update_file = test_start_file(Some("update-fail"));
 
@@ -386,6 +399,18 @@ pub mod tests {
 
         tasks = test_file.list();
         assert_eq!(tasks.len(), 2);
+
+        let deleted = test_file.delete(1);
+        assert_eq!(deleted, ());
+
+        tasks = test_file.list();
+        assert_eq!(tasks.len(), 1);
+
+        let deleted = test_file.delete(3);
+        assert_eq!(deleted, ());
+
+        tasks = test_file.list();
+        assert_eq!(tasks.len(), 0);
 
         test_remove_file(test_file.name());
     }

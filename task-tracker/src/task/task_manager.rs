@@ -1,9 +1,12 @@
+use crate::error::{error_invalid_input, error_kind, error_not_found_input};
 use crate::file::files::File;
 use crate::task::task::{Task, TaskTrait, VALID_STATUSES};
 use chrono::{DateTime, Local};
 use core::result::Result;
 use mockall::*;
-use std::io::{Error, ErrorKind};
+use std::io::Error;
+
+const FILE_NAME: &str = "TASK_MANAGER";
 
 // TDD
 // ✅ ❔ ❌
@@ -19,24 +22,6 @@ pub struct TaskManager {
     pub file: File,
     // func.: get_next_id() is only for getting the next id
     pub list: Vec<Task>,
-}
-
-// > It's me, not Github Copilot (AI)!
-// fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah
-// => function (not impl...for...): to notify if an error message for an invalid input error
-fn error_invalid_input(message: &str) -> Error {
-    return Error::new(ErrorKind::InvalidInput, format!("{}", message));
-}
-
-// > It's me, not Github Copilot (AI)!
-// fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
-// => function: to notify that if an error message for a not found input error
-fn error_not_found_input(message: &str) -> Error {
-    return Error::new(ErrorKind::NotFound, format!("{}", message));
-}
-
-fn error_kind(err: Error) -> Error {
-    return Error::new(err.kind(), format!("{}", err));
 }
 
 #[automock]
@@ -93,7 +78,10 @@ impl TaskManagerTrait for TaskManager {
         let task = self.list.iter().find(|&task| task.id == id).cloned();
         match task {
             Some(task) => Ok(task),
-            None => Err(error_not_found_input("`id` is not found")),
+            None => Err(error_not_found_input::<&str>(
+                FILE_NAME,
+                "`id` is not found",
+            )),
         }
     }
 
@@ -120,7 +108,7 @@ impl TaskManagerTrait for TaskManager {
         let err = add_task.is_validation();
         // if let Err(e) = err {...}
         if err.is_err() {
-            return Err(error_kind(err.unwrap_err()));
+            return Err(error_kind::<String>(FILE_NAME, err.unwrap_err()));
         }
 
         let _ = &self.file.add(add_task.clone());
@@ -132,26 +120,29 @@ impl TaskManagerTrait for TaskManager {
     fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error> {
         let task = self.find_by_id(id);
         if let Err(e) = task {
-            return Err(error_kind(e));
+            return Err(error_kind::<String>(FILE_NAME, e));
         }
 
         let mut task_to_update = task.unwrap();
         task_to_update.description = description.to_string();
         match self.update(id, &mut task_to_update) {
             Ok(updated_task) => Ok(updated_task),
-            Err(e) => Err(error_kind(e)),
+            Err(e) => Err(error_kind::<String>(FILE_NAME, e)),
         }
     }
 
     fn update(&mut self, id: i32, update_task: &mut Task) -> Result<Task, Error> {
         let err = update_task.is_validation();
         if let Err(e) = err {
-            return Err(error_kind(e));
+            return Err(error_kind::<String>(FILE_NAME, e));
         }
 
         let old_task = self.find_by_id(id).unwrap();
         if old_task.id != update_task.id {
-            return Err(error_invalid_input("`id` is not identical"));
+            return Err(error_invalid_input::<&str>(
+                FILE_NAME,
+                "`id` is not identical",
+            ));
         }
         update_task.updated_at = Local::now().into();
 
@@ -164,7 +155,10 @@ impl TaskManagerTrait for TaskManager {
     fn delete(&mut self, id: i32) -> Result<(), Error> {
         let task = self.list.iter().find(|&task| task.id == id);
         if task.is_none() {
-            return Err(error_not_found_input("`id` is not found"));
+            return Err(error_not_found_input::<&str>(
+                FILE_NAME,
+                format!("`id` is not found (id: {})", id).as_str(),
+            ));
         }
 
         let _ = self.file.delete(id);
