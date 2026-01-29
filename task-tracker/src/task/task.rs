@@ -81,7 +81,7 @@ impl TaskTrait for Task {
         {
             return Err(Error::new(
                 invalid_input,
-                "`description` is empty or too short or too long",
+                "`description` is empty or too short(min. 2 chars) or too long(max. 50 chars)",
             ));
         }
         let _valid_statuses = VALID_STATUSES;
