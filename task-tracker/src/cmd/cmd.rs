@@ -9,50 +9,6 @@ use core::result::Result;
 use std::io::{Error, ErrorKind};
 // => add(...); v
 
-fn error_kind_refused(err_message: String) -> Error {
-    return Error::new(ErrorKind::ConnectionRefused, err_message);
-}
-
-fn error_kind_aborted(err_message: String) -> Error {
-    return Error::new(ErrorKind::ConnectionAborted, err_message);
-}
-
-fn open_task_str(task: &Task) -> String {
-    let task_str: Vec<String> = vec![
-        format!("ID: {}", task.id),
-        format!("----- Description: {}", task.description),
-        format!("----- Status: {}", task.status),
-        format!("----- Created At: {:?}", task.created_at),
-        format!("----- Updated At: {:?}", task.updated_at),
-    ];
-
-    return task_str.join("\n");
-}
-
-fn open_task_title_str(title: &str, task: Task) -> String {
-    let task_str: Vec<String> = vec![
-        String::from(title),
-        String::from("------------------"),
-        open_task_str(&task),
-    ];
-
-    return task_str.join("\n");
-}
-
-fn open_task_list_for_title_str(title: &str, list: Vec<Task>) -> String {
-    let mut list_str: Vec<String> = vec![String::from(title), String::from("------------------")];
-    if list.is_empty() {
-        list_str.push(String::from("No lists found."));
-    } else {
-        for task in list {
-            list_str.push(open_task_str(&task));
-        }
-        list_str.push(String::from("++++++++++++++++++"));
-    }
-
-    return list_str.join("\n");
-}
-
 pub struct Command {
     task_manager: TaskManager,
     mark: Mark,
@@ -81,13 +37,13 @@ impl CommandTrait for Command {
         Task Manager Operations
     */
     fn to_task_cli(&mut self, args: &Vec<String>) -> Result<String, Error> {
-        if "add" == args.get(1).unwrap() && args.len() == 2 {
+        if "add" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 3) {
             return Err(error_kind_refused(help::help_add()));
         }
-        if "update" == args.get(1).unwrap() && args.len() == 2 {
+        if "update" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 4) {
             return Err(error_kind_refused(help::help_update()));
         }
-        if "delete" == args.get(1).unwrap() && args.len() == 2 {
+        if "delete" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 3) {
             return Err(error_kind_refused(help::help_delete()));
         }
 
@@ -135,14 +91,13 @@ impl CommandTrait for Command {
 
         // $ task-cli delete <id>
         if accept_args == "delete" {
-            let id: i32 = match input_args.parse() {
-                Ok(num) => num,
-                Err(_) => {
-                    return Err(error_kind_refused(
-                        "Error deleting task: ID must be a number".to_string(),
-                    ));
-                }
-            };
+            let parsed_id = input_args.parse::<i32>();
+            if parsed_id.is_err() {
+                return Err(error_kind_refused(
+                    "Error deleting task: ID must be a number".to_string(),
+                ));
+            }
+            let id = parsed_id.unwrap();
 
             let delete_task = self.task_manager.delete(id);
             if let Err(e) = delete_task {
@@ -159,10 +114,10 @@ impl CommandTrait for Command {
         Mark Task Operations
     */
     fn to_mark_cli(&mut self, args: &Vec<String>) -> Result<String, Error> {
-        if "mark-in-progress" == args.get(1).unwrap() && args.len() == 2 {
+        if "mark-in-progress" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 3) {
             return Err(error_kind_refused(help::help_mark_in_progress()));
         }
-        if "mark-done" == args.get(1).unwrap() && args.len() == 2 {
+        if "mark-done" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 3) {
             return Err(error_kind_refused(help::help_mark_done()));
         }
 
@@ -171,15 +126,14 @@ impl CommandTrait for Command {
 
         // $ task-cli mark-in-progress <id>
         if accept_args == "mark-in-progress" {
-            let id: i32 = match input_args.parse() {
-                Ok(num) => num,
-                Err(e) => {
-                    return Err(error_kind_refused(format!(
-                        "Error marking task in progress: {}",
-                        e
-                    )));
-                }
-            };
+            let parsed_id = input_args.parse::<i32>();
+            if parsed_id.is_err() {
+                return Err(error_kind_refused(
+                    "Error marking task in progress: ID must be a number".to_string(),
+                ));
+            }
+            let id = parsed_id.unwrap();
+
             let task_result = self.mark.mark_in_progress(id);
             if let Err(e) = &task_result {
                 return Err(error_kind_aborted(format!(
@@ -190,15 +144,14 @@ impl CommandTrait for Command {
             let task = task_result.unwrap();
             return Ok(open_task_title_str("Mark task in progress", task));
         } else if accept_args == "mark-done" {
-            let id: i32 = match input_args.parse() {
-                Ok(num) => num,
-                Err(e) => {
-                    return Err(error_kind_refused(format!(
-                        "Error marking task done: {}",
-                        e
-                    )));
-                }
-            };
+            let parsed_id = input_args.parse::<i32>();
+            if parsed_id.is_err() {
+                return Err(error_kind_refused(
+                    "Error marking task in progress: ID must be a number".to_string(),
+                ));
+            }
+            let id = parsed_id.unwrap();
+
             let task_result = self.mark.mark_done(id);
             if let Err(e) = &task_result {
                 return Err(error_kind_aborted(format!(
@@ -253,6 +206,10 @@ impl CommandTrait for Command {
         /*
             Task Operations
         */
+        // -------------------------------
+        // $ task-cli add <description>
+        // $ task-cli update <id> <description>
+        // $ task-cli delete <id>
         if accept_args == "add" || accept_args == "update" || accept_args == "delete" {
             match self.to_task_cli(args) {
                 Ok(data) => return Ok(data),
@@ -264,6 +221,8 @@ impl CommandTrait for Command {
         /*
             Mark Task Operations
         */
+        // -------------------------------
+        // $ task-cli [mark-in-progress|mark-done] <id>
         else if accept_args == "mark-in-progress" || accept_args == "mark-done" {
             match self.to_mark_cli(args) {
                 Ok(data) => return Ok(data),
@@ -277,6 +236,7 @@ impl CommandTrait for Command {
         */
         // -------------------------------
         // $ task-cli list
+        // $ task-cli list [todo|in-progress|done]
         else if accept_args == "list" {
             match self.to_list_cli(args) {
                 Ok(data) => return Ok(data),
@@ -288,4 +248,48 @@ impl CommandTrait for Command {
 
         return Ok(help::help_all());
     }
+}
+
+fn error_kind_refused(err_message: String) -> Error {
+    return Error::new(ErrorKind::ConnectionRefused, err_message);
+}
+
+fn error_kind_aborted(err_message: String) -> Error {
+    return Error::new(ErrorKind::ConnectionAborted, err_message);
+}
+
+fn open_task_str(task: &Task) -> String {
+    let task_str: Vec<String> = vec![
+        format!("ID: {}", task.id),
+        format!("----- Description: {}", task.description),
+        format!("----- Status: {}", task.status),
+        format!("----- Created At: {:?}", task.created_at),
+        format!("----- Updated At: {:?}", task.updated_at),
+    ];
+
+    return task_str.join("\n");
+}
+
+fn open_task_title_str(title: &str, task: Task) -> String {
+    let task_str: Vec<String> = vec![
+        String::from(title),
+        String::from("------------------"),
+        open_task_str(&task),
+    ];
+
+    return task_str.join("\n");
+}
+
+fn open_task_list_for_title_str(title: &str, list: Vec<Task>) -> String {
+    let mut list_str: Vec<String> = vec![String::from(title), String::from("------------------")];
+    if list.is_empty() {
+        list_str.push(String::from("No lists found."));
+    } else {
+        for task in list {
+            list_str.push(open_task_str(&task));
+        }
+        list_str.push(String::from("++++++++++++++++++"));
+    }
+
+    return list_str.join("\n");
 }
