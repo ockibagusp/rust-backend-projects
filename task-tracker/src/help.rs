@@ -25,7 +25,7 @@ pub fn help_all() -> String {
 pub fn help_add() -> String {
     return format!(
         "Usage: 
-        $ task-cli add <task-description>
+        $ task-cli add <description>
         
         Example:
         $ task-cli add \"buy milk\"
@@ -36,7 +36,7 @@ pub fn help_add() -> String {
 pub fn help_update() -> String {
     return format!(
         "Usage: 
-        $ task-cli update <id> <task-description>
+        $ task-cli update <id> <description>
         
         Example:
         $ task-cli update 1 \"buy milk and 2 eggs\"
