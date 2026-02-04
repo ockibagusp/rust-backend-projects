@@ -47,12 +47,12 @@ impl CommandTrait for Command {
             return Err(error_kind_refused(help::help_delete()));
         }
 
-        let accept_args = args.get(1).unwrap();
-        let input_args = args.get(2).unwrap();
+        let accept = args.iter().nth(1).unwrap();
 
-        // $ task-cli add <task>
-        if accept_args == "add" {
-            let task_result = self.task_manager.add(input_args);
+        // $ task-cli add <description>
+        if accept == "add" {
+            let input_desc = args.iter().nth(2).unwrap();
+            let task_result = self.task_manager.add(input_desc);
             if let Err(e) = &task_result {
                 return Err(error_kind_aborted(format!(
                     "Error adding task: {}",
@@ -63,22 +63,22 @@ impl CommandTrait for Command {
             return Ok(open_task_title_str("Add task", task));
         }
 
-        // $ task-cli update <id> <task>
-        if accept_args == "update" {
-            let id: i32 = match input_args.parse() {
+        // $ task-cli update <id> <description>
+        if accept == "update" {
+            let id: i32 = match args.get(2).unwrap().parse() {
                 Ok(num) => num,
                 Err(e) => {
                     return Err(error_kind_refused(format!("Error updating task: {}", e)));
                 }
             };
 
-            let update_args = args.get(3);
-            if update_args.is_none() {
+            let parsed_desc = args.get(3);
+            if parsed_desc.is_none() {
                 return Err(error_kind_refused(help::help_update()));
             }
             let task_result = self
                 .task_manager
-                .update_description(id, update_args.unwrap());
+                .update_description(id, parsed_desc.unwrap());
             let Ok(task) = task_result else {
                 return Err(error_kind_aborted(format!(
                     "Error updating task: {}",
@@ -90,8 +90,8 @@ impl CommandTrait for Command {
         }
 
         // $ task-cli delete <id>
-        if accept_args == "delete" {
-            let parsed_id = input_args.parse::<i32>();
+        if accept == "delete" {
+            let parsed_id = args.get(2).unwrap().parse::<i32>();
             if parsed_id.is_err() {
                 return Err(error_kind_refused(
                     "Error deleting task: ID must be a number".to_string(),
@@ -121,12 +121,12 @@ impl CommandTrait for Command {
             return Err(error_kind_refused(help::help_mark_done()));
         }
 
-        let accept_args = args.get(1).unwrap();
-        let input_args = args.get(2).unwrap();
+        let accept = args.get(1).unwrap();
+        let input_id = args.get(2).unwrap();
 
         // $ task-cli mark-in-progress <id>
-        if accept_args == "mark-in-progress" {
-            let parsed_id = input_args.parse::<i32>();
+        if accept == "mark-in-progress" {
+            let parsed_id = input_id.parse::<i32>();
             if parsed_id.is_err() {
                 return Err(error_kind_refused(
                     "Error marking task in progress: ID must be a number".to_string(),
@@ -143,8 +143,8 @@ impl CommandTrait for Command {
             }
             let task = task_result.unwrap();
             return Ok(open_task_title_str("Mark task in progress", task));
-        } else if accept_args == "mark-done" {
-            let parsed_id = input_args.parse::<i32>();
+        } else if accept == "mark-done" {
+            let parsed_id = input_id.parse::<i32>();
             if parsed_id.is_err() {
                 return Err(error_kind_refused(
                     "Error marking task in progress: ID must be a number".to_string(),
@@ -178,16 +178,16 @@ impl CommandTrait for Command {
         }
 
         // $ task-cli list done
-        let input_args = &args[2];
-        if input_args == "todo" {
+        let input = &args[2];
+        if input == "todo" {
             let todo = self.list_manager.todo();
             let list_str = open_task_list_for_title_str("Todos Task", todo);
             return Ok(list_str);
-        } else if input_args == "in-progress" {
+        } else if input == "in-progress" {
             let in_progress = self.list_manager.in_progress();
             let list_str = open_task_list_for_title_str("In-Progresses Task", in_progress);
             return Ok(list_str);
-        } else if input_args == "done" {
+        } else if input == "done" {
             let done = self.list_manager.done();
             let done_str = open_task_list_for_title_str("Dones Task", done);
             return Ok(done_str);
