@@ -40,6 +40,7 @@ use mockall::*;
 //         }
 //     }
 // }
+pub const FILE_NAME: &str = "TASK";
 pub const VALID_STATUSES: [&str; 3] = ["todo", "in-progress", "done"];
 
 // #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeDisplay)]
@@ -56,14 +57,18 @@ pub struct Task {
 // TDD
 // ✅ ❔ ❌
 // 2.2. buatlah validasi untuk struktur data Task ✅
-// => 2.2. create the validation for the the Task data structure
+// => 2.2. create the validation for the Task data structure
 // ------------------------------------------------
 // 1. pastikan field `id` harus memiliki nilai positif ✅
-// => 1. make the `id` field should have a positive value
-// 2. pastikan field `description` tidak boleh kosong dan maksimal 26 karakter ✅
-// => 2. make the `description` field should not be empty and maximum 26 characters
+// => 1. ensure that the `id` field should have a positive value
+// 2. pastikan field `description` tidak boleh:
+//      - minimal 2 karakter
+//      - maksimal 50 karakter ✅
+// => 2. ensure that the `description` field should have:
+//      - a minimum of 2 characters
+//      - a maximum of 50 characters
 // 3. pastikan field `status` hanya boleh memiliki nilai 'todo', 'in-progress', atau 'done' ✅
-// => 3. make the `status` field should only have values 'todo', 'in-progress', or 'done'
+// => 3. ensure that the `status` field should only have values 'todo', 'in-progress', or 'done'
 #[automock]
 pub trait TaskTrait {
     fn is_validation(&self) -> Result<(), Error>;
