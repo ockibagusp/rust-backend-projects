@@ -1,11 +1,9 @@
 use chrono::DateTime;
 use chrono::prelude::FixedOffset;
 use core::result::Result;
-use serde::{Deserialize, Serialize};
-use std::io::Error;
-
 use mockall::predicate::*;
 use mockall::*;
+use serde::{Deserialize, Serialize};
 
 // TDD
 // ✅ ❔ ❌
@@ -40,7 +38,6 @@ use mockall::*;
 //         }
 //     }
 // }
-pub const FILE_NAME: &str = "TASK";
 pub const VALID_STATUSES: [&str; 3] = ["todo", "in-progress", "done"];
 
 // #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeDisplay)]
@@ -71,30 +68,25 @@ pub struct Task {
 // => 3. ensure that the `status` field should only have values 'todo', 'in-progress', or 'done'
 #[automock]
 pub trait TaskTrait {
-    fn is_validation(&self) -> Result<(), Error>;
+    fn is_validation(&self) -> Result<(), &'static str>;
 }
 
 impl TaskTrait for Task {
-    fn is_validation(&self) -> Result<(), Error> {
-        let invalid_input = std::io::ErrorKind::InvalidInput;
+    fn is_validation(&self) -> Result<(), &'static str> {
         if self.id.is_negative() {
-            return Err(Error::new(invalid_input, "`id` is negative"));
+            return Err("`id` is negative");
         }
         if self.description.trim().is_empty()
             || self.description.len() < 2
             || self.description.len() > 50
         {
-            return Err(Error::new(
-                invalid_input,
+            return Err(
                 "`description` is empty or too short(min. 2 chars) or too long(max. 50 chars)",
-            ));
+            );
         }
         let _valid_statuses = VALID_STATUSES;
         if !matches!(&self.status, _valid_statuses) {
-            return Err(Error::new(
-                invalid_input,
-                format!("`status` is invalid `{}`", &self.status),
-            ));
+            return Err("`status` is invalid: \"todo\", \"in-progress\" or \"done\"");
         }
         Ok(())
     }

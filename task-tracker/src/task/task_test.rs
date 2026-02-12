@@ -1,5 +1,3 @@
-use std::io::{Error, ErrorKind};
-
 // use mockall::mock;
 use crate::task::task::VALID_STATUSES;
 use crate::task::task::{MockTaskTrait, Task, TaskTrait};
@@ -36,11 +34,8 @@ pub fn setup_task_status(id: i32, desciption: &str, status: &str) -> Task {
 #[test]
 fn test_task_trait_should_fail() {
     let mut mock = MockTaskTrait::new();
-    let invalid_input = ErrorKind::InvalidInput;
-
-    mock.expect_is_validation()
-        .returning(move || Err(Error::new(invalid_input, "error")));
-    assert_eq!(mock.is_validation().is_err(), true);
+    mock.expect_is_validation().returning(move || Err("error"));
+    assert_eq!(mock.is_validation(), Err("error"));
 }
 
 #[test]
