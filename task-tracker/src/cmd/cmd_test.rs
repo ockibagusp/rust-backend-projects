@@ -45,6 +45,7 @@
 //      success => `$ ./task-cli list in-progress` should be return the success message: "In-Progress Task"
 // 4. to list done (tasks)
 //      success => `$ ./task-cli list done` should be return the success message: "Done Task"
+// ------------------------------------------------
 mod tests {
     use crate::cmd::cmd::{CommandTrait, MockCommandTrait};
     use mockall::predicate::*;
