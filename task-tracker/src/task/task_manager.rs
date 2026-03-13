@@ -149,7 +149,7 @@ pub fn find_by_id(list: &Vec<Task>, id: i32) -> Result<Task, &str> {
     let task = list.iter().find(|&task| task.id == id).cloned();
     match task {
         Some(task) => Ok(task),
-        None => Err("`id` is not found"),
+        None => Err("`id` must be a number"),
     }
 }
 

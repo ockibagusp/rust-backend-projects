@@ -80,13 +80,13 @@ pub struct Task {
 // 1. buat trait `TaskTrait` dengan method `is_validation` yang mengembalikan nil atau status kesalahan teks  ✅
 // => 1. create the `TaskTrait` trait with the `is_validation` method that returns nil or a text error status
 // 2. implementasikan trait `TaskTrait` untuk struct `Task` dengan:
-//      - validasi untuk field `description`sesuai dengan poin 2.2
-//      - validasi untuk field `id` harus tidak boleh negatif
-//      - validasi untuk field `status` harus memiliki nilai 'todo', 'in-progress', atau 'done'
 // => 2. implement the `TaskTrait` trait for the `Task` struct with:
-//      - validation for the `description` field according to point 2.2
-//      - validation for the `id` field should not be negative
-//      - validation for the `status` field should have values 'todo', 'in-progress', or 'done'
+//      - validasi untuk field `description`sesuai dengan poin 2.2
+//      -> validation for the `description` field according to point 2.2
+//      - validasi untuk field `id` harus tidak boleh negatif
+//      -> validation for the `id` field should not be negative
+//      - validasi untuk field `status` seharusnya hanya memiliki nilai 'todo', 'in-progress', atau 'done'
+//      -> validation for the `status` field should only have the values 'todo', 'in-progress', or 'done'
 // ------------------------------------------------
 #[automock]
 pub trait TaskTrait {
