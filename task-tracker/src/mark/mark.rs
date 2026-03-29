@@ -1,4 +1,4 @@
-use crate::error::error_invalid_input;
+use crate::error::{error_invalid_input, error_not_found_input};
 use crate::task::task::{Task, VALID_STATUSES};
 use crate::task::task_manager::{TaskManager, TaskManagerTrait};
 use mockall::*;
@@ -14,9 +14,16 @@ pub struct Mark {
 #[automock]
 pub trait MarkTrait {
     fn new(file_name: &'static str) -> Self;
-    fn find_by_id(&self, id: i32) -> Result<Task, Error>;
     fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error>;
     fn mark_done(&mut self, id: i32) -> Result<Task, Error>;
+}
+
+fn find_by_id(task_manager: &Vec<Task>, id: i32) -> Result<Task, Error> {
+    let task = task_manager.iter().find(|&task| task.id == id).cloned();
+    match task {
+        Some(task) => Ok(task),
+        None => Err(error_not_found_input::<&str>(FILE_NAME, "ID is not found")),
+    }
 }
 
 impl MarkTrait for Mark {
@@ -26,14 +33,10 @@ impl MarkTrait for Mark {
         }
     }
 
-    fn find_by_id(&self, id: i32) -> Result<Task, Error> {
-        let task = self.task_manager.find_by_id(id);
-        return task;
-    }
-
     fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error> {
-        let mut task_to_update = self.find_by_id(id)?;
+        let mut task_to_update = find_by_id(&self.task_manager.list, id)?;
 
+        ///???
         if task_to_update.status == VALID_STATUSES[1] {
             return Err(error_invalid_input::<&str>(
                 FILE_NAME,
@@ -43,12 +46,12 @@ impl MarkTrait for Mark {
 
         task_to_update.status = VALID_STATUSES[1].to_string();
 
-        let _ = &self.task_manager.update(id, &mut task_to_update);
+        let _ = &self.task_manager.updates(id, &mut task_to_update);
         Ok(task_to_update)
     }
 
     fn mark_done(&mut self, id: i32) -> Result<Task, Error> {
-        let mut task_to_update = self.find_by_id(id)?;
+        let mut task_to_update = find_by_id(&self.task_manager.list, id)?;
 
         if task_to_update.status == VALID_STATUSES[2] {
             return Err(error_invalid_input::<&str>(
@@ -59,7 +62,7 @@ impl MarkTrait for Mark {
 
         task_to_update.status = VALID_STATUSES[2].to_string();
 
-        let _ = &self.task_manager.update(id, &mut task_to_update);
+        let _ = &self.task_manager.updates(id, &mut task_to_update);
         Ok(task_to_update)
     }
 }

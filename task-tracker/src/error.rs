@@ -27,6 +27,14 @@ pub fn error_invalid_input<T: std::fmt::Debug>(name: &'static str, message: &str
     return IoError::new(INVALIDINPUT, format!("{:?}", err_file));
 }
 
+pub fn error_invalid_input_str<S>(name: &'static str, message: S) -> IoError
+where
+    S: AsRef<str>,
+{
+    let err_file = get_error_func(name, INVALIDINPUT, message.as_ref());
+    return IoError::new(INVALIDINPUT, format!("{:?}", err_file));
+}
+
 // > It's me, not Github Copilot (AI)!
 // fungsi: untuk memberitahukan bahwa jika pesan error yang input tidak ditemukan
 // => function: to notify that if an error message for a not found input error
@@ -38,6 +46,16 @@ pub fn error_not_found_input<T: std::fmt::Debug>(name: &'static str, message: &s
 pub fn error_kind<T: std::fmt::Debug>(name: &'static str, err: IoError) -> IoError {
     let err_file = get_error_func(name, INVALIDINPUT, format!("{}", err));
     return IoError::new(err.kind(), format!("{:?}", err_file));
+}
+
+pub fn error_kind_refused<T: std::fmt::Debug>(name: &'static str, message: &str) -> IoError {
+    let err_file = get_error_func(name, IoErrorKind::ConnectionRefused, message);
+    return IoError::new(IoErrorKind::ConnectionRefused, format!("{:?}", err_file));
+}
+
+pub fn error_kind_aborted<T: std::fmt::Debug>(name: &'static str, message: &str) -> IoError {
+    let err_file = get_error_func(name, IoErrorKind::ConnectionAborted, message);
+    return IoError::new(IoErrorKind::ConnectionAborted, format!("{:?}", err_file));
 }
 
 // fungsi (bukan impl...for...): untuk memberitahukan jika ada pesan error yang diinput salah

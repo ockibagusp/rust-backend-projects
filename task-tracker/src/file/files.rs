@@ -83,10 +83,10 @@ impl File {
         tasks
     }
 
-    pub fn add(&self, add_task: Task) -> () {
+    pub fn add(&self, add_task: &Task) -> () {
         if let Err(is_valid) = add_task.is_validation() {
             // TODO: change to proper str or error type later
-            panic_invalid_input(FILE_NAME, is_valid.to_string());
+            panic!("{}", is_valid.to_string());
         }
 
         let tasks_string = self.tasks_str();
@@ -230,10 +230,9 @@ pub mod tests {
         test_remove_file(test_file.name());
     }
 
+    // TODO
     #[test]
-    #[should_panic(
-        expected = "Error { code: \"FILE\", kind: InvalidInput, message: \"`id` is negative\" }"
-    )]
+    #[should_panic(expected = "ID is negative")]
     fn test_add_file_not_found() {
         let new_file = test_start_file(Some("add-file-not-found"));
 
@@ -242,8 +241,9 @@ pub mod tests {
 
         test_remove_file(test_file.name());
 
-        let added = test_file.add(setup_task(-1, "fail"));
-        assert_eq!(added, ());
+        let added = test_file.add(&setup_task(-1, "fail"));
+        eprintln!("{:?}", added);
+        //assert_eq!(added, ());
     }
 
     #[test]
@@ -254,14 +254,14 @@ pub mod tests {
         let test_file = File::new(new_file);
 
         let mut add_task = setup_task(2, "Buy cook dinner");
-        let added = test_file.add(add_task);
+        let added = test_file.add(&add_task);
         assert_eq!(added, ());
 
         let mut tasks = test_file.list();
         assert_eq!(tasks.len(), 1);
 
         add_task = setup_task(3, "Buy groceries");
-        let updated = test_file.add(add_task);
+        let updated = test_file.add(&add_task);
         assert_eq!(updated, ());
 
         tasks = test_file.list();

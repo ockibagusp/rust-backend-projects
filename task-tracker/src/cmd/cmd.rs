@@ -1,261 +1,166 @@
+use chrono::{DateTime, FixedOffset};
+use clap::{Parser, Subcommand};
 use mockall::*;
 
-use crate::help;
+use crate::error::{error_kind_aborted, error_kind_refused};
 use crate::list::list::{ListManager, ListManagerTrait};
 use crate::mark::mark::{Mark, MarkTrait};
 use crate::task::task::Task;
 use crate::task::task_manager::{TaskManager, TaskManagerTrait};
 use core::result::Result;
-use std::io::{Error, ErrorKind};
-// => add(...); v
+use std::io::Error;
 
-pub struct Command {
-    task_manager: TaskManager,
-    mark: Mark,
-    list_manager: ListManager,
+const FILE_NAME: &str = "COMMAND";
+
+#[derive(Parser, Debug)]
+#[command(name = "task-cli", about = "A simple task management CLI application")]
+pub struct Cli {
+    #[command(subcommand)]
+    commands: Commands,
 }
 
+#[derive(Subcommand, Debug)]
+pub enum Commands {
+    List { status: Option<String> },
+
+    Add { description: String },
+    Update { id: u32, description: String },
+    Delete { id: u32 },
+
+    MarkInProgress { id: u32 },
+    MarkDone { id: u32 },
+}
+
+// TDD
+// ✅ ❔ ❌
+// 3.1. buatlah struktur data Command
+// => 3.1. create the Command Data Structure
+// ------------------------------------------------
+// 1. buat sebuah field `task manager` bertipe objek `TaskManager`
+// => create the `task manager` field with an object type of `TaskManager`
+// 2. buat sebuah field `mark` dengan tipe objek `Mark`
+// => create the `mark` field with the `Mark` object type
+// 3. buat sebuah field `list manager` dengan tipe objek `ListManager`
+// => create the `list manager` field with the `List` object type
+pub struct Command {
+    file_name: &'static str,
+}
+
+// TDD
+// ✅ ❔ ❌
+// 3.2.
+// => the CommandTrait trait for the Command struct
+// ------------------------------------------------
 #[automock]
 pub trait CommandTrait {
     fn new(file_name: &'static str) -> Self;
-    fn to_task_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
-    fn to_mark_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
-    fn to_list_cli(&mut self, args: &Vec<String>) -> Result<String, Error>;
-    fn run(&mut self, args: &Vec<String>) -> Result<String, Error>;
+    fn run(&mut self) -> Result<String, Error>;
 }
 
 impl CommandTrait for Command {
     fn new(file_name: &'static str) -> Self {
-        Command {
-            task_manager: TaskManager::new(file_name),
-            mark: Mark::new(file_name),
-            list_manager: ListManager::new(file_name),
-        }
+        Command { file_name }
     }
 
-    /*
-        Task Manager Operations
-    */
-    fn to_task_cli(&mut self, args: &Vec<String>) -> Result<String, Error> {
-        if "add" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 3) {
-            return Err(error_kind_refused(help::help_add()));
-        }
-        if "update" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 4) {
-            return Err(error_kind_refused(help::help_update()));
-        }
-        if "delete" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 3) {
-            return Err(error_kind_refused(help::help_delete()));
-        }
+    fn run(&mut self) -> Result<String, Error> {
+        let cli = Cli::parse();
 
-        let accept = args.iter().nth(1).unwrap();
-
-        // $ task-cli add <description>
-        if accept == "add" {
-            let input_desc = args.iter().nth(2).unwrap();
-            let task_result = self.task_manager.add(input_desc);
-            if let Err(e) = &task_result {
-                return Err(error_kind_aborted(format!(
-                    "Error adding task: {}",
-                    e.to_string()
-                )));
-            }
-            let task = task_result.unwrap();
-            return Ok(open_task_title_str("Add task", task));
-        }
-
-        // $ task-cli update <id> <description>
-        if accept == "update" {
-            let id: i32 = match args.get(2).unwrap().parse() {
-                Ok(num) => num,
-                Err(e) => {
-                    return Err(error_kind_refused(format!("Error updating task: {}", e)));
-                }
-            };
-
-            let parsed_desc = args.get(3);
-            if parsed_desc.is_none() {
-                return Err(error_kind_refused(help::help_update()));
-            }
-            let task_result = self
-                .task_manager
-                .update_description(id, parsed_desc.unwrap());
-            let Ok(task) = task_result else {
-                return Err(error_kind_aborted(format!(
-                    "Error updating task: {}",
-                    task_result.unwrap_err()
-                )));
-            };
-
-            return Ok(open_task_title_str("Update task", task));
-        }
-
-        // $ task-cli delete <id>
-        if accept == "delete" {
-            let parsed_id = args.get(2).unwrap().parse::<i32>();
-            if parsed_id.is_err() {
-                return Err(error_kind_refused(
-                    "Error deleting task: ID must be a number".to_string(),
-                ));
-            }
-            let id = parsed_id.unwrap();
-
-            let delete_task = self.task_manager.delete(id);
-            if let Err(e) = delete_task {
-                return Err(error_kind_aborted(format!("Error deleting task: {}", e)));
-            }
-
-            return Ok(String::from("Delete task success"));
-        }
-
-        return Err(error_kind_refused(help::help_all()));
-    }
-
-    /*
-        Mark Task Operations
-    */
-    fn to_mark_cli(&mut self, args: &Vec<String>) -> Result<String, Error> {
-        if "mark-in-progress" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 3) {
-            return Err(error_kind_refused(help::help_mark_in_progress()));
-        }
-        if "mark-done" == args.get(1).unwrap() && (args.len() == 2 || args.len() > 3) {
-            return Err(error_kind_refused(help::help_mark_done()));
-        }
-
-        let accept = args.get(1).unwrap();
-        let input_id = args.get(2).unwrap();
-
-        // $ task-cli mark-in-progress <id>
-        if accept == "mark-in-progress" {
-            let parsed_id = input_id.parse::<i32>();
-            if parsed_id.is_err() {
-                return Err(error_kind_refused(
-                    "Error marking task in progress: ID must be a number".to_string(),
-                ));
-            }
-            let id = parsed_id.unwrap();
-
-            let task_result = self.mark.mark_in_progress(id);
-            if let Err(e) = &task_result {
-                return Err(error_kind_aborted(format!(
-                    "Error marking task in progress: {}",
-                    e.to_string()
-                )));
-            }
-            let task = task_result.unwrap();
-            return Ok(open_task_title_str("Mark task in progress", task));
-        } else if accept == "mark-done" {
-            let parsed_id = input_id.parse::<i32>();
-            if parsed_id.is_err() {
-                return Err(error_kind_refused(
-                    "Error marking task in progress: ID must be a number".to_string(),
-                ));
-            }
-            let id = parsed_id.unwrap();
-
-            let task_result = self.mark.mark_done(id);
-            if let Err(e) = &task_result {
-                return Err(error_kind_aborted(format!(
-                    "Error marking task done: {}",
-                    e.to_string()
-                )));
-            }
-            let task = task_result.unwrap();
-            return Ok(open_task_title_str("Mark task done", task));
-        }
-
-        Err(error_kind_refused(help::help_all()))
-    }
-
-    fn to_list_cli(&mut self, args: &Vec<String>) -> Result<String, Error> {
-        // func => tasks::list(); v
-        //         ^^^^^
-        //      => add(...); v
-        // func => list(); x
-        if args.len() == 2 {
-            let list = self.list_manager.index();
-            let list_str = open_task_list_for_title_str("Lists", list);
-            return Ok(list_str);
-        }
-
-        // $ task-cli list done
-        let input = &args[2];
-        if input == "todo" {
-            let todo = self.list_manager.todo();
-            let list_str = open_task_list_for_title_str("Todos Task", todo);
-            return Ok(list_str);
-        } else if input == "in-progress" {
-            let in_progress = self.list_manager.in_progress();
-            let list_str = open_task_list_for_title_str("In-Progresses Task", in_progress);
-            return Ok(list_str);
-        } else if input == "done" {
-            let done = self.list_manager.done();
-            let done_str = open_task_list_for_title_str("Dones Task", done);
-            return Ok(done_str);
-        }
-
-        return Err(error_kind_refused(help::help_list()));
-    }
-
-    fn run(&mut self, args: &Vec<String>) -> Result<String, Error> {
-        if args.len() == 1 {
-            return Err(error_kind_refused(help::help_all()));
-        }
-
-        let accept_args = args.get(1).unwrap();
-
-        /*
-            Task Operations
-        */
-        // -------------------------------
-        // $ task-cli add <description>
-        // $ task-cli update <id> <description>
-        // $ task-cli delete <id>
-        if accept_args == "add" || accept_args == "update" || accept_args == "delete" {
-            match self.to_task_cli(args) {
-                Ok(data) => return Ok(data),
-                Err(e) => {
-                    return Err(error_kind_refused(e.to_string()));
+        match &cli.commands {
+            /*
+                Task Operations
+            */
+            // -------------------------------
+            // $ task-cli add <description>
+            // $ task-cli update <id> <description>
+            // $ task-cli delete <id>
+            Commands::Add { description } => {
+                let mut task_manager = TaskManager::new(self.file_name);
+                match task_manager.add(&description) {
+                    Ok(task) => return Ok(open_task_title_str("Add task", task)),
+                    Err(e) => Err(e),
                 }
             }
-        }
-        /*
-            Mark Task Operations
-        */
-        // -------------------------------
-        // $ task-cli [mark-in-progress|mark-done] <id>
-        else if accept_args == "mark-in-progress" || accept_args == "mark-done" {
-            match self.to_mark_cli(args) {
-                Ok(data) => return Ok(data),
-                Err(e) => {
-                    return Err(error_kind_refused(e.to_string()));
+            Commands::Update { id, description } => {
+                let mut task_manager = TaskManager::new(self.file_name);
+                match task_manager.update_description(*id as i32, &description) {
+                    Ok(task) => Ok(open_task_title_str("Update task", task)),
+                    Err(e) => Err(e),
                 }
             }
-        }
-        /*
-            List Task Operations
-        */
-        // -------------------------------
-        // $ task-cli list
-        // $ task-cli list [todo|in-progress|done]
-        else if accept_args == "list" {
-            match self.to_list_cli(args) {
-                Ok(data) => return Ok(data),
-                Err(e) => {
-                    return Err(error_kind_refused(e.to_string()));
+            Commands::Delete { id } => {
+                let mut task_manager = TaskManager::new(self.file_name);
+                match task_manager.delete(*id as i32) {
+                    Ok(_) => Ok(String::from("Delete task success")),
+                    Err(e) => Err(error_kind_aborted::<&str>(
+                        FILE_NAME,
+                        &format!("Error deleting task: {}", e),
+                    )),
                 }
             }
-        }
+            /*
+                Mark Task Operations
+            */
+            // -------------------------------
+            // $ task-cli [mark-in-progress|mark-done] <id>
+            Commands::MarkInProgress { id } => {
+                let mut mark = Mark::new(self.file_name);
+                match mark.mark_in_progress(*id as i32) {
+                    Ok(task) => return Ok(open_task_title_str("Mark in progress", task)),
+                    Err(e) => {
+                        return Err(error_kind_refused::<&str>(
+                            FILE_NAME,
+                            &format!("Error marking task as in progress: {}", e),
+                        ));
+                    }
+                }
+            }
+            Commands::MarkDone { id } => {
+                let mut mark = Mark::new(self.file_name);
+                match mark.mark_done(*id as i32) {
+                    Ok(task) => return Ok(open_task_title_str("Mark done", task)),
+                    Err(e) => {
+                        return Err(error_kind_refused::<&str>(
+                            FILE_NAME,
+                            &format!("Error marking task as done: {}", e),
+                        ));
+                    }
+                }
+            }
+            /*
+                List Task Operations
+            */
+            // -------------------------------
+            // $ task-cli list
+            // $ task-cli list [todo|in-progress|done]
+            Commands::List { status } => {
+                let list = ListManager::new(self.file_name);
 
-        return Ok(help::help_all());
+                if *status == None {
+                    let list_str = open_task_list_for_title_str("All Lists", list.index());
+                    return Ok(list_str);
+                }
+
+                if *status == Some(String::from("todo")) {
+                    let list_str = open_task_list_for_title_str("Todo Lists", list.todo());
+                    return Ok(list_str);
+                }
+
+                if *status == Some(String::from("in-progress")) {
+                    let list_str =
+                        open_task_list_for_title_str("In Progress Lists", list.in_progress());
+                    return Ok(list_str);
+                }
+
+                // if *status == Some(String::from("done")) { ...}
+                let list_str = open_task_list_for_title_str("Done Lists", list.done());
+                return Ok(list_str);
+            }
+        }
     }
 }
 
-fn error_kind_refused(err_message: String) -> Error {
-    return Error::new(ErrorKind::ConnectionRefused, err_message);
-}
-
-fn error_kind_aborted(err_message: String) -> Error {
-    return Error::new(ErrorKind::ConnectionAborted, err_message);
+fn get_datetimes_to_string(date_time: &DateTime<FixedOffset>) -> String {
+    return date_time.format("%d-%m-%Y %H:%M:%S").to_string();
 }
 
 fn open_task_str(task: &Task) -> String {
@@ -263,8 +168,14 @@ fn open_task_str(task: &Task) -> String {
         format!("ID: {}", task.id),
         format!("----- Description: {}", task.description),
         format!("----- Status: {}", task.status),
-        format!("----- Created At: {:?}", task.created_at),
-        format!("----- Updated At: {:?}", task.updated_at),
+        format!(
+            "----- Created At: {}",
+            get_datetimes_to_string(&task.created_at)
+        ),
+        format!(
+            "----- Updated At: {}",
+            get_datetimes_to_string(&task.updated_at)
+        ),
     ];
 
     return task_str.join("\n");

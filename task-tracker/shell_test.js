@@ -20,7 +20,7 @@ var test_cases = [
         expected: `Add task
 ------------------
 ID: 3
------ Description: This is a valid task description 3`
+----- Description: This is a valid task description 3\n`
     },
 
     /**
@@ -28,7 +28,7 @@ ID: 3
      */
     {
         command: './task-cli update -1 "f"',
-        expected: `error: unexpected argument '-1' found`
+        expected: 'Usage: task-cli update <ID> <DESCRIPTION>'
     },
     {
         command: './task-cli update 1 "f"',
@@ -41,16 +41,16 @@ ID: 3
     {
         command: './task-cli update 1 "This is an updated task description"',
         expected: `Update task
-    ------------------
-    ID: 1
-    ----- Description: This is an updated task description 1`
+------------------
+ID: 1
+----- Description: This is an updated task description 1`
     },
     /**
      * Test cases for delete command
      */
     {
         command: './task-cli delete -1',
-        expected: `Error: Command failed: ./task-cli delete -1`
+        expected: `Usage: task-cli delete <ID>`
     },
     {
         command: './task-cli delete 3',
@@ -62,7 +62,7 @@ ID: 3
      */
     {
         command: './task-cli mark-in-progress -1',
-        expected: `Error: Command failed: ./task-cli mark -1 in-progress`
+        expected: `Usage: task-cli mark-in-progress <ID>`
     },
     {
         command: './task-cli mark-in-progress 1',
@@ -70,7 +70,7 @@ ID: 3
     },
     {
         command: './task-cli mark-done -1',
-        expected: `Error: Command failed: ./task-cli mark -1 done`
+        expected: `Usage: task-cli mark-done <ID>`
     },
     {
         command: './task-cli mark-done 2',
@@ -130,23 +130,19 @@ async function runTests() {
     for (const { command, expected } of test_cases) {
         exec(command, (error, stdout, stderr) => {
             process.stdout.write(`Running: ${command}\n`);
-            if (error) {
-                console.error(`Error: ${error.message}`);
+            var output = error || stderr || stdout;
+            if (output) {
+                if ((output.message && output.message.includes(expected)) || output.includes(expected)) {
+                    console.info("\x1b[42m%s\x1b[0m", 'Test passed');
+                    total += 1;
+                } else {
+                    console.log("\x1b[31m%s\x1b[0m", `output: ${output}`);
+                    console.log("\x1b[41m%s\x1b[0m", 'Test failed');
+                }
                 return;
-            }
-            if (stderr) {
-                console.error(`Stderr: ${stderr}`);
-                return;
-            }
-            if (stdout.includes(expected)) {
-                console.info("\x1b[42m%s\x1b[0m", 'Test passed');
-                total += 1;
-            } else {
-                console.log("\x1b[31m%s\x1b[0m", `Stdout: ${stdout}`);
-                console.log("\x1b[41m%s\x1b[0m", 'Test failed');
             }
         });
-        await sleep(2000); // wait for 2 seconds before running the next command
+        await sleep(1500); // wait for 1.5 seconds before running the next command
     }
     process.stdout.write(`\nTotal tests passed: ${total}/${test_cases.length}\n`);
 }

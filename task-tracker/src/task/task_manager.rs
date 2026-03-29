@@ -1,4 +1,4 @@
-use crate::error::{error_invalid_input, error_invalid_input_str, error_not_found_input};
+use crate::error::{error_invalid_input, error_invalid_input_str};
 use crate::file::files::File;
 use crate::task::task::{Task, TaskTrait, VALID_STATUSES};
 use chrono::{DateTime, Local};
@@ -72,11 +72,7 @@ impl TaskManagerTrait for TaskManager {
         let add_task = get_next_task_of_add(&self.list, input);
         // if let Err(e) = err {...}
         if add_task.is_err() {
-            let err_string = error_invalid_input_str(FILE_NAME, add_task.unwrap_err());
-            return Err(error_not_found_input::<String>(
-                FILE_NAME,
-                &err_string.to_string(),
-            ));
+            return add_task;
         }
         let add_task = add_task.unwrap();
 
@@ -87,14 +83,15 @@ impl TaskManagerTrait for TaskManager {
     }
 
     fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error> {
-        let task = find_by_id(&self.list, id);
-        if let Err(e) = task {
-            return Err(error_not_found_input::<String>(FILE_NAME, e));
-        }
-        let mut task_to_update = task.unwrap();
-        task_to_update.description = description.to_string();
+        let mut task = find_by_id(&self.list, id)?;
+        // if let Err(e) = task {
+        //     return Err(e);
+        // }
+        // let mut task_to_update = task.unwrap();
+        // task_to_update.description = description.to_string();
+        task.description = description.to_string();
 
-        match self.updates(id, &mut task_to_update) {
+        match self.updates(id, &mut task) {
             Ok(updated_task) => Ok(updated_task),
             Err(e) => Err(e),
         }
@@ -110,7 +107,7 @@ impl TaskManagerTrait for TaskManager {
         if is_valid {
             return Err(error_invalid_input_str(
                 FILE_NAME,
-                "`description` is not identical",
+                "DESCRIPTION is not identical",
             ));
         }
         update_task.updated_at = Local::now().into();
@@ -124,7 +121,7 @@ impl TaskManagerTrait for TaskManager {
     fn delete(&mut self, id: i32) -> Result<(), Error> {
         let task = find_by_id(&self.list, id);
         if !task.is_ok() {
-            return Err(error_not_found_input::<&str>(FILE_NAME, task.unwrap_err()));
+            return Err(task.unwrap_err());
         }
 
         let _ = self.file.delete(id);
@@ -145,15 +142,15 @@ fn get_next_id(list: &Vec<Task>) -> i32 {
     max_id + 1
 }
 
-pub fn find_by_id(list: &Vec<Task>, id: i32) -> Result<Task, &str> {
+pub fn find_by_id(list: &Vec<Task>, id: i32) -> Result<Task, Error> {
     let task = list.iter().find(|&task| task.id == id).cloned();
     match task {
         Some(task) => Ok(task),
-        None => Err("`id` must be a number"),
+        None => Err(error_invalid_input::<String>(FILE_NAME, "ID is not found")),
     }
 }
 
-pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task, &'static str> {
+pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task, Error> {
     let next_id = get_next_id(list);
     // Convert UTC to Jakarta time
     let now_created_at: DateTime<Local> = Local::now();
@@ -169,7 +166,7 @@ pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task,
 
     match add_task.is_validation() {
         Ok(_) => Ok(add_task),
-        Err(e) => Err(e),
+        Err(e) => Err(error_invalid_input::<String>(FILE_NAME, e)),
     }
 }
 

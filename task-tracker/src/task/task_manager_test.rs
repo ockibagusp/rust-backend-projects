@@ -37,17 +37,27 @@ fn test_task_manager_trait_new() {
 
 const TASK_DESC: &str = "test buy one";
 const UPDATED_DESC: &str = "test updated description";
-const ERR_ID_NEGATIVE: &str = "`id` is negative";
-const ERR_DESC_EMPTY: &str =
-    "`description` is empty or too short(min. 2 chars) or too long(max. 50 chars)";
-const ERR_NOT_FOUND: &str = "`id` is not found";
+const ERR_DESC_EMPTY: &str = "Error { code: \"TASK_MANAGER\", kind: InvalidInput, message: \"DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)\" }";
+const ERR_NOT_FOUND: &str =
+    "Error { code: \"TASK_MANAGER\", kind: InvalidInput, message: \"ID is not found\" }";
 
 #[test]
 fn test_add_in_get_next_add_task_should_return_task_with_error() {
     let list = vec![];
+
+    // description with 1 character
     let result = get_next_task_of_add(&list, "f");
     assert!(result.is_err());
-    let err_task = result.unwrap_err();
+    let err_task = result.unwrap_err().to_string();
+    assert_eq!(err_task, ERR_DESC_EMPTY);
+
+    // description with more than 50 characters
+    let result = get_next_task_of_add(
+        &list,
+        "foo bar baz qux quux corge grault garply waldo fred plugh xyzzy thud",
+    );
+    assert!(result.is_err());
+    let err_task = result.unwrap_err().to_string();
     assert_eq!(err_task, ERR_DESC_EMPTY);
 }
 
@@ -83,7 +93,7 @@ fn test_find_by_id_should_return_task_with_error() {
     let list = vec![];
     let result = find_by_id(&list, -1);
     assert!(result.is_err());
-    let err_task = result.unwrap_err();
+    let err_task = result.unwrap_err().to_string();
     assert_eq!(err_task, ERR_NOT_FOUND);
 }
 
@@ -144,7 +154,7 @@ fn test_mock_update_description_should_success() {
 fn test_update_in_find_by_id_should_with_error() {
     let err = task_test::setup_task(-1, "f");
     let result = err.is_validation();
-    assert_eq!(result.unwrap_err(), ERR_ID_NEGATIVE);
+    assert_eq!(result.unwrap_err(), "ID is negative");
 }
 
 #[test]
