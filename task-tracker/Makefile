@@ -13,5 +13,12 @@ build:
 
 # create a symbolic link
 	ln -sf target/debug/$(link) $(link_after)
+
+js-test:
+	@cargo build
+	@ln -sf target/debug/$(link) $(link_after)
+	@ENV_JSON=tasks_test.json node shell_test.js
+	
+	@rm -f tasks_test.json
 	
 

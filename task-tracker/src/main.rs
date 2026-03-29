@@ -7,11 +7,15 @@ mod mark;
 mod task;
 
 use crate::cmd::cmd::{Command, CommandTrait};
+use dotenv::dotenv;
+use std::env;
 
 fn main() {
-    let mut main = Command::new("tasks.json");
-    let args: Vec<String> = std::env::args().collect();
-    let result = main.run(&args);
+    dotenv().ok();
+    let env_json = env::var("ENV_JSON").expect("ENV_JSON not found");
+
+    let mut cmd = Command::new(env_json.leak());
+    let result = cmd.run();
     match result {
         Ok(data) => {
             println!("{}", data);
