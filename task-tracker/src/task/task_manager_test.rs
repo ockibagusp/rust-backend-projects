@@ -164,20 +164,23 @@ fn test_update_in_find_by_id_should_with_correct() {
     assert_eq!(result.unwrap(), ());
 }
 
+const DESCRIPTION: i32 = 0;
 #[test]
-fn test_update_in_is_not_similar_to_task_of_description_update_should_error() {
+fn test_update_in_is_not_similar_to_task_of_description_or_status_update_should_error() {
     let list = vec![task_test::setup_task(1, TASK_DESC)];
     let mut task = task_test::setup_task(1, TASK_DESC);
-    let bool_false = is_not_similar_to_task_of_description_update(&list, 1, &mut task);
-    assert_eq!(bool_false, false)
+    let invalid =
+        is_valid_to_task_of_description_or_status_update(&list, 1, &mut task, DESCRIPTION);
+    assert!(invalid)
 }
 
 #[test]
-fn test_update_in_is_not_similar_to_task_of_description_update_should_correct() {
+fn test_update_in_is_not_similar_to_task_of_description_or_status_update_should_correct() {
     let list = vec![task_test::setup_task(1, TASK_DESC)];
-    let mut task_err = task_test::setup_task(1, UPDATED_DESC);
-    let bool_true = is_not_similar_to_task_of_description_update(&list, 1, &mut task_err);
-    assert!(bool_true)
+    let mut task = task_test::setup_task(1, UPDATED_DESC);
+    let invalid =
+        is_valid_to_task_of_description_or_status_update(&list, 1, &mut task, DESCRIPTION);
+    assert_eq!(invalid, false)
 }
 
 #[test]
@@ -187,9 +190,9 @@ fn test_mock_update_should_fail() {
     let mut update_task_fail = task_test::setup_task(1, "f");
     // is empty description
     mock.expect_updates()
-        .with(eq(1), eq(update_task_fail.clone()))
-        .returning(|_, _| Err(Error::new(InvalidInput, ERR_DESC_EMPTY)));
-    let result = mock.updates(1, &mut update_task_fail);
+        .with(eq(1), eq(update_task_fail.clone()), eq(DESCRIPTION))
+        .returning(|_, _, _| Err(Error::new(InvalidInput, ERR_DESC_EMPTY)));
+    let result = mock.updates(1, &mut update_task_fail, DESCRIPTION);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert_eq!(err.kind(), std::io::ErrorKind::InvalidInput);
@@ -204,9 +207,9 @@ fn test_mock_update_should_success() {
     let mut update_task = task_test::setup_task_status(1, TASK_DESC, "done");
     let value = update_task.clone();
     mock.expect_updates()
-        .with(eq(1), eq(update_task.clone()))
-        .returning(move |_, _| Ok(value.clone()));
-    let result = mock.updates(1, &mut update_task);
+        .with(eq(1), eq(update_task.clone()), eq(DESCRIPTION))
+        .returning(move |_, _, _| Ok(value.clone()));
+    let result = mock.updates(1, &mut update_task, DESCRIPTION);
     assert!(result.is_ok());
     let task = result.unwrap();
     assert_eq!(task.id, 1);

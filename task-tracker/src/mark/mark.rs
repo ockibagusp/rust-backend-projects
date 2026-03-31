@@ -1,9 +1,8 @@
 use crate::error::{error_invalid_input, error_not_found_input};
 use crate::task::task::{Task, VALID_STATUSES};
-use crate::task::task_manager::{TaskManager, TaskManagerTrait};
+use crate::task::task_manager::{STATUS, TaskManager, TaskManagerTrait};
 use mockall::*;
 use std::io::Error;
-
 const FILE_NAME: &str = "MARK";
 
 #[derive(PartialEq, Debug)]
@@ -36,7 +35,6 @@ impl MarkTrait for Mark {
     fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error> {
         let mut task_to_update = find_by_id(&self.task_manager.list, id)?;
 
-        ///???
         if task_to_update.status == VALID_STATUSES[1] {
             return Err(error_invalid_input::<&str>(
                 FILE_NAME,
@@ -46,7 +44,7 @@ impl MarkTrait for Mark {
 
         task_to_update.status = VALID_STATUSES[1].to_string();
 
-        let _ = &self.task_manager.updates(id, &mut task_to_update);
+        let _ = &self.task_manager.updates(id, &mut task_to_update, STATUS);
         Ok(task_to_update)
     }
 
@@ -62,7 +60,7 @@ impl MarkTrait for Mark {
 
         task_to_update.status = VALID_STATUSES[2].to_string();
 
-        let _ = &self.task_manager.updates(id, &mut task_to_update);
+        let _ = &self.task_manager.updates(id, &mut task_to_update, STATUS);
         Ok(task_to_update)
     }
 }

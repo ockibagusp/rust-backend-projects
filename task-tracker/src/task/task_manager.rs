@@ -31,7 +31,8 @@ pub trait TaskManagerTrait {
     // some operations with CRUD
     fn add(&mut self, input: &str) -> Result<Task, Error>;
     fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error>;
-    fn updates(&mut self, id: i32, update_task: &mut Task) -> Result<Task, Error>;
+    fn updates(&mut self, id: i32, update_task: &mut Task, desc_status: i32)
+    -> Result<Task, Error>;
     fn delete(&mut self, id: i32) -> Result<(), Error>;
 }
 
@@ -91,23 +92,33 @@ impl TaskManagerTrait for TaskManager {
         // task_to_update.description = description.to_string();
         task.description = description.to_string();
 
-        match self.updates(id, &mut task) {
+        match self.updates(id, &mut task, DESCRIPTION) {
             Ok(updated_task) => Ok(updated_task),
             Err(e) => Err(e),
         }
     }
 
-    fn updates(&mut self, id: i32, update_task: &mut Task) -> Result<Task, Error> {
+    fn updates(
+        &mut self,
+        id: i32,
+        update_task: &mut Task,
+        desc_status: i32,
+    ) -> Result<Task, Error> {
         let err = update_task.is_validation();
         if let Err(e) = err {
             return Err(error_invalid_input::<String>(FILE_NAME, e));
         }
 
-        let is_valid = is_not_similar_to_task_of_description_update(&self.list, id, update_task);
+        let is_valid = is_valid_to_task_of_description_or_status_update(
+            &self.list,
+            id,
+            update_task,
+            desc_status,
+        );
         if is_valid {
             return Err(error_invalid_input_str(
                 FILE_NAME,
-                "DESCRIPTION is not identical",
+                "DESCRIPTION or STATUS is not identical",
             ));
         }
         update_task.updated_at = Local::now().into();
@@ -170,14 +181,35 @@ pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task,
     }
 }
 
-pub fn is_not_similar_to_task_of_description_update(
+type TaskI32 = i32;
+pub const DESCRIPTION: TaskI32 = 0;
+pub const STATUS: TaskI32 = 1;
+pub fn is_valid_to_task_of_description_or_status_update(
     list: &Vec<Task>,
     id: i32,
-    update_task: &mut Task,
+    update_task: &Task,
+    desc_status: TaskI32,
 ) -> bool {
     let old_task = find_by_id(list, id).unwrap();
-    if old_task.description == update_task.description {
-        return false;
+
+    match desc_status {
+        DESCRIPTION => {
+            if old_task.description == update_task.description {
+                return true;
+            }
+        }
+        STATUS => {
+            if old_task.status == update_task.status {
+                return true;
+            }
+        }
+        _ => {}
     }
-    true
+    // if old_task.description == update_task.description {
+    //     return true;
+    // }
+    // if old_task.status == update_task.status {
+    //     return true;
+    // }
+    false
 }
