@@ -6,16 +6,19 @@ var test_cases = [
      */
     // error: description with 1 character
     {
+        name: 'add command with invalid description (1 character) should fail',
         command: './task-cli add "f"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }\n`
+        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
     },
     // error: description with 51 characters
     {
+        name: 'add command with invalid description (51 characters) should fail',
         command: './task-cli add "foo bar baz qux quux corge grault garply waldo fred plugh xyzzy thud"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }\n`
+        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
     },
     // success: valid description
     {
+        name: 'add command with valid description should succeed',
         command: './task-cli add "This is a valid task description 3"',
         expected: `Add task
 ------------------
@@ -27,32 +30,44 @@ ID: 3
      * Test cases for update command
      */
     {
+        name: 'update command with missing arguments should fail',
         command: './task-cli update -1 "f"',
         expected: 'Usage: task-cli update <ID> <DESCRIPTION>'
     },
     {
+        name: 'update command with invalid description (1 character) should fail',
         command: './task-cli update 1 "f"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }\n`
+        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
     },
     {
+        name: 'update command with invalid description (51 characters) should fail',
         command: './task-cli update 1 "foo bar baz qux quux corge grault garply waldo fred plugh xyzzy thud"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }\n`
+        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
     },
     {
-        command: './task-cli update 1 "This is an updated task description"',
+        name: 'update command with valid description should succeed',
+        command: './task-cli update 1 "This is an updated task description 1"',
         expected: `Update task
 ------------------
 ID: 1
 ----- Description: This is an updated task description 1`
     },
+    // update with the same description and status should fail
+    {
+        name: 'update command with identical description and status should fail',
+        command: './task-cli update 1 "This is an updated task description 1"',
+        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION or STATUS is not identical" }`
+    },
     /**
      * Test cases for delete command
      */
     {
-        command: './task-cli delete -1',
+        name: 'delete command with missing argument should fail',
+        command: './task-cli delete',
         expected: `Usage: task-cli delete <ID>`
     },
     {
+        name: 'delete command with valid ID should succeed',
         command: './task-cli delete 3',
         expected: `Delete task`
     },
@@ -61,18 +76,36 @@ ID: 1
      * Test cases for mark command
      */
     {
-        command: './task-cli mark-in-progress -1',
+        name: 'mark-in-progress command with missing argument should fail',
+        command: './task-cli mark-in-progress',
         expected: `Usage: task-cli mark-in-progress <ID>`
     },
+    // mark in progress with ID: 99, it should have failed
     {
+        name: 'mark-in-progress command with invalid ID should fail',
+        command: './task-cli mark-in-progress 99',
+        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION or STATUS is not identical" }`
+    },
+    // mark in progress with ID: 1, it should have failed
+    {
+        name: 'mark-in-progress command with valid ID should succeed',
         command: './task-cli mark-in-progress 1',
         expected: `Mark in progress`
     },
     {
-        command: './task-cli mark-done -1',
+        name: 'mark-done command with missing argument should fail',
+        command: './task-cli mark-done',
         expected: `Usage: task-cli mark-done <ID>`
     },
+    // mark done with ID: 99, it should have failed
     {
+        name: 'mark-done command with invalid ID should fail',
+        command: './task-cli mark-done 99',
+        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION or STATUS is not identical" }`
+    },
+    // mark done with ID: 1, it should have success
+    {
+        name: 'mark-done command with valid ID should succeed',
         command: './task-cli mark-done 2',
         expected: `Mark done`
     },
@@ -80,26 +113,30 @@ ID: 1
      * Test cases for list command
      */
     {
+        name: 'list command with no arguments should succeed',
         command: './task-cli list',
         expected: `All Lists
 ------------------
 ID: 1
------ Description: This is a valid task description 1`
+----- Description: This is an updated task description 1`
     },
     {
+        name: 'list command with invalid status should fail',
         command: './task-cli list todo',
         expected: `Todo Lists
 ------------------
 No lists found.`
     },
     {
+        name: 'list command with in-progress status should succeed',
         command: './task-cli list in-progress',
         expected: `In Progress Lists
 ------------------
 ID: 1
------ Description: This is a valid task description 1`
+----- Description: This is an updated task description 1`
     },
     {
+        name: 'list command with done status should succeed',
         command: './task-cli list done',
         expected: `Done Lists
 ------------------
@@ -111,24 +148,19 @@ ID: 2
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 async function runTests() {
     // repeat two more times
-    var before_test_cases = [
-        'This is a valid task description 1',
-        'This is a valid task description 2'
-    ];
-    for (const command of before_test_cases) {
-        exec(`./task-cli add "${command}"`, (error, stdout, stderr) => {
+    for (var i = 0; i < 2; i++) {
+        var command = `./task-cli add "This is a valid task description ${i + 1}"`;
+        exec(command, (error, stdout, stderr) => {
             process.stdout.write(`Running: ${command}\n`);
-            if (!stdout.includes('Add task')) {
-                console.info("\x1b[41m%s\x1b[0m", 'Test passed');
-            }
         });
-        await sleep(2000); // wait for 2 seconds before running the next command
+        await sleep(1500); // wait for 1.5 seconds before running the next command
     }
     console.log('-------------------');
 
     var total = 0;
-    for (const { command, expected } of test_cases) {
+    for (const { name, command, expected } of test_cases) {
         exec(command, (error, stdout, stderr) => {
+            process.stdout.write(`Name: ${name}\n`);
             process.stdout.write(`Running: ${command}\n`);
             var output = error || stderr || stdout;
             if (output) {
