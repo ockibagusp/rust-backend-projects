@@ -84,7 +84,7 @@ ID: 1
     {
         name: 'mark-in-progress command with invalid ID should fail',
         command: './task-cli mark-in-progress 99',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION or STATUS is not identical" }`
+        expected: `Error { code: "MARK", kind: NotFound, message: "ID is not found" }`
     },
     // mark in progress with ID: 1, it should have failed
     {
@@ -101,7 +101,7 @@ ID: 1
     {
         name: 'mark-done command with invalid ID should fail',
         command: './task-cli mark-done 99',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION or STATUS is not identical" }`
+        expected: `Error { code: "MARK", kind: NotFound, message: "ID is not found" }`
     },
     // mark done with ID: 1, it should have success
     {

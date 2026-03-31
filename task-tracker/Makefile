@@ -15,8 +15,7 @@ build:
 	ln -sf target/debug/$(link) $(link_after)
 
 js-test:
-	@cargo build
-	@ln -sf target/debug/$(link) $(link_after)
+	@make build
 	@ENV_JSON=tasks_test.json node shell_test.js
 	
 	@rm -f tasks_test.json
