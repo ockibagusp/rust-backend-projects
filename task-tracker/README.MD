@@ -2,10 +2,6 @@
 
 Task CLI
 
-## Build
-
-`$ make build`
-
 ## Requirements
 
 The application should run from the command line, accept user actions and inputs as arguments, and store the tasks in a JSON file. The user should be able to:
@@ -111,6 +107,10 @@ The list of commands and their usage is given below:
 
 ```
 
-## Sell Test Javascript
+## Build
+
+`$ make build`
+
+## Shell Test Javascript
 
 `$ make js-test`
