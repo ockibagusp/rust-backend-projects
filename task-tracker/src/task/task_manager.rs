@@ -191,25 +191,11 @@ pub fn is_valid_to_task_of_description_or_status_update(
     desc_status: TaskI32,
 ) -> bool {
     let old_task = find_by_id(list, id).unwrap();
-
-    match desc_status {
-        DESCRIPTION => {
-            if old_task.description == update_task.description {
-                return true;
-            }
-        }
-        STATUS => {
-            if old_task.status == update_task.status {
-                return true;
-            }
-        }
-        _ => {}
+    if desc_status == DESCRIPTION && old_task.description == update_task.description {
+        return true;
     }
-    // if old_task.description == update_task.description {
-    //     return true;
-    // }
-    // if old_task.status == update_task.status {
-    //     return true;
-    // }
+    if desc_status == STATUS && old_task.status == update_task.status {
+        return true;
+    }
     false
 }
