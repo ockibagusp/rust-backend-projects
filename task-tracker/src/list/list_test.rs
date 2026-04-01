@@ -1,7 +1,6 @@
 use crate::list::list::{ListManagerTrait, MockListManagerTrait};
 use crate::task::task::VALID_STATUSES;
 use crate::task::task_test::{setup_task, setup_task_status};
-use mockall::predicate::*;
 
 #[test]
 // func. `index` is the same as (equals) `list`
