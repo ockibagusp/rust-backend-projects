@@ -1,7 +1,6 @@
 mod cmd;
 mod error;
 mod file;
-mod help;
 mod list;
 mod mark;
 mod task;

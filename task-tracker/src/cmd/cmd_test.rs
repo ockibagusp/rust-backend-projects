@@ -48,10 +48,24 @@
 // ------------------------------------------------
 mod tests {
     use crate::cmd::cmd::Cli;
+    use crate::cmd::cmd::Commands;
+    use clap::Parser;
 
     #[test]
     fn verify_cli() {
         use clap::CommandFactory;
         Cli::command().debug_assert();
+    }
+
+    #[test]
+    fn test_parse_valid_args() {
+        // The first element in the iterator is typically the program name
+        let args = vec!["./task-cli", "mark-in-progress", "1"];
+        let cli = Cli::try_parse_from(args).expect("Failed to parse arguments");
+
+        match cli.commands {
+            Commands::MarkInProgress { id } => assert_eq!(id, 1),
+            _ => panic!("Expected MarkInProgress command"),
+        }
     }
 }

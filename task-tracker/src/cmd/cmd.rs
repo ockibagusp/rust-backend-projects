@@ -2,7 +2,7 @@ use chrono::{DateTime, FixedOffset};
 use clap::{Parser, Subcommand};
 use mockall::*;
 
-use crate::error::{error_kind_aborted, error_kind_refused};
+use crate::error::error_kind_aborted;
 use crate::list::list::{ListManager, ListManagerTrait};
 use crate::mark::mark::{Mark, MarkTrait};
 use crate::task::task::Task;
@@ -12,14 +12,14 @@ use std::io::Error;
 
 const FILE_NAME: &str = "COMMAND";
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, PartialEq)]
 #[command(name = "task-cli", about = "A simple task management CLI application")]
 pub struct Cli {
     #[command(subcommand)]
-    commands: Commands,
+    pub commands: Commands,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, PartialEq)]
 pub enum Commands {
     List { status: Option<String> },
 
@@ -76,7 +76,7 @@ impl CommandTrait for Command {
             Commands::Add { description } => {
                 let mut task_manager = TaskManager::new(self.file_name);
                 match task_manager.add(&description) {
-                    Ok(task) => return Ok(open_task_title_str("Add task", task)),
+                    Ok(task) => Ok(open_task_title_str("Add task", task)),
                     Err(e) => Err(e),
                 }
             }
@@ -105,25 +105,15 @@ impl CommandTrait for Command {
             Commands::MarkInProgress { id } => {
                 let mut mark = Mark::new(self.file_name);
                 match mark.mark_in_progress(*id as i32) {
-                    Ok(task) => return Ok(open_task_title_str("Mark in progress", task)),
-                    Err(e) => {
-                        return Err(error_kind_refused::<&str>(
-                            FILE_NAME,
-                            &format!("Error marking task as in progress: {}", e),
-                        ));
-                    }
+                    Ok(task) => Ok(open_task_title_str("Mark in progress", task)),
+                    Err(e) => Err(e),
                 }
             }
             Commands::MarkDone { id } => {
                 let mut mark = Mark::new(self.file_name);
                 match mark.mark_done(*id as i32) {
-                    Ok(task) => return Ok(open_task_title_str("Mark done", task)),
-                    Err(e) => {
-                        return Err(error_kind_refused::<&str>(
-                            FILE_NAME,
-                            &format!("Error marking task as done: {}", e),
-                        ));
-                    }
+                    Ok(task) => Ok(open_task_title_str("Mark done", task)),
+                    Err(e) => Err(e),
                 }
             }
             /*
