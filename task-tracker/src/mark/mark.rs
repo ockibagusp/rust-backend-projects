@@ -43,8 +43,11 @@ impl MarkTrait for Mark {
         }
 
         task_to_update.status = VALID_STATUSES[1].to_string();
-
-        let _ = &self.task_manager.updates(id, &mut task_to_update, STATUS);
+        let _ = self.task_manager.updates(id, &mut task_to_update, STATUS)?; // ? operator
+        // if let Err(e) = self.task_manager.updates(id, &mut task_to_update) {
+        //     return Err(e);
+        // }
+        // // link: https://doc.rust-lang.org/reference/expressions/operator-expr.html#r-expr.try
         Ok(task_to_update)
     }
 
@@ -60,7 +63,10 @@ impl MarkTrait for Mark {
 
         task_to_update.status = VALID_STATUSES[2].to_string();
 
-        let _ = &self.task_manager.updates(id, &mut task_to_update, STATUS);
-        Ok(task_to_update)
+        let result = self.task_manager.updates(id, &mut task_to_update, STATUS);
+        match result {
+            Err(e) => Err(e),
+            Ok(_) => Ok(task_to_update),
+        }
     }
 }

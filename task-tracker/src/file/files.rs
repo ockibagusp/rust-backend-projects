@@ -85,7 +85,7 @@ impl File {
 
     pub fn add(&self, add_task: &Task) -> () {
         if let Err(is_valid) = add_task.is_validation() {
-            // TODO: change to proper str or error type later
+            // change to proper str or error type later
             panic!("{}", is_valid.to_string());
         }
 
@@ -156,7 +156,7 @@ impl File {
 #[cfg(test)]
 pub mod tests {
     use super::{File, Task, fs};
-    use crate::task::task_test::setup_task;
+    use crate::task::task_test::{setup_task, setup_task_status};
     use std::sync::{Arc, Mutex};
 
     fn test_start_file(file_name: Option<&str>) -> &str {
@@ -300,7 +300,7 @@ pub mod tests {
         test_remove_file(test_file.name());
 
         // task id -1 == 1 should fail update
-        let update_fail = test_file.update(-1, &setup_task(1, "fail update"));
+        let update_fail = test_file.update(-1, &mut setup_task(1, "fail update"));
         // !!! This should panic
         assert_eq!(update_fail, ());
     }
@@ -328,7 +328,7 @@ pub mod tests {
         assert_eq!(one_task[0].id, 1);
         assert_eq!(one_task[0].description, "Buy cook dinner");
 
-        let _update = test_file.update(1, &setup_task(1, "Buy a pizza"));
+        let _ = test_file.update(1, &mut setup_task_status(1, "Buy a pizza", "in-progress"));
         let one_task_updated = test_file.list();
         assert_eq!(one_task_updated.len(), 1);
         assert_eq!(one_task_updated[0].id, 1);
