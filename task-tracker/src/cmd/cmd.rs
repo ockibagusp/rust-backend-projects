@@ -1,11 +1,10 @@
-use chrono::{DateTime, FixedOffset};
 use clap::{Parser, Subcommand};
 use mockall::*;
 
+use crate::cmd::cmd_printing::{open_task_list_for_title_str, open_task_title_str};
 use crate::error::error_kind_aborted;
 use crate::list::list::{ListManager, ListManagerTrait};
 use crate::mark::mark::{Mark, MarkTrait};
-use crate::task::task::Task;
 use crate::task::task_manager::{TaskManager, TaskManagerTrait};
 use core::result::Result;
 use std::io::Error;
@@ -147,50 +146,4 @@ impl CommandTrait for Command {
             }
         }
     }
-}
-
-fn get_datetimes_to_string(date_time: &DateTime<FixedOffset>) -> String {
-    return date_time.format("%d-%m-%Y %H:%M:%S").to_string();
-}
-
-fn open_task_str(task: &Task) -> String {
-    let task_str: Vec<String> = vec![
-        format!("ID: {}", task.id),
-        format!("----- Description: {}", task.description),
-        format!("----- Status: {}", task.status),
-        format!(
-            "----- Created At: {}",
-            get_datetimes_to_string(&task.created_at)
-        ),
-        format!(
-            "----- Updated At: {}",
-            get_datetimes_to_string(&task.updated_at)
-        ),
-    ];
-
-    return task_str.join("\n");
-}
-
-fn open_task_title_str(title: &str, task: Task) -> String {
-    let task_str: Vec<String> = vec![
-        String::from(title),
-        String::from("------------------"),
-        open_task_str(&task),
-    ];
-
-    return task_str.join("\n");
-}
-
-fn open_task_list_for_title_str(title: &str, list: Vec<Task>) -> String {
-    let mut list_str: Vec<String> = vec![String::from(title), String::from("------------------")];
-    if list.is_empty() {
-        list_str.push(String::from("No lists found."));
-    } else {
-        for task in list {
-            list_str.push(open_task_str(&task));
-        }
-        list_str.push(String::from("++++++++++++++++++"));
-    }
-
-    return list_str.join("\n");
 }
