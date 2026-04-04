@@ -21,7 +21,6 @@ pub struct ListManager {
 #[automock]
 pub trait ListManagerTrait {
     fn new(file_name: &'static str) -> Self;
-    fn get_status_tasks(&self, status: &str) -> Vec<Task>;
     fn index(&self) -> Vec<Task>;
     fn todo(&self) -> Vec<Task>;
     fn in_progress(&self) -> Vec<Task>;
@@ -52,24 +51,24 @@ impl ListManagerTrait for ListManager {
     fn index(&self) -> Vec<Task> {
         return self.list.clone();
     }
-    fn get_status_tasks(&self, status: &str) -> Vec<Task> {
-        return self
-            .list
-            .iter()
-            .filter(|&task| task.status == status)
-            .cloned()
-            .collect();
-    }
     // Mark task to 'todo' status
     fn todo(&self) -> Vec<Task> {
-        return self.get_status_tasks(VALID_STATUSES[0]);
+        return get_status_tasks(&self.list, VALID_STATUSES[0]);
     }
     // Mark task to 'in-progress' status
     fn in_progress(&self) -> Vec<Task> {
-        return self.get_status_tasks(VALID_STATUSES[1]);
+        return get_status_tasks(&self.list, VALID_STATUSES[1]);
     }
     // Mark task to 'done' status
     fn done(&self) -> Vec<Task> {
-        return self.get_status_tasks(VALID_STATUSES[2]);
+        return get_status_tasks(&self.list, VALID_STATUSES[2]);
     }
+}
+
+fn get_status_tasks(list: &Vec<Task>, status: &str) -> Vec<Task> {
+    return list
+        .iter()
+        .filter(|&task| task.status == status)
+        .cloned()
+        .collect();
 }
