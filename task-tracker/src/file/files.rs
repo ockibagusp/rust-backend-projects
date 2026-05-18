@@ -13,6 +13,16 @@ pub struct File {
     json_str: &'static str,
 }
 
+// specifics of list function for testing purposes
+// IMPORTANT: the panic!
+//
+// parameters methods:
+// - tasks_string: the string representation of the tasks or default("" or "[]"), which is expected to be in JSON format
+fn specifics_of_list(tasks_string: &str) -> Vec<Task> {
+    let tasks = serde_json::from_str(tasks_string).unwrap_or_default();
+    tasks
+}
+
 // specifics of add function for testing purposes
 // IMPORTANT: the panic! for example: `Task` object should no longer be validated
 //
@@ -95,9 +105,7 @@ impl File {
     pub fn list(&self) -> Vec<Task> {
         let tasks_string = self.tasks_str();
 
-        // You probably want to deserialize tasks_string into Vec<Task>
-        let tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap();
-        tasks
+        specifics_of_list(&tasks_string)
     }
 
     // IMPORTANT: not an error, for example: `Task` object should no longer be validated
@@ -161,14 +169,23 @@ pub mod tests {
     #[test]
     fn test_json_add_fail() {
         let got: Vec<super::Task> = vec![];
-        let want = specifics_of_add("[]", &setup_task(1, "Buy cook dinner"));
+        let want = specifics_of_add("[]", &setup_task(1, "test add fail"));
         assert_ne!(got, want);
     }
 
     #[test]
     fn test_json_add_success() {
-        let got = vec![setup_task(1, "Buy cook dinner")];
-        let want = specifics_of_add("[]", &setup_task(1, "Buy cook dinner"));
+        let got = vec![setup_task(1, "test add success")];
+        let want = specifics_of_add("[]", &setup_task(1, "test add success"));
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    fn test_json_list() {
+        let got = vec![setup_task(1, "test list")];
+        let want = specifics_of_list(
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"test list\",\n    \"status\": \"todo\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]",
+        );
         assert_eq!(got, want);
     }
 
@@ -176,7 +193,7 @@ pub mod tests {
     // // $ cargo test -- --test-threads=1
     use super::{File, Task, fs};
     use crate::{
-        file::files::specifics_of_add,
+        file::files::{specifics_of_add, specifics_of_list},
         task::task_test::{setup_task, setup_task_status},
     };
     use std::{
