@@ -128,7 +128,7 @@ impl File {
                 .open(file_name)
                 .unwrap();
 
-            Self::to_file_by_json(file_name, vec![]);
+            Self::to_file_by_json(file_name, &vec![]);
         }
     }
 
@@ -149,8 +149,8 @@ impl File {
         tasks_string
     }
 
-    fn to_file_by_json(file_name: &'static str, tasks: Vec<Task>) -> () {
-        let json_string = serde_json::to_string_pretty(&tasks).unwrap();
+    fn to_file_by_json(file_name: &'static str, tasks: &Vec<Task>) -> () {
+        let json_string = serde_json::to_string_pretty(tasks).unwrap();
         if fs::write(file_name, json_string).is_err() {
             panic_invalid_input::<&str>(FILE_NAME, "failed to write to file");
         }
@@ -166,20 +166,27 @@ impl File {
     pub fn add(&self, add_task: &Task) -> Vec<Task> {
         let tasks_string = self.tasks_str();
 
-        return specifics_of_add(&tasks_string, add_task);
+        let task = specifics_of_add(&tasks_string, add_task);
+        Self::to_file_by_json(&self.json_str, &task);
+        task
     }
 
     // IMPORTANT: not an error, for example: `Task` object should no longer be validated
     pub fn update(&self, id: i32, update_task: &Task) -> Vec<Task> {
         let tasks_string = self.tasks_str();
 
-        specifics_of_update(tasks_string, id, update_task)
+        let tasks = specifics_of_update(tasks_string, id, update_task);
+        Self::to_file_by_json(&self.json_str, &tasks);
+        tasks
     }
 
+    // IMPORTANT: not an error, for example: `Task` object should no longer be validated
     pub fn delete(&self, id: i32) -> Vec<Task> {
         let tasks_string = self.tasks_str();
 
-        specifics_of_delete(tasks_string, id)
+        let tasks = specifics_of_delete(tasks_string, id);
+        Self::to_file_by_json(&self.json_str, &tasks);
+        tasks
     }
 }
 
