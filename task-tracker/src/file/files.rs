@@ -73,6 +73,27 @@ fn specifics_of_update(tasks_string: String, id: i32, update_task: &Task) -> Vec
     tasks
 }
 
+fn specifics_of_delete(tasks_string: String, id: i32) -> Vec<Task> {
+    // You probably want to deserialize tasks_string into Vec<Task>
+    let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
+    let mut index_to_remove = false;
+    for (i, task) in tasks.iter().enumerate() {
+        if task.id == id {
+            tasks.remove(i);
+            index_to_remove = true;
+            break;
+        }
+    }
+
+    if !index_to_remove {
+        panic_not_found_input::<String>(
+            FILE_NAME,
+            format!("failed to delete task: ID not found (id: {})", id),
+        );
+    }
+    tasks
+}
+
 // TDD
 // ✅ ❔ ❌
 // 1. buatlah struktur data File dengan method new, list, add, update, delete
@@ -158,24 +179,7 @@ impl File {
     pub fn delete(&self, id: i32) -> Vec<Task> {
         let tasks_string = self.tasks_str();
 
-        // You probably want to deserialize tasks_string into Vec<Task>
-        let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
-        let mut index_to_remove = false;
-        for (i, task) in tasks.iter().enumerate() {
-            if task.id == id {
-                tasks.remove(i);
-                index_to_remove = true;
-                break;
-            }
-        }
-
-        if !index_to_remove {
-            panic_not_found_input::<String>(
-                FILE_NAME,
-                format!("failed to delete task: ID not found (id: {})", id),
-            );
-        }
-        tasks
+        specifics_of_delete(tasks_string, id)
     }
 }
 
@@ -184,7 +188,10 @@ pub mod tests {
     // TODO: a single core test
     // // $ cargo test -- --test-threads=1
     use crate::{
-        file::files::{specifics_of_add, specifics_of_list},
+        file::files::{
+            specifics_of_add, specifics_of_delete, specifics_of_list, specifics_of_update,
+        },
+        task::task::Task,
         task::task_test::{setup_task, setup_task_status},
     };
 
@@ -214,8 +221,10 @@ pub mod tests {
     #[test]
     fn test_json_update_fail() {
         let got = vec![setup_task_status(1, "test update fail", "todo")];
-        let want = specifics_of_list(
-            "[\n  {\n    \"id\": 1,\n    \"description\": \"test update fail\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]",
+        let want = specifics_of_update(
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"test update fail\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_owned(),
+            1,
+            &setup_task_status(1, "test update fail", "done"),
         );
         assert_ne!(got, want);
     }
@@ -223,8 +232,29 @@ pub mod tests {
     #[test]
     fn test_json_update_success() {
         let got = vec![setup_task_status(1, "test update success", "in-progress")];
-        let want = specifics_of_list(
-            "[\n  {\n    \"id\": 1,\n    \"description\": \"test update success\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]",
+        let want = specifics_of_update(
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"test update success\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_owned(),
+            1,
+            &setup_task_status(1, "test update success", "in-progress"),
+        );
+        assert_eq!(got, want);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_json_delete_fail() {
+        specifics_of_delete(
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"test delete fail\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_owned(),
+            2,
+        );
+    }
+
+    #[test]
+    fn test_json_delete_success() {
+        let got: Vec<Task> = vec![];
+        let want = specifics_of_delete(
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"test delete success\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_owned(),
+            1,
         );
         assert_eq!(got, want);
     }
