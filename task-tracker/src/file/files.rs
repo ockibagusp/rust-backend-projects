@@ -181,6 +181,13 @@ impl File {
 
 #[cfg(test)]
 pub mod tests {
+    // TODO: a single core test
+    // // $ cargo test -- --test-threads=1
+    use crate::{
+        file::files::{specifics_of_add, specifics_of_list},
+        task::task_test::{setup_task, setup_task_status},
+    };
+
     #[test]
     fn test_json_add_fail() {
         let got: Vec<super::Task> = vec![];
@@ -222,13 +229,6 @@ pub mod tests {
         assert_eq!(got, want);
     }
 
-    // TODO: a single core test
-    // // $ cargo test -- --test-threads=1
-    use super::{File, Task, fs};
-    use crate::{
-        file::files::{specifics_of_add, specifics_of_list},
-        task::task_test::{setup_task, setup_task_status},
-    };
     // use std::{
     //     sync::{Arc, Mutex},
     //     vec,
