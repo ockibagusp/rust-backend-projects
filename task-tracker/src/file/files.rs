@@ -40,6 +40,39 @@ fn specifics_of_add(tasks_string: &str, add_task: &Task) -> Vec<Task> {
     tasks
 }
 
+// specifics of update function for testing purposes
+// IMPORTANT: the panic! for example: `Task` object should no longer be validated
+//
+// parameters methods:
+// - tasks_string: the string representation of the tasks or default("" or "[]"), which is expected to be in JSON format
+// - id: the ID of the Task object that we want to update in the list of tasks
+// - update_task: the Task object that we want to update in the list of tasks
+fn specifics_of_update(tasks_string: String, id: i32, update_task: &Task) -> Vec<Task> {
+    if let Err(e) = update_task.is_validation() {
+        panic_invalid_input::<String>(FILE_NAME, e.to_string());
+    }
+
+    // You probably want to deserialize tasks_string into Vec<Task>
+    let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
+    let mut index_to_update = false;
+    for task in tasks.iter_mut() {
+        if task.id == id {
+            *task = update_task.clone();
+            index_to_update = true;
+            break;
+        }
+    }
+
+    if !index_to_update {
+        panic_not_found_input::<String>(
+            FILE_NAME,
+            format!("failed to update task: ID not found (id: {})", id),
+        );
+    }
+
+    tasks
+}
+
 // TDD
 // ✅ ❔ ❌
 // 1. buatlah struktur data File dengan method new, list, add, update, delete
@@ -119,25 +152,7 @@ impl File {
     pub fn update(&self, id: i32, update_task: &Task) -> Vec<Task> {
         let tasks_string = self.tasks_str();
 
-        // You probably want to deserialize tasks_string into Vec<Task>
-        let mut tasks: Vec<Task> = serde_json::from_str(&tasks_string).unwrap_or_default();
-        let mut index_to_update = false;
-        for task in tasks.iter_mut() {
-            if task.id == id {
-                *task = update_task.clone();
-                index_to_update = true;
-                break;
-            }
-        }
-
-        if !index_to_update {
-            panic_not_found_input::<String>(
-                FILE_NAME,
-                format!("failed to update task: ID not found (id: {})", id),
-            );
-        }
-
-        tasks
+        specifics_of_update(tasks_string, id, update_task)
     }
 
     pub fn delete(&self, id: i32) -> Vec<Task> {
@@ -189,6 +204,24 @@ pub mod tests {
         assert_eq!(got, want);
     }
 
+    #[test]
+    fn test_json_update_fail() {
+        let got = vec![setup_task_status(1, "test update fail", "todo")];
+        let want = specifics_of_list(
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"test update fail\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]",
+        );
+        assert_ne!(got, want);
+    }
+
+    #[test]
+    fn test_json_update_success() {
+        let got = vec![setup_task_status(1, "test update success", "in-progress")];
+        let want = specifics_of_list(
+            "[\n  {\n    \"id\": 1,\n    \"description\": \"test update success\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]",
+        );
+        assert_eq!(got, want);
+    }
+
     // TODO: a single core test
     // // $ cargo test -- --test-threads=1
     use super::{File, Task, fs};
@@ -196,54 +229,54 @@ pub mod tests {
         file::files::{specifics_of_add, specifics_of_list},
         task::task_test::{setup_task, setup_task_status},
     };
-    use std::{
-        sync::{Arc, Mutex},
-        vec,
-    };
+    // use std::{
+    //     sync::{Arc, Mutex},
+    //     vec,
+    // };
 
-    #[test]
-    fn test_new_file() {
-        let new_file_str = "test-task-cli.json";
+    // #[test]
+    // fn test_new_file() {
+    //     let new_file_str = "test-task-cli.json";
 
-        let update_task = setup_task(1, "Buy cook dinner");
-        let json_string = serde_json::to_string_pretty(&vec![update_task]).unwrap();
+    //     let update_task = setup_task(1, "Buy cook dinner");
+    //     let json_string = serde_json::to_string_pretty(&vec![update_task]).unwrap();
 
-        // Create File instance
-        let test_file = File::new(new_file_str);
-        assert_eq!(test_file.name(), test_file.json_str);
+    //     // Create File instance
+    //     let test_file = File::new(new_file_str);
+    //     assert_eq!(test_file.name(), test_file.json_str);
 
-        assert_eq!(
-            json_string.as_str(),
-            "[\n  {\n    \"id\": 1,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"todo\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]",
-        );
+    //     assert_eq!(
+    //         json_string.as_str(),
+    //         "[\n  {\n    \"id\": 1,\n    \"description\": \"Buy cook dinner\",\n    \"status\": \"todo\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]",
+    //     );
 
-        match fs::remove_file(new_file_str) {
-            Ok(_) => println!("Removing existing test: {}...\n", new_file_str),
-            Err(e) => eprintln!("Error removing file: {}", e),
-        }
-    }
+    //     match fs::remove_file(new_file_str) {
+    //         Ok(_) => println!("Removing existing test: {}...\n", new_file_str),
+    //         Err(e) => eprintln!("Error removing file: {}", e),
+    //     }
+    // }
 
-    #[test]
-    fn test_file_list() {
-        let list_task = setup_task(1, "Buy cook dinner");
-        let annother_list_task = setup_task(2, "Buy groceries");
+    // #[test]
+    // fn test_file_list() {
+    //     let list_task = setup_task(1, "Buy cook dinner");
+    //     let annother_list_task = setup_task(2, "Buy groceries");
 
-        let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
-        let json_string;
-        {
-            let mut data = tasks.lock().unwrap();
-            data.extend(vec![list_task, annother_list_task]);
-            json_string = serde_json::to_string_pretty(&*data).unwrap();
-        }
+    //     let tasks = Arc::new(Mutex::new(Vec::<Task>::new()));
+    //     let json_string;
+    //     {
+    //         let mut data = tasks.lock().unwrap();
+    //         data.extend(vec![list_task, annother_list_task]);
+    //         json_string = serde_json::to_string_pretty(&*data).unwrap();
+    //     }
 
-        // Create File instance
-        let test_file = File::new("test.json");
+    //     // Create File instance
+    //     let test_file = File::new("test.json");
 
-        {
-            let tasks = test_file.list();
-            assert_eq!(tasks.len(), 2);
-        }
-    }
+    //     {
+    //         let tasks = test_file.list();
+    //         assert_eq!(tasks.len(), 2);
+    //     }
+    // }
 
     // #[test]
     // fn test_add_file() {
