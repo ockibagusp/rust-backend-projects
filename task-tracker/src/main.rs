@@ -10,6 +10,7 @@ use dotenv::dotenv;
 use std::env;
 
 fn main() {
+    // TODO: move "ENV_JSON" to src/file.rs
     dotenv().ok();
     let env_json = env::var("ENV_JSON").expect("ENV_JSON not found");
 

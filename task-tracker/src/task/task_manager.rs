@@ -56,6 +56,7 @@ pub trait TaskManagerTrait {
 // 7. method `delete` untuk menghapus Task berdasarkan ID ✅
 // => 7. `delete` method to delete a Task by ID
 impl TaskManagerTrait for TaskManager {
+    // TODO: remove `file_name` as parameter
     fn new(file_name: &'static str) -> Self {
         let file = File::new(file_name);
         let list = file.list();
