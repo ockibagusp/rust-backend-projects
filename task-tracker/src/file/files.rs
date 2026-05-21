@@ -28,7 +28,7 @@ fn specifics_of_list(tasks_string: &str) -> Vec<Task> {
 //
 // parameters methods:
 // - tasks_string: the string representation of the tasks or default("" or "[]"), which is expected to be in JSON format
-// - add_task: the Task object that we want to add to the list of tasks
+// - add_task: the Task object that we want to add in the list of tasks
 fn specifics_of_add(tasks_string: &str, add_task: &Task) -> Vec<Task> {
     if let Err(e) = add_task.is_validation() {
         panic_invalid_input::<String>(FILE_NAME, e.to_string());
