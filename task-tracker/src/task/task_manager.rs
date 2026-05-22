@@ -26,7 +26,7 @@ pub struct TaskManager {
 
 #[automock]
 pub trait TaskManagerTrait {
-    fn new(file_name: &'static str) -> Self;
+    fn new() -> Self;
     // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> ();
     // some operations with CRUD
     fn add(&mut self, input: &str) -> Result<Task, Error>;
@@ -56,9 +56,8 @@ pub trait TaskManagerTrait {
 // 7. method `delete` untuk menghapus Task berdasarkan ID ✅
 // => 7. `delete` method to delete a Task by ID
 impl TaskManagerTrait for TaskManager {
-    // TODO: remove `file_name` as parameter
-    fn new(file_name: &'static str) -> Self {
-        let file = File::new(file_name);
+    fn new() -> Self {
+        let file = File::new();
         let list = file.list();
 
         Self { file, list }

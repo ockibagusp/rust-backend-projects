@@ -1,7 +1,9 @@
 use crate::file::files::File;
 use crate::task::task::{Task, VALID_STATUSES};
 
+use dotenv::dotenv;
 use mockall::automock;
+use std::env;
 
 // TDD
 // ✅ ❔ ❌
@@ -20,7 +22,7 @@ pub struct ListManager {
 // => 3.2. create the ListManagerTrait trait with methods new, index, todo, in_progress, done
 #[automock]
 pub trait ListManagerTrait {
-    fn new(file_name: &'static str) -> Self;
+    fn new() -> Self;
     fn index(&self) -> Vec<Task>;
     fn todo(&self) -> Vec<Task>;
     fn in_progress(&self) -> Vec<Task>;
@@ -43,8 +45,8 @@ pub trait ListManagerTrait {
 // 5. method `done` untuk mendapatkan task dengan status 'done' ✅
 // => 5. the `done` method to get tasks with 'done' status
 impl ListManagerTrait for ListManager {
-    fn new(file_name: &'static str) -> Self {
-        let file = File::new(file_name);
+    fn new() -> Self {
+        let file = File::new();
         ListManager { list: file.list() }
     }
     // Get all tasks list

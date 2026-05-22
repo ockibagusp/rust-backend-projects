@@ -12,7 +12,7 @@ pub struct Mark {
 
 #[automock]
 pub trait MarkTrait {
-    fn new(file_name: &'static str) -> Self;
+    fn new() -> Self;
     fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error>;
     fn mark_done(&mut self, id: i32) -> Result<Task, Error>;
 }
@@ -26,9 +26,9 @@ fn find_by_id(task_manager: &Vec<Task>, id: i32) -> Result<Task, Error> {
 }
 
 impl MarkTrait for Mark {
-    fn new(file_name: &'static str) -> Self {
+    fn new() -> Self {
         Mark {
-            task_manager: TaskManager::new(file_name),
+            task_manager: TaskManager::new(),
         }
     }
 

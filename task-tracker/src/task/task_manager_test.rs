@@ -29,7 +29,7 @@ use std::io::ErrorKind::InvalidInput;
 #[test]
 fn test_task_manager_trait_new() {
     let file_name = "test-task-cli.json";
-    let m = TaskManager::new(file_name);
+    let m = TaskManager::new();
     assert!(Some(m.file).is_some());
     assert_eq!(m.list, vec![]);
     fs::remove_file(file_name).unwrap();

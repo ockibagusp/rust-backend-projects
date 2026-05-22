@@ -35,15 +35,7 @@ pub enum Commands {
 // 3.1. buatlah struktur data Command
 // => 3.1. create the Command Data Structure
 // ------------------------------------------------
-// 1. buat sebuah field `task manager` bertipe objek `TaskManager`
-// => create the `task manager` field with an object type of `TaskManager`
-// 2. buat sebuah field `mark` dengan tipe objek `Mark`
-// => create the `mark` field with the `Mark` object type
-// 3. buat sebuah field `list manager` dengan tipe objek `ListManager`
-// => create the `list manager` field with the `List` object type
-pub struct Command {
-    file_name: &'static str,
-}
+pub struct Command {}
 
 // TDD
 // ✅ ❔ ❌
@@ -52,13 +44,13 @@ pub struct Command {
 // ------------------------------------------------
 #[automock]
 pub trait CommandTrait {
-    fn new(file_name: &'static str) -> Self;
+    fn new() -> Self;
     fn run(&mut self) -> Result<String, Error>;
 }
 
 impl CommandTrait for Command {
-    fn new(file_name: &'static str) -> Self {
-        Command { file_name }
+    fn new() -> Self {
+        Command {}
     }
 
     fn run(&mut self) -> Result<String, Error> {
@@ -73,21 +65,21 @@ impl CommandTrait for Command {
             // $ task-cli update <id> <description>
             // $ task-cli delete <id>
             Commands::Add { description } => {
-                let mut task_manager = TaskManager::new(self.file_name);
+                let mut task_manager = TaskManager::new();
                 match task_manager.add(&description) {
                     Ok(task) => Ok(open_task_title_str("Add task", task)),
                     Err(e) => Err(e),
                 }
             }
             Commands::Update { id, description } => {
-                let mut task_manager = TaskManager::new(self.file_name);
+                let mut task_manager = TaskManager::new();
                 match task_manager.update_description(*id as i32, &description) {
                     Ok(task) => Ok(open_task_title_str("Update task", task)),
                     Err(e) => Err(e),
                 }
             }
             Commands::Delete { id } => {
-                let mut task_manager = TaskManager::new(self.file_name);
+                let mut task_manager = TaskManager::new();
                 match task_manager.delete(*id as i32) {
                     Ok(_) => Ok(String::from("Delete task success")),
                     Err(e) => Err(error_kind_aborted::<&str>(
@@ -102,14 +94,14 @@ impl CommandTrait for Command {
             // -------------------------------
             // $ task-cli [mark-in-progress|mark-done] <id>
             Commands::MarkInProgress { id } => {
-                let mut mark = Mark::new(self.file_name);
+                let mut mark = Mark::new();
                 match mark.mark_in_progress(*id as i32) {
                     Ok(task) => Ok(open_task_title_str("Mark in progress", task)),
                     Err(e) => Err(e),
                 }
             }
             Commands::MarkDone { id } => {
-                let mut mark = Mark::new(self.file_name);
+                let mut mark = Mark::new();
                 match mark.mark_done(*id as i32) {
                     Ok(task) => Ok(open_task_title_str("Mark done", task)),
                     Err(e) => Err(e),
@@ -122,7 +114,7 @@ impl CommandTrait for Command {
             // $ task-cli list
             // $ task-cli list [todo|in-progress|done]
             Commands::List { status } => {
-                let list = ListManager::new(self.file_name);
+                let list = ListManager::new();
 
                 if *status == None {
                     let list_str = open_task_list_for_title_str("All Lists", list.index());

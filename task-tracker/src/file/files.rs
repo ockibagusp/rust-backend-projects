@@ -4,6 +4,8 @@ use crate::file::files_specifics::{
 };
 use crate::task::task::Task;
 
+use dotenv::dotenv;
+use std::env;
 use std::fs;
 use std::fs::{File as std_file, OpenOptions};
 use std::io::Read;
@@ -13,7 +15,7 @@ pub const FILE_NAME: &str = "FILE";
 #[allow(dead_code)]
 #[derive(PartialEq, Debug)]
 pub struct File {
-    json_str: &'static str,
+    json_str: String,
 }
 
 // TDD
@@ -33,16 +35,18 @@ pub struct File {
 // => 1.5. create a `delete` method to delete Tasks based on its ID
 #[allow(dead_code)]
 impl File {
-    pub fn new(json_str: &'static str) -> Self {
-        Self::new_open_options(json_str);
-        Self { json_str }
+    pub fn new() -> Self {
+        dotenv().ok();
+        let env_json = env::var("ENV_JSON").expect("ENV_JSON not found");
+        Self::new_open_options(&env_json);
+        Self { json_str: env_json }
     }
 
-    fn name(&self) -> &str {
+    fn name(&self) -> &String {
         &self.json_str
     }
 
-    fn new_open_options(file_name: &'static str) -> () {
+    fn new_open_options(file_name: &String) -> () {
         if !fs::metadata(file_name).is_ok() {
             let _ = OpenOptions::new()
                 .write(true)
@@ -55,7 +59,7 @@ impl File {
     }
 
     fn get_open_options(&self) -> std_file {
-        let file = OpenOptions::new().read(true).open(self.json_str);
+        let file = OpenOptions::new().read(true).open(&self.json_str);
         if file.is_err() {
             panic_not_found_input(FILE_NAME, "failed to open file");
         }
@@ -71,7 +75,7 @@ impl File {
         tasks_string
     }
 
-    fn to_file_by_json(file_name: &'static str, tasks: &Vec<Task>) -> () {
+    fn to_file_by_json(file_name: &String, tasks: &Vec<Task>) -> () {
         let json_string = serde_json::to_string_pretty(tasks).unwrap();
         if fs::write(file_name, json_string).is_err() {
             panic_invalid_input::<&str>(FILE_NAME, "failed to write to file");
