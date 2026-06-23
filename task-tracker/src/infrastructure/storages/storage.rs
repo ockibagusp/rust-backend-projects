@@ -5,10 +5,8 @@ use crate::infrastructure::storages::storage_specifics::{
 };
 
 use dotenv::dotenv;
-use std::env;
-use std::fs;
 use std::fs::{File as std_file, OpenOptions};
-use std::io::Read;
+use std::{env, fs, io::Read};
 
 pub const FILE_NAME: &str = "FILE";
 

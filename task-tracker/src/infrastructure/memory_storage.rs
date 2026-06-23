@@ -1,17 +1,11 @@
-use crate::application::list_use_cases::ListRepositoryTrait;
-use crate::application::mark_use_cases::FILE_NAME as MARK_FILE_NAME;
-use crate::application::mark_use_cases::MarkRepositoryTrait;
-use crate::application::task_manager_use_cases::TaskManagerRepositoryTrait;
-use crate::domain::task::Task;
-use crate::domain::task::TaskTrait;
-use crate::domain::task::VALID_STATUSES;
-use crate::error::error_invalid_input;
-use crate::error::error_invalid_input_str;
-use crate::error::error_not_found_input;
-use crate::infrastructure::storages::storage::FILE_NAME as STORAGE_FILE_NAME;
-use crate::infrastructure::storages::storage::StorageTrait;
-use chrono::DateTime;
-use chrono::Local;
+use crate::application::{
+    list_use_cases::ListRepositoryTrait, mark_use_cases::FILE_NAME as MARK_FILE_NAME,
+    mark_use_cases::MarkRepositoryTrait, task_manager_use_cases::TaskManagerRepositoryTrait,
+};
+use crate::domain::task::{Task, TaskTrait, VALID_STATUSES};
+use crate::error::{error_invalid_input, error_invalid_input_str, error_not_found_input};
+use crate::infrastructure::storages::storage::{FILE_NAME as STORAGE_FILE_NAME, StorageTrait};
+use chrono::{DateTime, Local};
 use std::io::Error;
 
 // Concrete mock database implementation

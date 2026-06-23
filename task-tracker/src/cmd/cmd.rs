@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use mockall::*;
 
-use crate::cmd::cmd_printing::open_task_list_for_title_str;
+use crate::cmd::cmd_printing::{open_task_list_for_title_str, open_task_title_str};
 use crate::infrastructure::{
     memory_storage,
     storages::storage::{Storage, StorageTrait},
@@ -9,14 +9,11 @@ use crate::infrastructure::{
 use core::result::Result;
 use std::io::Error;
 
-use crate::application::list_use_cases;
-use crate::application::mark_use_cases;
-use crate::application::task_manager_use_cases;
-use crate::cmd::cmd_printing::open_task_title_str;
+use crate::application::{list_use_cases, mark_use_cases, task_manager_use_cases};
 use crate::error::error_kind_aborted;
-use crate::presentation::mark_handler::CmdMarkHandler;
 use crate::presentation::{
-    list_handler::CmdListHandler, task_manager_handler::CmdTaskManagerHandler,
+    list_handler::CmdListHandler, mark_handler::CmdMarkHandler,
+    task_manager_handler::CmdTaskManagerHandler,
 };
 
 const FILE_NAME: &str = "COMMAND";

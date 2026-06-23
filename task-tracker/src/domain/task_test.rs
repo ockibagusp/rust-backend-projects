@@ -1,6 +1,4 @@
-// use mockall::mock;
-use crate::domain::task::VALID_STATUSES;
-use crate::domain::task::{MockTaskTrait, Task, TaskTrait};
+use crate::domain::task::{MockTaskTrait, Task, TaskTrait, VALID_STATUSES};
 use chrono::DateTime;
 
 pub fn setup_task(id: i32, desciption: &str) -> Task {

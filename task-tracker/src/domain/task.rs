@@ -1,8 +1,6 @@
-use chrono::DateTime;
-use chrono::prelude::FixedOffset;
+use chrono::{DateTime, prelude::FixedOffset};
 use core::result::Result;
-use mockall::automock;
-use mockall::predicate::*;
+use mockall::{automock, predicate::*};
 use serde::{Deserialize, Serialize};
 
 pub const VALID_STATUSES: [&str; 3] = ["todo", "in-progress", "done"];

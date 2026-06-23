@@ -1,5 +1,5 @@
 use crate::domain::task::{Task, TaskTrait, VALID_STATUSES};
-use crate::error::{error_invalid_input, error_invalid_input_str};
+use crate::error::error_invalid_input;
 use crate::infrastructure::storages::storage::StorageTrait;
 use chrono::{DateTime, Local};
 use core::result::Result;
