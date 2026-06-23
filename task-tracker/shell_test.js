@@ -168,7 +168,8 @@ async function runTests() {
                     console.info("\x1b[42m%s\x1b[0m", 'Test passed');
                     total += 1;
                 } else {
-                    console.log("\x1b[31m%s\x1b[0m", `output: ${output}`);
+                    console.log("\x1b[32m%s\x1b[0m", `expected  : ${expected}`);
+                    console.log("\x1b[31m%s\x1b[0m", `output    : ${output}`);
                     console.log("\x1b[41m%s\x1b[0m", 'Test failed');
                 }
                 return;
@@ -176,6 +177,10 @@ async function runTests() {
         });
         await sleep(1500); // wait for 1.5 seconds before running the next command
     }
-    process.stdout.write(`\nTotal tests passed: ${total}/${test_cases.length}\n`);
+    var logo_img = "❌";
+    if (total === test_cases.length) {
+        logo_img = "✅";
+    }
+    process.stdout.write(`\nTotal tests passed: ${total}/${test_cases.length} ${logo_img}\n`);
 }
 runTests();
