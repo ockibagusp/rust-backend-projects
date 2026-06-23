@@ -1,11 +1,5 @@
-mod cmd;
-mod error;
-mod file;
-mod list;
-mod mark;
-mod task;
-
 use crate::cmd::cmd::{Command, CommandTrait};
+use task_tracker::cmd;
 
 fn main() {
     let mut cmd = Command::new();

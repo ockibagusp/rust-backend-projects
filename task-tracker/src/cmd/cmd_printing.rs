@@ -1,4 +1,4 @@
-use crate::task::task::Task;
+use crate::domain::task::Task;
 use chrono::{DateTime, FixedOffset};
 
 pub fn open_task_str(task: &Task) -> String {

@@ -1,10 +1,11 @@
 use chrono::DateTime;
 use chrono::prelude::FixedOffset;
 use core::result::Result;
+use mockall::automock;
 use mockall::predicate::*;
-use mockall::*;
 use serde::{Deserialize, Serialize};
 
+pub const VALID_STATUSES: [&str; 3] = ["todo", "in-progress", "done"];
 // TDD
 // ✅ ❔ ❌
 // 2.1. buatlah struktur data Task dengan field id, description, status, created_at, updated_at
@@ -21,24 +22,6 @@ use serde::{Deserialize, Serialize};
 // 5. buat field `updated_at` bertipe DateTime dengan zona waktu tetap ✅
 // => 5. create the `updated_at` field with DateTime type with fixed timezone
 // ------------------------------------------------
-
-// #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeFromStr)]
-// pub enum TaskStatus {
-//     Todo,
-//     InProgress,
-//     Done,
-// }
-
-// impl fmt::Display for TaskStatus {
-//     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-//         match self {
-//             TaskStatus::Todo => write!(f, "todo"),
-//             TaskStatus::InProgress => write!(f, "in-progress"),
-//             TaskStatus::Done => write!(f, "done"),
-//         }
-//     }
-// }
-pub const VALID_STATUSES: [&str; 3] = ["todo", "in-progress", "done"];
 
 // TDD
 // ✅ ❔ ❌

@@ -1,0 +1,1 @@
+Adapters: DB repositories, external clients

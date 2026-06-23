@@ -1,32 +1,13 @@
+use crate::domain::task::{Task, TaskTrait, VALID_STATUSES};
 use crate::error::{error_invalid_input, error_invalid_input_str};
-use crate::file::files::File;
-use crate::task::task::{Task, TaskTrait, VALID_STATUSES};
+use crate::infrastructure::storages::storage::StorageTrait;
 use chrono::{DateTime, Local};
 use core::result::Result;
-use mockall::*;
 use std::io::Error;
 
 const FILE_NAME: &str = "TASK_MANAGER";
 
-// TDD
-// ✅ ❔ ❌
-// 2.3. buatlah struktur data Task Manager dengan field `file` dan `list`
-// => 2.3. create the Task Manager data structure with field `file` and `list`
-// ------------------------------------------------
-// 1. buat field `file` bertipe objek File ✅
-// => 1. make a `file` field with an object type of File
-// 2. buat field `list` dengan tipe array meliputi Task ✅
-// => 2. make a `list` field with an array type of Tasks
-#[derive(PartialEq, Debug)]
-pub struct TaskManager {
-    pub file: File,
-    // func.: get_next_id() is only for getting the next id
-    pub list: Vec<Task>,
-}
-
-#[automock]
-pub trait TaskManagerTrait {
-    fn new() -> Self;
+pub trait TaskManagerRepositoryTrait {
     // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> ();
     // some operations with CRUD
     fn add(&mut self, input: &str) -> Result<Task, Error>;
@@ -36,10 +17,24 @@ pub trait TaskManagerTrait {
     fn delete(&mut self, id: i32) -> Result<(), Error>;
 }
 
+pub trait TaskManagerUseCaseTrait {
+    // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> ();
+    // some operations with CRUD
+    fn add(&mut self, input: &str) -> Result<Task, Error>;
+    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error>;
+    fn updates(&mut self, id: i32, update_task: &mut Task, desc_status: i32)
+    -> Result<Task, Error>;
+    fn delete(&mut self, id: i32) -> Result<(), Error>;
+}
+
+pub struct TaskManagerUseCase {
+    pub repository: Box<dyn TaskManagerRepositoryTrait>,
+    pub storage: Box<dyn StorageTrait>,
+}
 // TDD
 // ✅ ❔ ❌
-// 2.4. implementasikan trait TaskManagerTrait untuk struct TaskManager ✅
-// => 2.4. implement the TaskManagerTrait trait for the TaskManager struct
+// 2.4. implementasikan trait TaskManagerUseCaseTrait untuk struct TaskManager ✅
+// => 2.4. implement the TaskManagerUseCaseTrait trait for the TaskManager struct
 // ------------------------------------------------
 // 1. method `new` untuk inisialisasi TaskManager ✅
 // => 1. `new` method for TaskManager initialization
@@ -55,14 +50,7 @@ pub trait TaskManagerTrait {
 // => 6. `update` method to update an existing Task
 // 7. method `delete` untuk menghapus Task berdasarkan ID ✅
 // => 7. `delete` method to delete a Task by ID
-impl TaskManagerTrait for TaskManager {
-    fn new() -> Self {
-        let file = File::new();
-        let list = file.list();
-
-        Self { file, list }
-    }
-
+impl TaskManagerUseCaseTrait for TaskManagerUseCase {
     // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> () {
     //     self.list.iter_mut().find(|task| task.id == id).map(|task| {
     //         *task = update_task.clone();
@@ -70,21 +58,20 @@ impl TaskManagerTrait for TaskManager {
     // }
 
     fn add(&mut self, input: &str) -> Result<Task, Error> {
-        let add_task = get_next_task_of_add(&self.list, input);
+        let add_task = get_next_task_of_add(&self.storage.list(), input);
         // if let Err(e) = err {...}
         if add_task.is_err() {
             return add_task;
         }
         let add_task = add_task.unwrap();
 
-        let _ = &self.file.add(&add_task);
-        // ? let _ = &self.list.push(add_task);
+        let _ = &self.repository.add(&add_task.description);
 
         Ok(add_task)
     }
 
     fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error> {
-        let mut task = find_by_id(&self.list, id)?;
+        let mut task = find_by_id(&self.storage.list(), id)?;
         // if let Err(e) = task {
         //     return Err(e);
         // }
@@ -110,7 +97,7 @@ impl TaskManagerTrait for TaskManager {
         }
 
         let is_valid = is_valid_to_task_of_description_or_status_update(
-            &self.list,
+            &self.storage.list(),
             id,
             update_task,
             desc_status,
@@ -123,19 +110,19 @@ impl TaskManagerTrait for TaskManager {
         }
         update_task.updated_at = Local::now().into();
 
-        let _ = self.file.update(id, update_task);
+        let _ = &self.storage.update(id, update_task);
         // ? let _ = self.find_by_id_mut(id, update_task);
 
         Ok(update_task.clone())
     }
 
     fn delete(&mut self, id: i32) -> Result<(), Error> {
-        let task = find_by_id(&self.list, id);
+        let task = find_by_id(&self.storage.list(), id);
         if !task.is_ok() {
             return Err(task.unwrap_err());
         }
 
-        let _ = self.file.delete(id);
+        let _ = self.repository.delete(id);
         // tidak perlu menghapus
         // ? self.list.remove(index);
         Ok(())

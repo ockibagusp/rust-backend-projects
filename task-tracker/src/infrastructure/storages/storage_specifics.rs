@@ -1,6 +1,6 @@
+use crate::domain::task::{Task, TaskTrait};
 use crate::error::{panic_invalid_input, panic_not_found_input};
-use crate::file::files::FILE_NAME;
-use crate::task::task::{Task, TaskTrait};
+use crate::infrastructure::storages::storage::FILE_NAME;
 
 // specifics of list function for testing purposes
 // IMPORTANT: the panic!
@@ -88,11 +88,11 @@ pub mod tests {
     // TODO: a single core test
     // // $ cargo test -- --test-threads=1
     use crate::{
-        file::files_specifics::{
+        domain::task::Task,
+        domain::task_test::{setup_task, setup_task_status},
+        infrastructure::storages::storage_specifics::{
             specifics_of_add, specifics_of_delete, specifics_of_list, specifics_of_update,
         },
-        task::task::Task,
-        task::task_test::{setup_task, setup_task_status},
     };
 
     #[test]
