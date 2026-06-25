@@ -1,20 +1,19 @@
 use crate::domain::task::{Task, TaskTrait, VALID_STATUSES};
-use crate::error::error_invalid_input;
+use crate::error::AppError;
 use crate::infrastructure::storages::storage::StorageTrait;
 use chrono::{DateTime, Local};
 use core::result::Result;
-use std::io::Error;
 
 pub const FILE_NAME: &str = "MARK";
 
 pub trait MarkRepositoryTrait {
-    fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error>;
-    fn mark_done(&mut self, id: i32) -> Result<Task, Error>;
+    fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError>;
+    fn mark_done(&mut self, id: i32) -> Result<Task, AppError>;
 }
 
 pub trait MarkUseCaseTrait {
-    fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error>;
-    fn mark_done(&mut self, id: i32) -> Result<Task, Error>;
+    fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError>;
+    fn mark_done(&mut self, id: i32) -> Result<Task, AppError>;
 }
 
 pub struct MarkUseCase {
@@ -41,11 +40,11 @@ pub struct MarkUseCase {
 // 7. method `delete` untuk menghapus Task berdasarkan ID ✅
 // => 7. `delete` method to delete a Task by ID
 impl MarkUseCaseTrait for MarkUseCase {
-    fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error> {
+    fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError> {
         return self.repository.mark_in_progress(id);
     }
 
-    fn mark_done(&mut self, id: i32) -> Result<Task, Error> {
+    fn mark_done(&mut self, id: i32) -> Result<Task, AppError> {
         return self.repository.mark_done(id);
     }
 }
@@ -61,16 +60,16 @@ fn get_next_id(list: &Vec<Task>) -> i32 {
     max_id + 1
 }
 
-pub fn find_by_id(list: &Vec<Task>, id: i32) -> Result<Task, Error> {
+pub fn find_by_id(list: &Vec<Task>, id: i32) -> Result<Task, AppError> {
     let task = list.iter().find(|&task| task.id == id).cloned();
     println!("find_by_id: id={}, task={:?}", id, task);
     match task {
         Some(task) => Ok(task),
-        None => Err(error_invalid_input::<String>(FILE_NAME, "ID is not found")),
+        None => Err(AppError::NotFound(FILE_NAME, "ID is not found")),
     }
 }
 
-pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task, Error> {
+pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task, AppError> {
     let next_id = get_next_id(list);
     // Convert UTC to Jakarta time
     let now_created_at: DateTime<Local> = Local::now();
@@ -86,7 +85,7 @@ pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task,
 
     match add_task.is_validation() {
         Ok(_) => Ok(add_task),
-        Err(e) => Err(error_invalid_input::<String>(FILE_NAME, e)),
+        Err(e) => Err(AppError::InvalidInput(FILE_NAME, e)),
     }
 }
 

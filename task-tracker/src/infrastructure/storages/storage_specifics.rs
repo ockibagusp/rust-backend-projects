@@ -20,7 +20,7 @@ pub fn specifics_of_list(tasks_string: &str) -> Vec<Task> {
 // - add_task: the Task object that we want to add in the list of tasks
 pub fn specifics_of_add(tasks_string: &str, add_task: &Task) -> Vec<Task> {
     if let Err(e) = add_task.is_validation() {
-        panic_invalid_input::<String>(FILE_NAME, e.to_string());
+        panic_invalid_input(FILE_NAME, e);
     }
 
     // You probably want to deserialize tasks_string or default into Vec<Task>
@@ -38,7 +38,7 @@ pub fn specifics_of_add(tasks_string: &str, add_task: &Task) -> Vec<Task> {
 // - update_task: the Task object that we want to update in the list of tasks
 pub fn specifics_of_update(tasks_string: String, id: i32, update_task: &Task) -> Vec<Task> {
     if let Err(e) = update_task.is_validation() {
-        panic_invalid_input::<String>(FILE_NAME, e.to_string());
+        panic_invalid_input(FILE_NAME, e);
     }
 
     // You probably want to deserialize tasks_string into Vec<Task>
@@ -53,9 +53,10 @@ pub fn specifics_of_update(tasks_string: String, id: i32, update_task: &Task) ->
     }
 
     if !index_to_update {
-        panic_not_found_input::<String>(
+        // TODO: removed this NOW!
+        panic_not_found_input(
             FILE_NAME,
-            format!("failed to update task: ID not found (id: {})", id),
+            Box::leak(format!("failed to update task: ID not found (id: {})", id).into_boxed_str()),
         );
     }
 
@@ -75,9 +76,10 @@ pub fn specifics_of_delete(tasks_string: String, id: i32) -> Vec<Task> {
     }
 
     if !index_to_remove {
-        panic_not_found_input::<String>(
+        // TODO: removed this NOW!
+        panic_not_found_input(
             FILE_NAME,
-            format!("failed to delete task: ID not found (id: {})", id),
+            Box::leak(format!("failed to delete task: ID not found (id: {})", id).into_boxed_str()),
         );
     }
     tasks

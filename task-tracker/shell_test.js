@@ -8,13 +8,17 @@ var test_cases = [
     {
         name: 'add command with invalid description (1 character) should fail',
         command: './task-cli add "f"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     },
     // error: description with 51 characters
     {
         name: 'add command with invalid description (51 characters) should fail',
         command: './task-cli add "foo bar baz qux quux corge grault garply waldo fred plugh xyzzy thud"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     },
     // success: valid description
     {
@@ -37,12 +41,16 @@ ID: 3
     {
         name: 'update command with invalid description (1 character) should fail',
         command: './task-cli update 1 "f"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     },
     {
         name: 'update command with invalid description (51 characters) should fail',
         command: './task-cli update 1 "foo bar baz qux quux corge grault garply waldo fred plugh xyzzy thud"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     },
     {
         name: 'update command with valid description should succeed',
@@ -56,7 +64,9 @@ ID: 1
     {
         name: 'update command with identical description and status should fail',
         command: './task-cli update 1 "This is an updated task description 1"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION or STATUS is not identical" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION or STATUS is not identical"`
     },
     /**
      * Test cases for delete command
@@ -84,7 +94,9 @@ ID: 1
     {
         name: 'mark-in-progress command with invalid ID should fail',
         command: './task-cli mark-in-progress 99',
-        expected: `Error { code: "MARK", kind: NotFound, message: "ID is not found" }`
+        expected: `code   : MARK
+kind   : NotFound
+message: "ID is not found"`
     },
     // mark in progress with ID: 1, it should have failed
     {
@@ -101,7 +113,9 @@ ID: 1
     {
         name: 'mark-done command with invalid ID should fail',
         command: './task-cli mark-done 99',
-        expected: `Error { code: "MARK", kind: NotFound, message: "ID is not found" }`
+        expected: `code   : MARK
+kind   : NotFound
+message: "ID is not found"`
     },
     // mark done with ID: 1, it should have success
     {

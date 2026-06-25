@@ -118,6 +118,6 @@ fn tasks_str(file_name: &String) -> String {
 fn to_file_by_json(file_name: &String, tasks: &Vec<Task>) -> () {
     let json_string = serde_json::to_string_pretty(tasks).unwrap();
     if fs::write(file_name, json_string).is_err() {
-        panic_invalid_input::<&str>(FILE_NAME, "failed to write to file");
+        panic_invalid_input(FILE_NAME, "failed to write to file");
     }
 }

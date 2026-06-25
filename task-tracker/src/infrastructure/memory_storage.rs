@@ -3,10 +3,9 @@ use crate::application::{
     mark_use_cases::MarkRepositoryTrait, task_manager_use_cases::TaskManagerRepositoryTrait,
 };
 use crate::domain::task::{Task, TaskTrait, VALID_STATUSES};
-use crate::error::{error_invalid_input, error_invalid_input_str, error_not_found_input};
+use crate::error::AppError;
 use crate::infrastructure::storages::storage::{FILE_NAME as STORAGE_FILE_NAME, StorageTrait};
 use chrono::{DateTime, Local};
-use std::io::Error;
 
 // Concrete mock database implementation
 pub struct ListRepository {
@@ -44,7 +43,7 @@ pub struct TaskManagerRepository {
 }
 
 impl TaskManagerRepositoryTrait for TaskManagerRepository {
-    fn add(&mut self, description: &str) -> Result<Task, Error> {
+    fn add(&mut self, description: &str) -> Result<Task, AppError> {
         let add_task = get_next_task_of_add(&self.storage.list(), description);
         // if let Err(e) = err {...}
         if add_task.is_err() {
@@ -58,7 +57,7 @@ impl TaskManagerRepositoryTrait for TaskManagerRepository {
         Ok(add_task)
     }
 
-    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error> {
+    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, AppError> {
         let mut task = find_by_id(&self.storage.list(), id, STORAGE_FILE_NAME)?;
         // if let Err(e) = task {
         //     return Err(e);
@@ -78,10 +77,10 @@ impl TaskManagerRepositoryTrait for TaskManagerRepository {
         id: i32,
         update_task: &mut Task,
         desc_status: i32,
-    ) -> Result<Task, Error> {
+    ) -> Result<Task, AppError> {
         let err = update_task.is_validation();
         if let Err(e) = err {
-            return Err(error_invalid_input::<String>(STORAGE_FILE_NAME, e));
+            return Err(AppError::InvalidInput(STORAGE_FILE_NAME, e));
         }
 
         let is_valid = is_valid_to_task_of_description_or_status_update(
@@ -91,7 +90,7 @@ impl TaskManagerRepositoryTrait for TaskManagerRepository {
             desc_status,
         );
         if is_valid {
-            return Err(error_invalid_input_str(
+            return Err(AppError::InvalidInput(
                 STORAGE_FILE_NAME,
                 "DESCRIPTION or STATUS is not identical",
             ));
@@ -104,7 +103,7 @@ impl TaskManagerRepositoryTrait for TaskManagerRepository {
         Ok(update_task.clone())
     }
 
-    fn delete(&mut self, id: i32) -> Result<(), Error> {
+    fn delete(&mut self, id: i32) -> Result<(), AppError> {
         let task = find_by_id(&self.storage.list(), id, STORAGE_FILE_NAME);
         if !task.is_ok() {
             return Err(task.unwrap_err());
@@ -128,18 +127,15 @@ fn get_next_id(list: &Vec<Task>) -> i32 {
     max_id + 1
 }
 
-pub fn find_by_id(list: &Vec<Task>, id: i32, file_name: &'static str) -> Result<Task, Error> {
+pub fn find_by_id(list: &Vec<Task>, id: i32, file_name: &'static str) -> Result<Task, AppError> {
     let task = list.iter().find(|&task| task.id == id).cloned();
     match task {
         Some(task) => Ok(task),
-        None => Err(error_not_found_input::<String>(
-            file_name,
-            "ID is not found",
-        )),
+        None => Err(AppError::NotFound(file_name, "ID is not found")),
     }
 }
 
-pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task, Error> {
+pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task, AppError> {
     let next_id = get_next_id(list);
     // Convert UTC to Jakarta time
     let now_created_at: DateTime<Local> = Local::now();
@@ -154,7 +150,7 @@ pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task,
     };
     match add_task.is_validation() {
         Ok(_) => Ok(add_task),
-        Err(e) => Err(error_invalid_input::<String>(STORAGE_FILE_NAME, e)),
+        Err(e) => Err(AppError::InvalidInput(STORAGE_FILE_NAME, e)),
     }
 }
 
@@ -183,11 +179,11 @@ pub struct MarkRepository {
 }
 
 impl MarkRepositoryTrait for MarkRepository {
-    fn mark_in_progress(&mut self, id: i32) -> Result<Task, Error> {
+    fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError> {
         let mut task_to_update = find_by_id(&self.storage.list(), id, MARK_FILE_NAME)?;
 
         if task_to_update.status == VALID_STATUSES[1] {
-            return Err(error_invalid_input::<&str>(
+            return Err(AppError::InvalidInput(
                 MARK_FILE_NAME,
                 "task is already in 'in-progress' status",
             ));
@@ -202,11 +198,11 @@ impl MarkRepositoryTrait for MarkRepository {
         Ok(task_to_update)
     }
 
-    fn mark_done(&mut self, id: i32) -> Result<Task, Error> {
+    fn mark_done(&mut self, id: i32) -> Result<Task, AppError> {
         let mut task_to_update = find_by_id(&self.storage.list(), id, MARK_FILE_NAME)?;
 
         if task_to_update.status == VALID_STATUSES[2] {
-            return Err(error_invalid_input::<&str>(
+            return Err(AppError::InvalidInput(
                 MARK_FILE_NAME,
                 "task is already in 'done' status",
             ));

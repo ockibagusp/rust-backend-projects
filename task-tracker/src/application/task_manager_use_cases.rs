@@ -1,30 +1,37 @@
 use crate::domain::task::{Task, TaskTrait, VALID_STATUSES};
-use crate::error::{error_invalid_input, error_invalid_input_str};
+use crate::error::AppError;
 use crate::infrastructure::storages::storage::StorageTrait;
 use chrono::{DateTime, Local};
 use core::result::Result;
-use std::io::Error;
 
 const FILE_NAME: &str = "TASK_MANAGER";
 
 pub trait TaskManagerRepositoryTrait {
     // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> ();
     // some operations with CRUD
-    fn add(&mut self, input: &str) -> Result<Task, Error>;
-    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error>;
-    fn updates(&mut self, id: i32, update_task: &mut Task, desc_status: i32)
-    -> Result<Task, Error>;
-    fn delete(&mut self, id: i32) -> Result<(), Error>;
+    fn add(&mut self, input: &str) -> Result<Task, AppError>;
+    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, AppError>;
+    fn updates(
+        &mut self,
+        id: i32,
+        update_task: &mut Task,
+        desc_status: i32,
+    ) -> Result<Task, AppError>;
+    fn delete(&mut self, id: i32) -> Result<(), AppError>;
 }
 
 pub trait TaskManagerUseCaseTrait {
     // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> ();
     // some operations with CRUD
-    fn add(&mut self, input: &str) -> Result<Task, Error>;
-    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error>;
-    fn updates(&mut self, id: i32, update_task: &mut Task, desc_status: i32)
-    -> Result<Task, Error>;
-    fn delete(&mut self, id: i32) -> Result<(), Error>;
+    fn add(&mut self, input: &str) -> Result<Task, AppError>;
+    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, AppError>;
+    fn updates(
+        &mut self,
+        id: i32,
+        update_task: &mut Task,
+        desc_status: i32,
+    ) -> Result<Task, AppError>;
+    fn delete(&mut self, id: i32) -> Result<(), AppError>;
 }
 
 pub struct TaskManagerUseCase {
@@ -57,7 +64,7 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
     //     });
     // }
 
-    fn add(&mut self, input: &str) -> Result<Task, Error> {
+    fn add(&mut self, input: &str) -> Result<Task, AppError> {
         let add_task = get_next_task_of_add(&self.storage.list(), input);
         // if let Err(e) = err {...}
         if add_task.is_err() {
@@ -70,7 +77,7 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
         Ok(add_task)
     }
 
-    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, Error> {
+    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, AppError> {
         let mut task = find_by_id(&self.storage.list(), id)?;
         // if let Err(e) = task {
         //     return Err(e);
@@ -90,10 +97,10 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
         id: i32,
         update_task: &mut Task,
         desc_status: i32,
-    ) -> Result<Task, Error> {
+    ) -> Result<Task, AppError> {
         let err = update_task.is_validation();
         if let Err(e) = err {
-            return Err(error_invalid_input::<String>(FILE_NAME, e));
+            return Err(AppError::InvalidInput(FILE_NAME, e));
         }
 
         let is_valid = is_valid_to_task_of_description_or_status_update(
@@ -103,7 +110,7 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
             desc_status,
         );
         if is_valid {
-            return Err(error_invalid_input_str(
+            return Err(AppError::InvalidInput(
                 FILE_NAME,
                 "DESCRIPTION or STATUS is not identical",
             ));
@@ -116,7 +123,7 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
         Ok(update_task.clone())
     }
 
-    fn delete(&mut self, id: i32) -> Result<(), Error> {
+    fn delete(&mut self, id: i32) -> Result<(), AppError> {
         let task = find_by_id(&self.storage.list(), id);
         if !task.is_ok() {
             return Err(task.unwrap_err());
@@ -140,15 +147,15 @@ fn get_next_id(list: &Vec<Task>) -> i32 {
     max_id + 1
 }
 
-pub fn find_by_id(list: &Vec<Task>, id: i32) -> Result<Task, Error> {
+pub fn find_by_id(list: &Vec<Task>, id: i32) -> Result<Task, AppError> {
     let task = list.iter().find(|&task| task.id == id).cloned();
     match task {
         Some(task) => Ok(task),
-        None => Err(error_invalid_input::<String>(FILE_NAME, "ID is not found")),
+        None => Err(AppError::InvalidInput(FILE_NAME, "ID is not found")),
     }
 }
 
-pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task, Error> {
+pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task, AppError> {
     let next_id = get_next_id(list);
     // Convert UTC to Jakarta time
     let now_created_at: DateTime<Local> = Local::now();
@@ -164,7 +171,7 @@ pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task,
 
     match add_task.is_validation() {
         Ok(_) => Ok(add_task),
-        Err(e) => Err(error_invalid_input::<String>(FILE_NAME, e)),
+        Err(e) => Err(AppError::InvalidInput(FILE_NAME, e)),
     }
 }
 

@@ -7,10 +7,9 @@ use crate::infrastructure::{
     storages::storage::{Storage, StorageTrait},
 };
 use core::result::Result;
-use std::io::Error;
 
 use crate::application::{list_use_cases, mark_use_cases, task_manager_use_cases};
-use crate::error::error_kind_aborted;
+use crate::error::AppError;
 use crate::presentation::{
     list_handler::CmdListHandler, mark_handler::CmdMarkHandler,
     task_manager_handler::CmdTaskManagerHandler,
@@ -50,7 +49,7 @@ pub struct Command {}
 #[automock]
 pub trait CommandTrait {
     fn new() -> Self;
-    fn run(&mut self) -> Result<String, Error>;
+    fn run(&mut self) -> Result<String, AppError>;
 }
 
 impl CommandTrait for Command {
@@ -58,7 +57,7 @@ impl CommandTrait for Command {
         Command {}
     }
 
-    fn run(&mut self) -> Result<String, Error> {
+    fn run(&mut self) -> Result<String, AppError> {
         let cli = Cli::parse();
         match &cli.commands {
             /*
@@ -138,9 +137,9 @@ impl CommandTrait for Command {
                 // 4. Pass execution onto CMD controller
                 match CmdTaskManagerHandler::handle_delete(&mut handler, *id as i32) {
                     Ok(_) => Ok(String::from("Delete task success")),
-                    Err(e) => Err(error_kind_aborted::<&str>(
+                    Err(e) => Err(AppError::Aborted(
                         FILE_NAME,
-                        &format!("Error deleting task: {}", e),
+                        Box::leak(format!("Error deleting task: {}", e).into_boxed_str()),
                     )),
                 }
             }
