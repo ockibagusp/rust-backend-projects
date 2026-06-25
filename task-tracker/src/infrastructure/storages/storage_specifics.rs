@@ -53,10 +53,9 @@ pub fn specifics_of_update(tasks_string: String, id: i32, update_task: &Task) ->
     }
 
     if !index_to_update {
-        // TODO: removed this NOW!
         panic_not_found_input(
             FILE_NAME,
-            Box::leak(format!("failed to update task: ID not found (id: {})", id).into_boxed_str()),
+            &format!("failed to update task: ID not found (id: {})", id),
         );
     }
 
@@ -76,10 +75,9 @@ pub fn specifics_of_delete(tasks_string: String, id: i32) -> Vec<Task> {
     }
 
     if !index_to_remove {
-        // TODO: removed this NOW!
         panic_not_found_input(
             FILE_NAME,
-            Box::leak(format!("failed to delete task: ID not found (id: {})", id).into_boxed_str()),
+            &format!("failed to delete task: ID not found (id: {})", id),
         );
     }
     tasks
