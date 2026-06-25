@@ -5,6 +5,14 @@ const INVALIDINPUT: IoErrorKind = IoErrorKind::InvalidInput;
 const CONNECTIONABORTED: IoErrorKind = IoErrorKind::ConnectionAborted;
 const NOTFOUND: IoErrorKind = IoErrorKind::NotFound;
 
+// #[derive(Debug)]
+// #[allow(dead_code)]
+// struct Error<'a, T> {
+//     code: &'a str,
+//     kind: IoErrorKind,
+//     message: T,
+// }
+
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum AppError {
