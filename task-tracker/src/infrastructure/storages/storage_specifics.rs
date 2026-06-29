@@ -37,6 +37,9 @@ pub fn specifics_of_add(tasks_string: &str, add_task: &Task) -> Vec<Task> {
 // - id: the ID of the Task object that we want to update in the list of tasks
 // - update_task: the Task object that we want to update in the list of tasks
 pub fn specifics_of_update(tasks_string: String, id: i32, update_task: &Task) -> Vec<Task> {
+    // // TODO: very important!
+    // update_task.updated_at = Local::now().into();
+
     if let Err(e) = update_task.is_validation() {
         panic_invalid_input(FILE_NAME, e);
     }
@@ -88,7 +91,7 @@ pub mod tests {
     // TODO: a single core test
     // // $ cargo test -- --test-threads=1
     use crate::{
-        domain::task::Task,
+        domain::task::{Task, TaskStatus},
         domain::task_test::{setup_task, setup_task_status},
         infrastructure::storages::storage_specifics::{
             specifics_of_add, specifics_of_delete, specifics_of_list, specifics_of_update,
@@ -120,22 +123,26 @@ pub mod tests {
 
     #[test]
     fn test_json_update_fail() {
-        let got = vec![setup_task_status(1, "test update fail", "todo")];
+        let got = vec![setup_task_status(1, "test update fail", TaskStatus::Todo)];
         let want = specifics_of_update(
             "[\n  {\n    \"id\": 1,\n    \"description\": \"test update fail\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_owned(),
             1,
-            &setup_task_status(1, "test update fail", "done"),
+            &mut setup_task_status(1, "test update fail", TaskStatus::Done),
         );
         assert_ne!(got, want);
     }
 
     #[test]
     fn test_json_update_success() {
-        let got = vec![setup_task_status(1, "test update success", "in-progress")];
+        let got = vec![setup_task_status(
+            1,
+            "test update success",
+            TaskStatus::InProgress,
+        )];
         let want = specifics_of_update(
             "[\n  {\n    \"id\": 1,\n    \"description\": \"test update success\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_owned(),
             1,
-            &setup_task_status(1, "test update success", "in-progress"),
+            &setup_task_status(1, "test update success", TaskStatus::InProgress),
         );
         assert_eq!(got, want);
     }
@@ -144,7 +151,7 @@ pub mod tests {
     #[should_panic]
     fn test_json_delete_fail() {
         specifics_of_delete(
-            "[\n  {\n    \"id\": 1,\n    \"description\": \"test delete fail\",\n    \"status\": \"in-progress\",\n    \"created_at\": \"2025-10-13T14:07:06.072493+07:00\",\n    \"updated_at\": \"2025-10-13T19:07:06.072493+07:00\"\n  }\n]".to_owned(),
+            "Error\n------------------\ncode   : FILE\nkind   : NotFound\nmessage: \"failed to delete task: ID not found (id: 2)\"\n++++++++++++++++++".to_owned(),
             2,
         );
     }

@@ -1,4 +1,4 @@
-use crate::domain::task::{MockTaskTrait, Task, TaskTrait, VALID_STATUSES};
+use crate::domain::task::{MockTaskTrait, Task, TaskStatus, TaskTrait};
 use chrono::DateTime;
 
 pub fn setup_task(id: i32, desciption: &str) -> Task {
@@ -17,15 +17,15 @@ pub fn setup_task(id: i32, desciption: &str) -> Task {
     Task {
         id: id,
         description: desciption.to_string(),
-        status: String::from(VALID_STATUSES[0]),
+        status: TaskStatus::Todo,
         created_at: _created_at,
         updated_at: _updated_at,
     }
 }
 
-pub fn setup_task_status(id: i32, desciption: &str, status: &str) -> Task {
+pub fn setup_task_status(id: i32, desciption: &str, status: TaskStatus) -> Task {
     let mut task_on_update = setup_task(id, desciption);
-    task_on_update.status = status.to_string();
+    task_on_update.status = status;
     task_on_update
 }
 

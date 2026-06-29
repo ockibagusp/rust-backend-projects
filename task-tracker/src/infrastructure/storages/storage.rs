@@ -4,6 +4,7 @@ use crate::infrastructure::storages::storage_specifics::{
     specifics_of_add, specifics_of_delete, specifics_of_list, specifics_of_update,
 };
 
+use chrono::Local;
 use dotenv::dotenv;
 use std::fs::{File as std_file, OpenOptions};
 use std::{env, fs, io::Read};
@@ -18,7 +19,7 @@ pub trait StorageTrait {
         Self: Sized;
     fn list(&self) -> Vec<Task>;
     fn add(&self, add_task: &Task) -> Vec<Task>;
-    fn update(&self, id: i32, update_task: &Task) -> Vec<Task>;
+    fn update(&self, id: i32, update_task: &mut Task) -> Vec<Task>;
     fn delete(&self, id: i32) -> Vec<Task>;
 }
 
@@ -68,9 +69,10 @@ impl StorageTrait for Storage {
     }
 
     // IMPORTANT: not an error, for example: `Task` object should no longer be validated
-    fn update(&self, id: i32, update_task: &Task) -> Vec<Task> {
+    fn update(&self, id: i32, update_task: &mut Task) -> Vec<Task> {
         let tasks_string = tasks_str(&self.json_str);
-
+        // ?
+        update_task.updated_at = Local::now().into();
         let tasks = specifics_of_update(tasks_string, id, update_task);
         to_file_by_json(&self.json_str, &tasks);
         tasks

@@ -2,8 +2,34 @@ use chrono::{DateTime, prelude::FixedOffset};
 use core::result::Result;
 use mockall::{automock, predicate::*};
 use serde::{Deserialize, Serialize};
+use std::fmt::{self};
 
-pub const VALID_STATUSES: [&str; 3] = ["todo", "in-progress", "done"];
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")] // Ensures serde automatically formats variants as lowercase
+pub enum TaskStatus {
+    Todo,
+    #[serde(rename = "in-progress")]
+    InProgress,
+    Done,
+}
+
+impl fmt::Display for TaskStatus {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            TaskStatus::Todo => write!(f, "todo"),
+            TaskStatus::InProgress => write!(f, "in-progress"),
+            TaskStatus::Done => write!(f, "done"),
+        }
+    }
+}
+
+// Automatically maps Display into Serde's serialization
+impl From<TaskStatus> for String {
+    fn from(t: TaskStatus) -> Self {
+        t.to_string()
+    }
+}
+
 // TDD
 // ✅ ❔ ❌
 // 2.1. buatlah struktur data Task dengan field id, description, status, created_at, updated_at
@@ -48,7 +74,7 @@ pub struct Task {
     pub id: i32,
     pub description: String,
     // status: todo, in-progress, done
-    pub status: String,
+    pub status: TaskStatus,
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
 }
@@ -85,10 +111,19 @@ impl TaskTrait for Task {
         {
             return Err("DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)");
         }
-        let _valid_statuses = VALID_STATUSES;
-        if !matches!(&self.status, _valid_statuses) {
-            return Err("STATUS is invalid: \"todo\", \"in-progress\" or \"done\"");
+        match self.status {
+            TaskStatus::Todo | TaskStatus::InProgress | TaskStatus::Done => (),
         }
         Ok(())
+    }
+}
+
+impl fmt::Display for Task {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(
+            f,
+            "Task {{ id: {}, description: \"{}\", status: {}, created_at: {}, updated_at: {} }}",
+            self.id, self.description, self.status, self.created_at, self.updated_at
+        )
     }
 }

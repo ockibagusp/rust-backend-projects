@@ -1,4 +1,4 @@
-use crate::domain::task::{Task, TaskTrait, VALID_STATUSES};
+use crate::domain::task::{Task, TaskStatus, TaskTrait};
 use crate::error::AppError;
 use crate::infrastructure::storages::storage::StorageTrait;
 use chrono::{DateTime, Local};
@@ -78,7 +78,7 @@ pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task,
         id: next_id,
         description: description.to_string(),
         // status: "todo"
-        status: VALID_STATUSES[0].to_string(),
+        status: TaskStatus::Todo,
         created_at: now_created_at.into(),
         updated_at: now_created_at.into(),
     };

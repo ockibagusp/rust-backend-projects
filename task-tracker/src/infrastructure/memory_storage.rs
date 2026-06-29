@@ -2,12 +2,13 @@ use crate::application::{
     list_use_cases::ListRepositoryTrait, mark_use_cases::FILE_NAME as MARK_FILE_NAME,
     mark_use_cases::MarkRepositoryTrait, task_manager_use_cases::TaskManagerRepositoryTrait,
 };
-use crate::domain::task::{Task, TaskTrait, VALID_STATUSES};
+use crate::domain::task::{Task, TaskStatus, TaskTrait};
 use crate::error::AppError;
 use crate::infrastructure::storages::storage::{FILE_NAME as STORAGE_FILE_NAME, StorageTrait};
 use chrono::{DateTime, Local};
 
-// Concrete mock database implementation
+// Concrete database implementation
+// ######## List Repository ########
 pub struct ListRepository {
     pub storage: Box<dyn StorageTrait>,
 }
@@ -18,25 +19,103 @@ impl ListRepositoryTrait for ListRepository {
     }
 
     fn todo(&self) -> Vec<Task> {
-        return get_status_tasks(&self.storage.list(), VALID_STATUSES[0]);
+        return get_status_tasks(&self.storage.list(), TaskStatus::Todo);
     }
 
     fn in_progress(&self) -> Vec<Task> {
-        return get_status_tasks(&self.storage.list(), VALID_STATUSES[1]);
+        return get_status_tasks(&self.storage.list(), TaskStatus::InProgress);
     }
 
     fn done(&self) -> Vec<Task> {
-        return get_status_tasks(&self.storage.list(), VALID_STATUSES[2]);
+        return get_status_tasks(&self.storage.list(), TaskStatus::Done);
     }
 }
 
-fn get_status_tasks(list: &Vec<Task>, status: &str) -> Vec<Task> {
+// TODO
+fn get_status_tasks(list: &Vec<Task>, status: TaskStatus) -> Vec<Task> {
     return list
         .iter()
         .filter(|&task| task.status == status)
         .cloned()
         .collect();
 }
+
+#[cfg(test)]
+pub mod list_tests {
+    use super::*;
+    use crate::domain::task_test::{setup_task, setup_task_status};
+
+    struct MockStorageTrait;
+    impl StorageTrait for MockStorageTrait {
+        fn new() -> Self
+        where
+            Self: Sized,
+        {
+            todo!()
+        }
+
+        fn list(&self) -> Vec<Task> {
+            return vec![
+                setup_task(1, "test description one"),
+                setup_task_status(2, "test description two", TaskStatus::InProgress),
+                setup_task_status(3, "test description two", TaskStatus::Done),
+            ];
+        }
+
+        fn add(&self, _add_task: &Task) -> Vec<Task> {
+            todo!()
+        }
+
+        fn update(&self, _id: i32, _update_task: &mut Task) -> Vec<Task> {
+            todo!()
+        }
+
+        fn delete(&self, _id: i32) -> Vec<Task> {
+            todo!()
+        }
+    }
+
+    #[test]
+    fn test_list_of_all() {
+        let list_repository = ListRepository {
+            storage: Box::new(MockStorageTrait),
+        };
+        let tasks = list_repository.all();
+        assert_eq!(tasks.len(), 3);
+    }
+
+    #[test]
+    fn test_list_of_todo() {
+        let list_repository = ListRepository {
+            storage: Box::new(MockStorageTrait),
+        };
+        let tasks = list_repository.todo();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].status, TaskStatus::Todo);
+    }
+
+    #[test]
+    fn test_list_of_in_progress() {
+        let list_repository = ListRepository {
+            storage: Box::new(MockStorageTrait),
+        };
+        let tasks = list_repository.in_progress();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].status, TaskStatus::InProgress);
+    }
+
+    #[test]
+    fn test_list_of_done() {
+        let list_repository = ListRepository {
+            storage: Box::new(MockStorageTrait),
+        };
+        let tasks = list_repository.done();
+        assert_eq!(tasks.len(), 1);
+        assert_eq!(tasks[0].status, TaskStatus::Done);
+    }
+}
+
+// ######## Task Manager Repository ########
 
 pub struct TaskManagerRepository {
     pub storage: Box<dyn StorageTrait>,
@@ -144,7 +223,7 @@ pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task,
         id: next_id,
         description: description.to_string(),
         // status: "todo"
-        status: VALID_STATUSES[0].to_string(),
+        status: TaskStatus::Todo,
         created_at: now_created_at.into(),
         updated_at: now_created_at.into(),
     };
@@ -182,14 +261,14 @@ impl MarkRepositoryTrait for MarkRepository {
     fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError> {
         let mut task_to_update = find_by_id(&self.storage.list(), id, MARK_FILE_NAME)?;
 
-        if task_to_update.status == VALID_STATUSES[1] {
+        if task_to_update.status == TaskStatus::InProgress {
             return Err(AppError::InvalidInput(
                 MARK_FILE_NAME,
                 "task is already in 'in-progress' status",
             ));
         }
 
-        task_to_update.status = VALID_STATUSES[1].to_string();
+        task_to_update.status = TaskStatus::InProgress;
         let _ = self.storage.update(id, &mut task_to_update); // ? operator
         // if let Err(e) = self.task_manager.updates(id, &mut task_to_update) {
         //     return Err(e);
@@ -201,14 +280,14 @@ impl MarkRepositoryTrait for MarkRepository {
     fn mark_done(&mut self, id: i32) -> Result<Task, AppError> {
         let mut task_to_update = find_by_id(&self.storage.list(), id, MARK_FILE_NAME)?;
 
-        if task_to_update.status == VALID_STATUSES[2] {
+        if task_to_update.status == TaskStatus::Done {
             return Err(AppError::InvalidInput(
                 MARK_FILE_NAME,
                 "task is already in 'done' status",
             ));
         }
 
-        task_to_update.status = VALID_STATUSES[2].to_string();
+        task_to_update.status = TaskStatus::Done;
 
         let _ = self.storage.update(id, &mut task_to_update);
         Ok(task_to_update)

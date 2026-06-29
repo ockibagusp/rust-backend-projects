@@ -3,7 +3,7 @@ use chrono::{DateTime, FixedOffset};
 
 pub fn open_task_str(task: &Task) -> String {
     return format!(
-        "ID: {}\n----- Description: {}\n----- Status: {}\n----- Created At: {}\n----- Updated At: {}",
+        "ID: {}\n----- Description: {}\n----- Status     : {}\n----- Created At : {}\n----- Updated At : {}",
         task.id,
         task.description,
         task.status,
