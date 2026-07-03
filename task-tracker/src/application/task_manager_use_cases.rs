@@ -1,6 +1,5 @@
 use crate::domain::task::{Task, TaskStatus, TaskTrait};
 use crate::error::AppError;
-use crate::infrastructure::storages::storage::StorageTrait;
 use chrono::{DateTime, Local};
 use core::result::Result;
 
@@ -18,6 +17,8 @@ pub trait TaskManagerRepositoryTrait {
         desc_status: i32,
     ) -> Result<Task, AppError>;
     fn delete(&mut self, id: i32) -> Result<(), AppError>;
+
+    fn _list(&self) -> Vec<Task>;
 }
 
 pub trait TaskManagerUseCaseTrait {
@@ -36,7 +37,6 @@ pub trait TaskManagerUseCaseTrait {
 
 pub struct TaskManagerUseCase {
     pub repository: Box<dyn TaskManagerRepositoryTrait>,
-    pub storage: Box<dyn StorageTrait>,
 }
 // TDD
 // ✅ ❔ ❌
@@ -65,7 +65,7 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
     // }
 
     fn add(&mut self, input: &str) -> Result<Task, AppError> {
-        let add_task = get_next_task_of_add(&self.storage.list(), input);
+        let add_task = get_next_task_of_add(&self.repository._list(), input);
         // if let Err(e) = err {...}
         if add_task.is_err() {
             return add_task;
@@ -78,7 +78,7 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
     }
 
     fn update_description(&mut self, id: i32, description: &str) -> Result<Task, AppError> {
-        let mut task = find_by_id(&self.storage.list(), id)?;
+        let mut task = find_by_id(&self.repository._list(), id)?;
         // if let Err(e) = task {
         //     return Err(e);
         // }
@@ -104,7 +104,7 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
         }
 
         let is_valid = is_valid_to_task_of_description_or_status_update(
-            &self.storage.list(),
+            &self.repository._list(),
             id,
             update_task,
             desc_status,
@@ -117,14 +117,14 @@ impl TaskManagerUseCaseTrait for TaskManagerUseCase {
         }
         update_task.updated_at = Local::now().into();
 
-        let _ = &self.storage.update(id, update_task);
+        let _ = &self.repository.updates(id, update_task, desc_status);
         // ? let _ = self.find_by_id_mut(id, update_task);
 
         Ok(update_task.clone())
     }
 
     fn delete(&mut self, id: i32) -> Result<(), AppError> {
-        let task = find_by_id(&self.storage.list(), id);
+        let task = find_by_id(&self.repository._list(), id);
         if !task.is_ok() {
             return Err(task.unwrap_err());
         }

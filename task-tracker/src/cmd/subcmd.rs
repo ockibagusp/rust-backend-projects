@@ -69,7 +69,6 @@ pub fn subcmd_add(description: &String, config: &config::Config) -> Result<Strin
     // 2. Inject infrastructure implementation into the usecase
     let use_case = task_manager_use_cases::TaskManagerUseCase {
         repository: Box::new(repo),
-        storage: Box::new(Storage::new(config)),
     };
 
     // 3. Handle incoming API traffic payload
@@ -97,7 +96,6 @@ pub fn subcmd_update(
     // 2. Inject infrastructure implementation into the usecase
     let use_case = task_manager_use_cases::TaskManagerUseCase {
         repository: Box::new(repo),
-        storage: Box::new(Storage::new(config)),
     };
 
     // 3. Handle incoming API traffic payload
@@ -121,7 +119,6 @@ pub fn subcmd_delete(id: &u32, config: &config::Config) -> Result<String, AppErr
     // 2. Inject infrastructure implementation into the usecase
     let use_case = task_manager_use_cases::TaskManagerUseCase {
         repository: Box::new(repo),
-        storage: Box::new(Storage::new(config)),
     };
 
     // 3. Handle incoming API traffic payload

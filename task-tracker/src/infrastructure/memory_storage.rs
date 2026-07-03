@@ -48,7 +48,7 @@ pub mod list_tests {
 
     struct MockStorageTrait;
     impl StorageTrait for MockStorageTrait {
-        fn new(config: &config::Config) -> Self
+        fn new(_config: &config::Config) -> Self
         where
             Self: Sized,
         {
@@ -124,7 +124,7 @@ pub struct TaskManagerRepository {
 
 impl TaskManagerRepositoryTrait for TaskManagerRepository {
     fn add(&mut self, description: &str) -> Result<Task, AppError> {
-        let add_task = get_next_task_of_add(&self.storage.list(), description);
+        let add_task = get_next_task_of_add(&self._list(), description);
         // if let Err(e) = err {...}
         if add_task.is_err() {
             return add_task;
@@ -138,7 +138,7 @@ impl TaskManagerRepositoryTrait for TaskManagerRepository {
     }
 
     fn update_description(&mut self, id: i32, description: &str) -> Result<Task, AppError> {
-        let mut task = find_by_id(&self.storage.list(), id, STORAGE_FILE_NAME)?;
+        let mut task = find_by_id(&self._list(), id, STORAGE_FILE_NAME)?;
         // if let Err(e) = task {
         //     return Err(e);
         // }
@@ -164,7 +164,7 @@ impl TaskManagerRepositoryTrait for TaskManagerRepository {
         }
 
         let is_valid = is_valid_to_task_of_description_or_status_update(
-            &self.storage.list(),
+            &self._list(),
             id,
             update_task,
             desc_status,
@@ -184,7 +184,7 @@ impl TaskManagerRepositoryTrait for TaskManagerRepository {
     }
 
     fn delete(&mut self, id: i32) -> Result<(), AppError> {
-        let task = find_by_id(&self.storage.list(), id, STORAGE_FILE_NAME);
+        let task = find_by_id(&self._list(), id, STORAGE_FILE_NAME);
         if !task.is_ok() {
             return Err(task.unwrap_err());
         }
@@ -193,6 +193,10 @@ impl TaskManagerRepositoryTrait for TaskManagerRepository {
         // tidak perlu menghapus
         // ? self.list.remove(index);
         Ok(())
+    }
+
+    fn _list(&self) -> Vec<Task> {
+        self.storage.list()
     }
 }
 
