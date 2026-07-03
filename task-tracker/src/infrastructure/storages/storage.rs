@@ -1,20 +1,23 @@
 use crate::domain::task::Task;
 use crate::error::{panic_invalid_input, panic_not_found_input};
-use crate::infrastructure::storages::storage_specifics::{
-    specifics_of_add, specifics_of_delete, specifics_of_list, specifics_of_update,
+use crate::infrastructure::{
+    config,
+    storages::storage_specifics::{
+        specifics_of_add, specifics_of_delete, specifics_of_list, specifics_of_update,
+    },
 };
 
 use chrono::Local;
-use dotenv::dotenv;
+
 use std::fs::{File as std_file, OpenOptions};
-use std::{env, fs, io::Read};
+use std::{fs, io::Read};
 
 pub const FILE_NAME: &str = "FILE";
 
 // Store in JSON file
 
 pub trait StorageTrait {
-    fn new() -> Self
+    fn new(config: &config::Config) -> Self
     where
         Self: Sized;
     fn list(&self) -> Vec<Task>;
@@ -46,9 +49,8 @@ pub struct Storage {
 // => 1.5. create a `delete` method to delete Tasks based on its ID
 #[allow(dead_code)]
 impl StorageTrait for Storage {
-    fn new() -> Self {
-        dotenv().ok();
-        let env_json = env::var("ENV_JSON").expect("ENV_JSON not found");
+    fn new(config: &config::Config) -> Self {
+        let env_json = config.env_json.clone();
         new_open_options(&env_json);
         Self { json_str: env_json }
     }

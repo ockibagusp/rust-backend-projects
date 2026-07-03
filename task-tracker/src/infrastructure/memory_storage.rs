@@ -44,10 +44,11 @@ fn get_status_tasks(list: &Vec<Task>, status: TaskStatus) -> Vec<Task> {
 pub mod list_tests {
     use super::*;
     use crate::domain::task_test::{setup_task, setup_task_status};
+    use crate::infrastructure::config;
 
     struct MockStorageTrait;
     impl StorageTrait for MockStorageTrait {
-        fn new() -> Self
+        fn new(config: &config::Config) -> Self
         where
             Self: Sized,
         {

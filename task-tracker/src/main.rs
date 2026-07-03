@@ -1,9 +1,13 @@
 use crate::cmd::cmd::{Command, CommandTrait};
-use task_tracker::cmd;
+use dotenv::dotenv;
+use task_tracker::{cmd, infrastructure::config::Config};
 
 fn main() {
+    dotenv().ok();
+    let config = Config::from_env();
+
     let mut cmd = Command::new();
-    let result = cmd.run();
+    let result = cmd.run(&config);
     match result {
         Ok(data) => {
             println!("{}", data);
