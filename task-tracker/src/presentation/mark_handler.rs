@@ -1,14 +1,14 @@
-use crate::application::mark_use_cases::MarkUseCaseTrait;
+use crate::application::mark_use_cases::MarkUseCase;
 use crate::domain::task::Task;
 use crate::error::AppError;
 
 pub struct CmdMarkHandler {
     // Presentation depends directly on the Application use case
-    pub use_case: Box<dyn MarkUseCaseTrait>,
+    pub use_case: Box<MarkUseCase>,
 }
 
 impl CmdMarkHandler {
-    pub fn new(use_case: Box<dyn MarkUseCaseTrait>) -> Self {
+    pub fn new(use_case: Box<MarkUseCase>) -> Self {
         Self { use_case }
     }
 

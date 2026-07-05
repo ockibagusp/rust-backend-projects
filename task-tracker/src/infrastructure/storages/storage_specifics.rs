@@ -91,8 +91,11 @@ pub mod tests {
     // TODO: a single core test
     // // $ cargo test -- --test-threads=1
     use crate::{
-        domain::task::{Task, TaskStatus},
-        domain::task_test::{setup_task, setup_task_status},
+        domain::{
+            task::Task,
+            task_status::TaskStatus,
+            task_test::{setup_task, setup_task_status},
+        },
         infrastructure::storages::storage_specifics::{
             specifics_of_add, specifics_of_delete, specifics_of_list, specifics_of_update,
         },

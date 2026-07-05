@@ -4,55 +4,31 @@ use crate::domain::{
     task_status::TaskStatus,
 };
 use crate::error::AppError;
+use crate::infrastructure::storages::storage::FILE_NAME as STORAGE_FILE_NAME;
+use crate::infrastructure::storages::storage::StorageTrait;
 use chrono::{DateTime, Local};
-use core::result::Result;
 
-const FILE_NAME: &str = "TASK_MANAGER";
-
-pub struct TaskManagerUseCase {
-    pub repository: Box<dyn TaskManagerRepository>,
+pub struct StorageTaskManagerRepository {
+    pub storage: Box<dyn StorageTrait>,
 }
-// TDD
-// ✅ ❔ ❌
-// 2.4. implementasikan trait TaskManagerUseCaseTrait untuk struct TaskManager ✅
-// => 2.4. implement the TaskManagerUseCaseTrait trait for the TaskManager struct
-// ------------------------------------------------
-// 1. method `new` untuk inisialisasi TaskManager ✅
-// => 1. `new` method for TaskManager initialization
-// 2. method `get_next_id` untuk mendapatkan ID berikutnya ✅
-// => 2. `get_next_id` method to get the next ID
-// 3. method `list` untuk mendapatkan daftar Task ✅
-// => 3. `list` method to get the Task list
-// 4. method `add` untuk menambahkan Task baru ✅
-// => 4. `add` method to add a new Task
-// 5. method `update_description` untuk memperbarui deskripsi Task berdasarkan ID ✅
-// => 5. `update_description` method to update the Task description by ID
-// 6. method `update` untuk memperbarui Task yang ada ✅
-// => 6. `update` method to update an existing Task
-// 7. method `delete` untuk menghapus Task berdasarkan ID ✅
-// => 7. `delete` method to delete a Task by ID
-impl TaskManagerUseCase {
-    // ? fn find_by_id_mut(&mut self, id: i32, update_task: &Task) -> () {
-    //     self.list.iter_mut().find(|task| task.id == id).map(|task| {
-    //         *task = update_task.clone();
-    //     });
-    // }
 
-    pub fn add(&mut self, input: &str) -> Result<Task, AppError> {
-        let add_task = get_next_task_of_add(&self.repository.find_by_list(), input);
+impl TaskManagerRepository for StorageTaskManagerRepository {
+    fn add(&mut self, description: &str) -> Result<Task, AppError> {
+        let add_task = get_next_task_of_add(&self.storage.find_by_list(), description);
         // if let Err(e) = err {...}
         if add_task.is_err() {
             return add_task;
         }
         let add_task = add_task.unwrap();
 
-        let _ = &self.repository.add(&add_task.description);
+        let _ = &self.storage.add(&add_task);
+        // ? let _ = &self.list.push(add_task);
 
         Ok(add_task)
     }
 
-    pub fn update_description(&mut self, id: i32, description: &str) -> Result<Task, AppError> {
-        let mut task = find_by_id(&self.repository.find_by_list(), id)?;
+    fn update_description(&mut self, id: i32, description: &str) -> Result<Task, AppError> {
+        let mut task = find_by_id(&self.storage.find_by_list(), id, STORAGE_FILE_NAME)?;
         // if let Err(e) = task {
         //     return Err(e);
         // }
@@ -66,7 +42,7 @@ impl TaskManagerUseCase {
         }
     }
 
-    pub fn updates(
+    fn updates(
         &mut self,
         id: i32,
         update_task: &mut Task,
@@ -74,39 +50,43 @@ impl TaskManagerUseCase {
     ) -> Result<Task, AppError> {
         let err = update_task.is_validation();
         if let Err(e) = err {
-            return Err(AppError::InvalidInput(FILE_NAME, e));
+            return Err(AppError::InvalidInput(STORAGE_FILE_NAME, e));
         }
 
         let is_valid = is_valid_to_task_of_description_or_status_update(
-            &self.repository.find_by_list(),
+            &self.storage.find_by_list(),
             id,
             update_task,
             desc_status,
         );
         if is_valid {
             return Err(AppError::InvalidInput(
-                FILE_NAME,
+                STORAGE_FILE_NAME,
                 "DESCRIPTION or STATUS is not identical",
             ));
         }
         update_task.updated_at = Local::now().into();
 
-        let _ = &self.repository.updates(id, update_task, desc_status);
+        let _ = self.storage.update(id, update_task);
         // ? let _ = self.find_by_id_mut(id, update_task);
 
         Ok(update_task.clone())
     }
 
-    pub fn delete(&mut self, id: i32) -> Result<(), AppError> {
-        let task = find_by_id(&self.repository.find_by_list(), id);
+    fn delete(&mut self, id: i32) -> Result<(), AppError> {
+        let task = find_by_id(&self.storage.find_by_list(), id, STORAGE_FILE_NAME);
         if !task.is_ok() {
             return Err(task.unwrap_err());
         }
 
-        let _ = self.repository.delete(id);
+        let _ = self.storage.delete(id);
         // tidak perlu menghapus
         // ? self.list.remove(index);
         Ok(())
+    }
+
+    fn find_by_list(&self) -> Vec<Task> {
+        self.storage.find_by_list()
     }
 }
 
@@ -121,11 +101,11 @@ fn get_next_id(list: &Vec<Task>) -> i32 {
     max_id + 1
 }
 
-pub fn find_by_id(list: &Vec<Task>, id: i32) -> Result<Task, AppError> {
+pub fn find_by_id(list: &Vec<Task>, id: i32, file_name: &'static str) -> Result<Task, AppError> {
     let task = list.iter().find(|&task| task.id == id).cloned();
     match task {
         Some(task) => Ok(task),
-        None => Err(AppError::InvalidInput(FILE_NAME, "ID is not found")),
+        None => Err(AppError::NotFound(file_name, "ID is not found")),
     }
 }
 
@@ -142,10 +122,9 @@ pub fn get_next_task_of_add(list: &Vec<Task>, description: &str) -> Result<Task,
         created_at: now_created_at.into(),
         updated_at: now_created_at.into(),
     };
-
     match add_task.is_validation() {
         Ok(_) => Ok(add_task),
-        Err(e) => Err(AppError::InvalidInput(FILE_NAME, e)),
+        Err(e) => Err(AppError::InvalidInput(STORAGE_FILE_NAME, e)),
     }
 }
 
@@ -158,7 +137,7 @@ pub fn is_valid_to_task_of_description_or_status_update(
     update_task: &Task,
     desc_status: TaskI32,
 ) -> bool {
-    let old_task = find_by_id(list, id).unwrap();
+    let old_task = find_by_id(list, id, STORAGE_FILE_NAME).unwrap();
     if desc_status == DESCRIPTION && old_task.description == update_task.description {
         return true;
     }

@@ -20,7 +20,7 @@ pub trait StorageTrait {
     fn new(config: &config::Config) -> Self
     where
         Self: Sized;
-    fn list(&self) -> Vec<Task>;
+    fn find_by_list(&self) -> Vec<Task>;
     fn add(&self, add_task: &Task) -> Vec<Task>;
     fn update(&self, id: i32, update_task: &mut Task) -> Vec<Task>;
     fn delete(&self, id: i32) -> Vec<Task>;
@@ -55,7 +55,7 @@ impl StorageTrait for Storage {
         Self { json_str: env_json }
     }
 
-    fn list(&self) -> Vec<Task> {
+    fn find_by_list(&self) -> Vec<Task> {
         let tasks_string = tasks_str(&self.json_str);
 
         specifics_of_list(&tasks_string)

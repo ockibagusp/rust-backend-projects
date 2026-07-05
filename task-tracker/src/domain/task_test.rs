@@ -1,4 +1,7 @@
-use crate::domain::task::{MockTaskTrait, Task, TaskStatus, TaskTrait};
+use crate::domain::{
+    task::{MockTaskTrait, Task, TaskTrait},
+    task_status::TaskStatus,
+};
 use chrono::DateTime;
 
 pub fn setup_task(id: i32, desciption: &str) -> Task {
@@ -31,7 +34,7 @@ pub fn setup_task_status(id: i32, desciption: &str, status: TaskStatus) -> Task 
 
 #[test]
 fn test_task_trait_should_fail() {
-    let mut mock = MockTaskTrait::new();
+    let mut mock = MockTaskTrait::default();
     mock.expect_is_validation().returning(move || Err("error"));
     assert_eq!(mock.is_validation(), Err("error"));
 }

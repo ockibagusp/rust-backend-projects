@@ -1,34 +1,9 @@
-use chrono::{DateTime, prelude::FixedOffset};
+use crate::domain::task_status::TaskStatus;
+use chrono::{DateTime, Local, prelude::FixedOffset};
 use core::result::Result;
 use mockall::{automock, predicate::*};
 use serde::{Deserialize, Serialize};
 use std::fmt::{self};
-
-#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")] // Ensures serde automatically formats variants as lowercase
-pub enum TaskStatus {
-    Todo,
-    #[serde(rename = "in-progress")]
-    InProgress,
-    Done,
-}
-
-impl fmt::Display for TaskStatus {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            TaskStatus::Todo => write!(f, "todo"),
-            TaskStatus::InProgress => write!(f, "in-progress"),
-            TaskStatus::Done => write!(f, "done"),
-        }
-    }
-}
-
-// Automatically maps Display into Serde's serialization
-impl From<TaskStatus> for String {
-    fn from(t: TaskStatus) -> Self {
-        t.to_string()
-    }
-}
 
 // TDD
 // ✅ ❔ ❌
@@ -36,16 +11,25 @@ impl From<TaskStatus> for String {
 // => 2.1. create the Task data structure with fields id, description, status, created_at, updated_at
 // ------------------------------------------------
 // 1. buat field `id` bertipe integer ✅
-// => 1. create the `id` field with integer type
+// => 1. create an `id` field of type integer
 // 2. buat field `description` bertipe string ✅
-// => 2. create the `description` field with string type
-// 3. buat field `status` bertipe string dengan nilai 'todo', 'in-progress', 'done' ✅
-// => 3. create the `status` field with string type with values 'todo', 'in-progress', 'done'
+// => 2. create a `description` field of type string
+// 3. buat field `status` bertipe TaskStatus dengan nilai-nilai 'todo', 'in-progress', 'done' ✅
+// => 3. create a `status` field of type TaskStatus with the values 'todo', 'in-progress', 'done'
 // 4. buat field `created_at` bertipe DateTime dengan zona waktu tetap ✅
-// => 4. create the `created_at` field with DateTime type with fixed timezone
+// => 4. create a `created_at` field of type DateTime with fixed timezone
 // 5. buat field `updated_at` bertipe DateTime dengan zona waktu tetap ✅
-// => 5. create the `updated_at` field with DateTime type with fixed timezone
+// => 5. create an `updated_at` field of type DateTime with fixed timezone
 // ------------------------------------------------
+#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
+pub struct Task {
+    pub id: i32,
+    pub description: String,
+    // status: todo, in-progress, done
+    pub status: TaskStatus,
+    pub created_at: DateTime<FixedOffset>,
+    pub updated_at: DateTime<FixedOffset>,
+}
 
 // TDD
 // ✅ ❔ ❌
@@ -67,16 +51,10 @@ impl From<TaskStatus> for String {
 // 5. pastikan field `updated_at` harus berisi waktu terakhir kali diubah ✅
 // => 5. ensure that the `updated_at` field should contain the last time it was updated
 // ------------------------------------------------
-
-// #[derive(PartialEq, Clone, Debug, SerializeDisplay, DeserializeDisplay)]
-#[derive(PartialEq, Clone, Debug, Serialize, Deserialize)]
-pub struct Task {
-    pub id: i32,
-    pub description: String,
-    // status: todo, in-progress, done
-    pub status: TaskStatus,
-    pub created_at: DateTime<FixedOffset>,
-    pub updated_at: DateTime<FixedOffset>,
+#[automock]
+pub trait TaskTrait {
+    fn new(id: i32, description: String) -> Self;
+    fn is_validation(&self) -> Result<(), &'static str>;
 }
 
 // TDD
@@ -95,12 +73,20 @@ pub struct Task {
 //      - validasi untuk field `status` seharusnya hanya memiliki nilai 'todo', 'in-progress', atau 'done'
 //      -> validation for the `status` field should only have the values 'todo', 'in-progress', or 'done'
 // ------------------------------------------------
-#[automock]
-pub trait TaskTrait {
-    fn is_validation(&self) -> Result<(), &'static str>;
-}
-
 impl TaskTrait for Task {
+    fn new(id: i32, description: String) -> Self {
+        let now: DateTime<FixedOffset> = Local::now().into();
+        let status = TaskStatus::Todo; // Default status is 'todo'
+
+        Self {
+            id,
+            description,
+            status,
+            created_at: now,
+            updated_at: now,
+        }
+    }
+
     fn is_validation(&self) -> Result<(), &'static str> {
         if self.id.is_negative() {
             return Err("ID is negative");
@@ -118,6 +104,7 @@ impl TaskTrait for Task {
     }
 }
 
+// Implement Display for Task to provide a string representation
 impl fmt::Display for Task {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(

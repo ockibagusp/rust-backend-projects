@@ -1,24 +1,16 @@
-use crate::domain::task::{Task, TaskStatus, TaskTrait};
+use crate::domain::{
+    mark_repository::MarkRepository,
+    task::{Task, TaskTrait},
+    task_status::TaskStatus,
+};
 use crate::error::AppError;
-use crate::infrastructure::storages::storage::StorageTrait;
 use chrono::{DateTime, Local};
 use core::result::Result;
 
 pub const FILE_NAME: &str = "MARK";
 
-pub trait MarkRepositoryTrait {
-    fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError>;
-    fn mark_done(&mut self, id: i32) -> Result<Task, AppError>;
-}
-
-pub trait MarkUseCaseTrait {
-    fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError>;
-    fn mark_done(&mut self, id: i32) -> Result<Task, AppError>;
-}
-
 pub struct MarkUseCase {
-    pub repository: Box<dyn MarkRepositoryTrait>,
-    pub storage: Box<dyn StorageTrait>,
+    pub repository: Box<dyn MarkRepository>,
 }
 // TDD
 // ✅ ❔ ❌
@@ -39,12 +31,12 @@ pub struct MarkUseCase {
 // => 6. `update` method to update an existing Task
 // 7. method `delete` untuk menghapus Task berdasarkan ID ✅
 // => 7. `delete` method to delete a Task by ID
-impl MarkUseCaseTrait for MarkUseCase {
-    fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError> {
+impl MarkUseCase {
+    pub fn mark_in_progress(&mut self, id: i32) -> Result<Task, AppError> {
         return self.repository.mark_in_progress(id);
     }
 
-    fn mark_done(&mut self, id: i32) -> Result<Task, AppError> {
+    pub fn mark_done(&mut self, id: i32) -> Result<Task, AppError> {
         return self.repository.mark_done(id);
     }
 }

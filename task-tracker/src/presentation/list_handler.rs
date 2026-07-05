@@ -1,18 +1,18 @@
-use crate::application::list_use_cases::ListUseCaseTrait;
+use crate::application::list_use_cases::ListUseCase;
 use crate::domain::task::Task;
 
 pub struct CmdListHandler {
     // Presentation depends directly on the Application use case
-    pub use_case: Box<dyn ListUseCaseTrait>,
+    pub use_case: Box<ListUseCase>,
 }
 
 impl CmdListHandler {
-    pub fn new(use_case: Box<dyn ListUseCaseTrait>) -> Self {
+    pub fn new(use_case: Box<ListUseCase>) -> Self {
         Self { use_case }
     }
 
     pub fn handle_list_of_all_tasks(&self) -> Vec<Task> {
-        return self.use_case.list_of_all();
+        return self.use_case.all();
     }
 
     pub fn handle_list_of_todo_tasks(&self) -> Vec<Task> {

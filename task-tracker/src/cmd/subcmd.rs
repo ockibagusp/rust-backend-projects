@@ -2,7 +2,10 @@ use crate::application::{list_use_cases, mark_use_cases, task_manager_use_cases}
 use crate::cmd::cmd_printing::{open_task_list_for_title_str, open_task_title_str};
 use crate::error::AppError;
 use crate::infrastructure::{
-    config, memory_storage,
+    config,
+    storage_list_repository::StorageListRepository,
+    storage_mark_repository::StorageMarkRepository,
+    storage_task_manager_repository::StorageTaskManagerRepository,
     storages::storage::{FILE_NAME, Storage, StorageTrait},
 };
 use crate::presentation::{
@@ -15,7 +18,7 @@ use crate::presentation::{
 */
 pub fn subcmd_lists(status: &Option<String>, config: &config::Config) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
-    let repo = memory_storage::ListRepository {
+    let repo = StorageListRepository {
         storage: Box::new(Storage::new(config)),
     };
 
@@ -62,7 +65,7 @@ pub fn subcmd_lists(status: &Option<String>, config: &config::Config) -> Result<
 */
 pub fn subcmd_add(description: &String, config: &config::Config) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
-    let repo = memory_storage::TaskManagerRepository {
+    let repo = StorageTaskManagerRepository {
         storage: Box::new(Storage::new(config)),
     };
 
@@ -89,7 +92,7 @@ pub fn subcmd_update(
     config: &config::Config,
 ) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
-    let repo = memory_storage::TaskManagerRepository {
+    let repo = StorageTaskManagerRepository {
         storage: Box::new(Storage::new(config)),
     };
 
@@ -112,7 +115,7 @@ pub fn subcmd_update(
 
 pub fn subcmd_delete(id: &u32, config: &config::Config) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
-    let repo = memory_storage::TaskManagerRepository {
+    let repo = StorageTaskManagerRepository {
         storage: Box::new(Storage::new(config)),
     };
 
@@ -141,14 +144,13 @@ pub fn subcmd_delete(id: &u32, config: &config::Config) -> Result<String, AppErr
 // */
 pub fn subcmd_mark_in_progress(id: &u32, config: &config::Config) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
-    let repo = memory_storage::MarkRepository {
+    let repo = StorageMarkRepository {
         storage: Box::new(Storage::new(config)),
     };
 
     // 2. Inject infrastructure implementation into the usecase
     let use_case = mark_use_cases::MarkUseCase {
         repository: Box::new(repo),
-        storage: Box::new(Storage::new(config)),
     };
 
     // 3. Handle incoming API traffic payload
@@ -165,14 +167,13 @@ pub fn subcmd_mark_in_progress(id: &u32, config: &config::Config) -> Result<Stri
 
 pub fn subcmd_mark_done(id: &u32, config: &config::Config) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
-    let repo = memory_storage::MarkRepository {
+    let repo = StorageMarkRepository {
         storage: Box::new(Storage::new(config)),
     };
 
     // 2. Inject infrastructure implementation into the usecase
     let use_case = mark_use_cases::MarkUseCase {
         repository: Box::new(repo),
-        storage: Box::new(Storage::new(config)),
     };
 
     // 3. Handle incoming API traffic payload

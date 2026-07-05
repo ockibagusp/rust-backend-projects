@@ -1,14 +1,14 @@
-use crate::application::task_manager_use_cases::TaskManagerUseCaseTrait;
+use crate::application::task_manager_use_cases::TaskManagerUseCase;
 use crate::domain::task::Task;
 use crate::error::AppError;
 
 pub struct CmdTaskManagerHandler {
     // Presentation depends directly on the Application use case
-    pub use_case: Box<dyn TaskManagerUseCaseTrait>,
+    pub use_case: Box<TaskManagerUseCase>,
 }
 
 impl CmdTaskManagerHandler {
-    pub fn new(use_case: Box<dyn TaskManagerUseCaseTrait>) -> Self {
+    pub fn new(use_case: Box<TaskManagerUseCase>) -> Self {
         Self { use_case }
     }
 
