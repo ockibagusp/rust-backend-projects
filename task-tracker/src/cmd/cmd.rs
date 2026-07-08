@@ -59,7 +59,7 @@ impl CommandTrait for Command {
             // -------------------------------
             // $ task-cli list
             // $ task-cli list [todo|in-progress|done]
-            Commands::List { status } => subcmd_lists(status, config),
+            Commands::List { status } => subcmd_lists(config, status),
             /*
                 Task Operations
             */
@@ -67,16 +67,16 @@ impl CommandTrait for Command {
             // $ task-cli add <description>
             // $ task-cli update <id> <description>
             // $ task-cli delete <id>
-            Commands::Add { description } => subcmd_add(&description, config),
-            Commands::Update { id, description } => subcmd_update(id, description, config),
-            Commands::Delete { id } => subcmd_delete(id, config),
+            Commands::Add { description } => subcmd_add(config, &description),
+            Commands::Update { id, description } => subcmd_update(config, id, description),
+            Commands::Delete { id } => subcmd_delete(config, id),
             // /*
             //     Mark Task Operations
             // */
             // -------------------------------
             // $ task-cli [mark-in-progress|mark-done] <id>
-            Commands::MarkInProgress { id } => subcmd_mark_in_progress(id, config),
-            Commands::MarkDone { id } => subcmd_mark_done(id, config),
+            Commands::MarkInProgress { id } => subcmd_mark_in_progress(config, id),
+            Commands::MarkDone { id } => subcmd_mark_done(config, id),
         }
     }
 }

@@ -16,7 +16,7 @@ use crate::presentation::{
 /*
     List Task Operations
 */
-pub fn subcmd_lists(status: &Option<String>, config: &config::Config) -> Result<String, AppError> {
+pub fn subcmd_lists(config: &config::Config, status: &Option<String>) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
     let repo = StorageListRepository {
         storage: Box::new(Storage::new(config)),
@@ -63,7 +63,7 @@ pub fn subcmd_lists(status: &Option<String>, config: &config::Config) -> Result<
 /*
     Task Operations
 */
-pub fn subcmd_add(description: &String, config: &config::Config) -> Result<String, AppError> {
+pub fn subcmd_add(config: &config::Config, description: &String) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
     let repo = StorageTaskManagerRepository {
         storage: Box::new(Storage::new(config)),
@@ -87,9 +87,9 @@ pub fn subcmd_add(description: &String, config: &config::Config) -> Result<Strin
 }
 
 pub fn subcmd_update(
+    config: &config::Config,
     id: &u32,
     description: &String,
-    config: &config::Config,
 ) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
     let repo = StorageTaskManagerRepository {
@@ -113,7 +113,7 @@ pub fn subcmd_update(
     }
 }
 
-pub fn subcmd_delete(id: &u32, config: &config::Config) -> Result<String, AppError> {
+pub fn subcmd_delete(config: &config::Config, id: &u32) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
     let repo = StorageTaskManagerRepository {
         storage: Box::new(Storage::new(config)),
@@ -142,7 +142,7 @@ pub fn subcmd_delete(id: &u32, config: &config::Config) -> Result<String, AppErr
 // /*
 //     Mark Task Operations
 // */
-pub fn subcmd_mark_in_progress(id: &u32, config: &config::Config) -> Result<String, AppError> {
+pub fn subcmd_mark_in_progress(config: &config::Config, id: &u32) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
     let repo = StorageMarkRepository {
         storage: Box::new(Storage::new(config)),
@@ -165,7 +165,7 @@ pub fn subcmd_mark_in_progress(id: &u32, config: &config::Config) -> Result<Stri
     }
 }
 
-pub fn subcmd_mark_done(id: &u32, config: &config::Config) -> Result<String, AppError> {
+pub fn subcmd_mark_done(config: &config::Config, id: &u32) -> Result<String, AppError> {
     // 1. Instantiate the real infrastructure
     let repo = StorageMarkRepository {
         storage: Box::new(Storage::new(config)),
