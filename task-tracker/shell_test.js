@@ -102,7 +102,7 @@ message: "ID is not found"`
     {
         name: 'mark-in-progress command with valid ID should succeed',
         command: './task-cli mark-in-progress 1',
-        expected: `Mark in progress`
+        expected: `Mark as "in progress"`
     },
     {
         name: 'mark-done command with missing argument should fail',
@@ -121,7 +121,7 @@ message: "ID is not found"`
     {
         name: 'mark-done command with valid ID should succeed',
         command: './task-cli mark-done 2',
-        expected: `Mark done`
+        expected: `Mark as "done"`
     },
     /**
      * Test cases for list command
