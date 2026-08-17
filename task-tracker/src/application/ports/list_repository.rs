@@ -2,8 +2,8 @@ use crate::domain::task::Task;
 
 // TDD
 // ✅ ❔ ❌
-// 3.2. buat trait ListRepository dengan method new, index, todo, in_progress, done ✅
-// => 3.2. create the ListRepository trait with methods new, index, todo, in_progress, done
+// 2.1. buat trait ListRepository dengan method all, todo, in_progress, done ✅
+// => 2.2. create the ListRepository trait with methodd all, todo, in_progress, done
 pub trait ListRepository {
     // fn new() -> Self
     // where

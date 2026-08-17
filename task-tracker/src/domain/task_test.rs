@@ -1,7 +1,4 @@
-use crate::domain::{
-    task::{MockTaskTrait, Task, TaskTrait},
-    task_status::TaskStatus,
-};
+use crate::domain::task::{MockTaskTrait, Task, TaskStatus, TaskTrait};
 use chrono::DateTime;
 
 pub fn setup_task(id: i32, desciption: &str) -> Task {

@@ -1,5 +1,5 @@
+use crate::application::error_impl::{panic_invalid_input, panic_not_found_input};
 use crate::domain::task::{Task, TaskTrait};
-use crate::error::{panic_invalid_input, panic_not_found_input};
 use crate::infrastructure::storages::storage::FILE_NAME;
 
 // specifics of list function for testing purposes
@@ -92,8 +92,7 @@ pub mod tests {
     // // $ cargo test -- --test-threads=1
     use crate::{
         domain::{
-            task::Task,
-            task_status::TaskStatus,
+            task::{Task, TaskStatus},
             task_test::{setup_task, setup_task_status},
         },
         infrastructure::storages::storage_specifics::{

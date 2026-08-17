@@ -1,4 +1,5 @@
-use crate::domain::{list_repository::ListRepository, task::Task};
+use crate::application::ports::list_repository::ListRepository;
+use crate::domain::task::Task;
 
 pub struct ListUseCase {
     pub repository: Box<dyn ListRepository>,
@@ -6,8 +7,8 @@ pub struct ListUseCase {
 
 // TDD
 // ✅ ❔ ❌
-// 3.3. implementasikan trait ListRepository untuk struct List ✅
-// => 3.3. implement the ListRepository trait for the List struct
+// 3.1. implementasikan trait ListRepository untuk struct List ✅
+// => 1.3. implement the ListRepository trait for the List struct
 // ------------------------------------------------
 // 1. method `new` untuk inisialisasi List ✅
 // => 1. the `new` method for initialize the List
