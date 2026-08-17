@@ -8,13 +8,17 @@ var test_cases = [
     {
         name: 'add command with invalid description (1 character) should fail',
         command: './task-cli add "f"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     },
     // error: description with 51 characters
     {
         name: 'add command with invalid description (51 characters) should fail',
         command: './task-cli add "foo bar baz qux quux corge grault garply waldo fred plugh xyzzy thud"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     },
     // success: valid description
     {
@@ -37,12 +41,16 @@ ID: 3
     {
         name: 'update command with invalid description (1 character) should fail',
         command: './task-cli update 1 "f"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     },
     {
         name: 'update command with invalid description (51 characters) should fail',
         command: './task-cli update 1 "foo bar baz qux quux corge grault garply waldo fred plugh xyzzy thud"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     },
     {
         name: 'update command with valid description should succeed',
@@ -56,7 +64,9 @@ ID: 1
     {
         name: 'update command with identical description and status should fail',
         command: './task-cli update 1 "This is an updated task description 1"',
-        expected: `Error { code: "TASK_MANAGER", kind: InvalidInput, message: "DESCRIPTION or STATUS is not identical" }`
+        expected: `code   : TASK_MANAGER
+kind   : InvalidInput
+message: "DESCRIPTION or STATUS is not identical"`
     },
     /**
      * Test cases for delete command
@@ -84,13 +94,15 @@ ID: 1
     {
         name: 'mark-in-progress command with invalid ID should fail',
         command: './task-cli mark-in-progress 99',
-        expected: `Error { code: "MARK", kind: NotFound, message: "ID is not found" }`
+        expected: `code   : MARK
+kind   : NotFound
+message: "ID is not found"`
     },
     // mark in progress with ID: 1, it should have failed
     {
         name: 'mark-in-progress command with valid ID should succeed',
         command: './task-cli mark-in-progress 1',
-        expected: `Mark in progress`
+        expected: `Mark as "in progress"`
     },
     {
         name: 'mark-done command with missing argument should fail',
@@ -101,13 +113,15 @@ ID: 1
     {
         name: 'mark-done command with invalid ID should fail',
         command: './task-cli mark-done 99',
-        expected: `Error { code: "MARK", kind: NotFound, message: "ID is not found" }`
+        expected: `code   : MARK
+kind   : NotFound
+message: "ID is not found"`
     },
     // mark done with ID: 1, it should have success
     {
         name: 'mark-done command with valid ID should succeed',
         command: './task-cli mark-done 2',
-        expected: `Mark done`
+        expected: `Mark as "done"`
     },
     /**
      * Test cases for list command
@@ -168,7 +182,8 @@ async function runTests() {
                     console.info("\x1b[42m%s\x1b[0m", 'Test passed');
                     total += 1;
                 } else {
-                    console.log("\x1b[31m%s\x1b[0m", `output: ${output}`);
+                    console.log("\x1b[32m%s\x1b[0m", `expected  : ${expected}`);
+                    console.log("\x1b[31m%s\x1b[0m", `output    : ${output}`);
                     console.log("\x1b[41m%s\x1b[0m", 'Test failed');
                 }
                 return;
@@ -176,6 +191,10 @@ async function runTests() {
         });
         await sleep(1500); // wait for 1.5 seconds before running the next command
     }
-    process.stdout.write(`\nTotal tests passed: ${total}/${test_cases.length}\n`);
+    var logo_img = "❌";
+    if (total === test_cases.length) {
+        logo_img = "✅";
+    }
+    process.stdout.write(`\nTotal tests passed: ${total}/${test_cases.length} ${logo_img}\n`);
 }
 runTests();
