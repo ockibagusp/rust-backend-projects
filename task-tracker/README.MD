@@ -47,11 +47,15 @@ The list of commands and their usage is given below:
 
 ## Build
 
-`$ make build`
+```bash
+make build
+```
 
 ## Shell Test Javascript
 
-`$ make js-test`
+```bash
+make js-test
+```
 
 ### Create a new file for task-cli.json
 
