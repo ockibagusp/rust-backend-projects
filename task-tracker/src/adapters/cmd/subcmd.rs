@@ -1,5 +1,5 @@
 use crate::adapters::{
-    cmd::cmd_printing::{OpenTasks, OpenTasksTrait, open_task_title_str},
+    cmd::cmd_printing::{OpenTasks, OpenTasksListTrait, open_task_title_str},
     presentation::{
         list_handler::CmdListHandler, mark_handler::CmdMarkHandler,
         task_manager_handler::CmdTaskManagerHandler,
@@ -50,32 +50,37 @@ impl<'a> SubCmd<'a> {
             use_case: Box::new(use_case),
         };
 
+        let mut open_tasks_list = OpenTasks::new();
         // 4. Pass execution onto CMD controller
         if *status == None {
             // handle_list_of_all_tasks returns a Future; store and drop it to avoid unused-future warning
             let results = CmdListHandler::handle_list_of_all_tasks(&handler);
 
-            let list_str = OpenTasks::new(results).list();
+            open_tasks_list.set_tasks(results);
+            let list_str = open_tasks_list.list();
             return Ok(list_str);
         }
 
         if *status == Some(String::from("todo")) {
             // handle_list_of_todo_tasks returns a Future; store and drop it to avoid unused-future warning
             let results = CmdListHandler::handle_list_of_todo_tasks(&handler);
-            let list_str = OpenTasks::new(results).todo();
+            open_tasks_list.set_tasks(results);
+            let list_str = open_tasks_list.todo();
             return Ok(list_str);
         }
 
         if *status == Some(String::from("in-progress")) {
             // handle_list_of_in_progress_tasks returns a Future; store and drop it to avoid unused-future warning
             let results = CmdListHandler::handle_list_of_in_progress_tasks(&handler);
-            let list_str = OpenTasks::new(results).in_progress();
+            open_tasks_list.set_tasks(results);
+            let list_str = open_tasks_list.in_progress();
             return Ok(list_str);
         }
 
         // if *status == Some(String::from("done")) { ...}
         let results = CmdListHandler::handle_list_of_done_tasks(&handler);
-        let list_str = OpenTasks::new(results).done();
+        open_tasks_list.set_tasks(results);
+        let list_str = open_tasks_list.done();
         return Ok(list_str);
     }
 

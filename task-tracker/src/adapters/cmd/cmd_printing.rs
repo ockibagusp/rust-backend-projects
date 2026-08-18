@@ -5,10 +5,9 @@ pub struct OpenTasks {
     pub tasks_to_specify: Vec<Task>,
 }
 
-pub trait OpenTasksTrait {
-    fn new(tasks: Vec<Task>) -> Self
-    where
-        Self: Sized;
+pub trait OpenTasksListTrait {
+    fn new() -> Self;
+    fn set_tasks(&mut self, tasks: Vec<Task>);
 
     fn list(&self) -> String;
     fn todo(&self) -> String;
@@ -18,14 +17,17 @@ pub trait OpenTasksTrait {
     fn list_for_title_str(&self, title: &str) -> String;
 }
 
-impl OpenTasksTrait for OpenTasks {
-    fn new(tasks: Vec<Task>) -> Self
-    where
-        Self: Sized,
-    {
-        return OpenTasks {
-            tasks_to_specify: tasks,
-        };
+impl OpenTasksListTrait for OpenTasks {
+    fn new() -> Self {
+        OpenTasks {
+            tasks_to_specify: vec![],
+        }
+    }
+
+    // IMPORTANT: This method is used to set the tasks to be printed
+    // in the `list`, `todo`, `in_progress`, and `done` methods.
+    fn set_tasks(&mut self, tasks: Vec<Task>) {
+        self.tasks_to_specify = tasks;
     }
 
     fn list(&self) -> String {
