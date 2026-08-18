@@ -1,5 +1,5 @@
 use crate::adapters::{
-    cmd::cmd_printing::{open_task_list_for_title_str, open_task_title_str},
+    cmd::cmd_printing::{OpenTasks, OpenTasksTrait, open_task_title_str},
     presentation::{
         list_handler::CmdListHandler, mark_handler::CmdMarkHandler,
         task_manager_handler::CmdTaskManagerHandler,
@@ -54,27 +54,28 @@ impl<'a> SubCmd<'a> {
         if *status == None {
             // handle_list_of_all_tasks returns a Future; store and drop it to avoid unused-future warning
             let results = CmdListHandler::handle_list_of_all_tasks(&handler);
-            let list_str = open_task_list_for_title_str("All Lists", results);
+
+            let list_str = OpenTasks::new(results).list();
             return Ok(list_str);
         }
 
         if *status == Some(String::from("todo")) {
             // handle_list_of_todo_tasks returns a Future; store and drop it to avoid unused-future warning
             let results = CmdListHandler::handle_list_of_todo_tasks(&handler);
-            let list_str = open_task_list_for_title_str("Todo Lists", results);
+            let list_str = OpenTasks::new(results).todo();
             return Ok(list_str);
         }
 
         if *status == Some(String::from("in-progress")) {
             // handle_list_of_in_progress_tasks returns a Future; store and drop it to avoid unused-future warning
             let results = CmdListHandler::handle_list_of_in_progress_tasks(&handler);
-            let list_str = open_task_list_for_title_str("In Progress Lists", results);
+            let list_str = OpenTasks::new(results).in_progress();
             return Ok(list_str);
         }
 
         // if *status == Some(String::from("done")) { ...}
         let results = CmdListHandler::handle_list_of_done_tasks(&handler);
-        let list_str = open_task_list_for_title_str("Done Lists", results);
+        let list_str = OpenTasks::new(results).done();
         return Ok(list_str);
     }
 
