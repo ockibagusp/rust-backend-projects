@@ -43,75 +43,7 @@ Here are some constraints to guide the implementation:
 Example
 The list of commands and their usage is given below:
 
-### Adding a new task
-
-`./task-cli add "Buy groceries"`
-
-### Output: Task added successfully (ID: 1)
-
-### Updating and deleting tasks
-
-`./task-cli update 1 "Buy groceries and cook dinner"`
-
-`./task-cli delete 1`
-
-### Marking a task as in progress or done
-
-`./task-cli mark-in-progress 1`
-
-`./task-cli mark-done 1`
-
-### Listing all tasks
-
-`./task-cli list`
-
-### Listing tasks by status
-
-`./task-cli list done`
-
-`./task-cli list todo`
-
-`./task-cli list in-progress`
-
-## 1.1. tambah tugas
-
-### a. jika ditambahkan dengan tugas nama tersebut atau jika salah maka ditolak
-
-### b. ke dari dalam json
-
-### c. menambahkan berkas buru di task-cli.json ke file-nya
-
-```
-[
-    {
-        "id": 1,
-        "description": "xxx",
-        "status": "xxx",
-        "created_at": xxx,
-        "updated_at": xxx
-    }
-]
-```
-
-## 1.2. perubahan tugas
-
-### a. jika mengganti nama baru atau jika salah maka ditolak
-
-### b. ke dari dalam json
-
-### c. mengganti berkas di task-cli.json ke file-nya
-
-## 1.3. hapus tugas
-
-### a. jika dihapus dengan tugas tersebut atau jika salah maka ditolak
-
-### b. ke dari dalam json
-
-### c. hapus berkas di task-cli.json ke file-nya
-
-```
-
-```
+---
 
 ## Build
 
@@ -120,3 +52,67 @@ The list of commands and their usage is given below:
 ## Shell Test Javascript
 
 `$ make js-test`
+
+### Create a new file for task-cli.json
+
+```
+[
+    {
+        "id": unique,
+        "description": "xxx", # =< 10 character
+        "status": "todo", # [todo, in-progress, done]
+        "created_at": xxx, # date time
+        "updated_at": xxx # date time
+    }
+]
+```
+
+---
+
+### Adding a new task
+
+```bash
+./task-cli add "Buy groceries"
+```
+
+### Output: Task added successfully (ID: 1)
+
+### Updating and deleting tasks
+
+```bash
+./task-cli update 1 "Buy groceries and cook dinner"
+```
+
+```bash
+./task-cli delete 1
+```
+
+### Marking a task as in progress or done
+
+```bash
+./task-cli mark-in-progress 1
+```
+
+```bash
+./task-cli mark-done 1
+```
+
+### Listing all tasks
+
+```bash
+./task-cli list
+```
+
+### Listing tasks by status
+
+```bash
+./task-cli list done
+```
+
+```bash
+./task-cli list todo
+```
+
+```bash
+./task-cli list in-progress
+```
