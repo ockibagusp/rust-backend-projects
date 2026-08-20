@@ -5,7 +5,7 @@ pub struct OpenTasks {
     pub tasks_to_specify: Vec<Task>,
 }
 
-pub trait OpenTasksListTrait {
+pub trait OpenListTasksTrait {
     fn new() -> Self;
     fn set_tasks(&mut self, tasks: Vec<Task>);
 
@@ -17,7 +17,7 @@ pub trait OpenTasksListTrait {
     fn list_for_title_str(&self, title: &str) -> String;
 }
 
-impl OpenTasksListTrait for OpenTasks {
+impl OpenListTasksTrait for OpenTasks {
     fn new() -> Self {
         OpenTasks {
             tasks_to_specify: vec![],
@@ -64,6 +64,50 @@ impl OpenTasksListTrait for OpenTasks {
             String::from("------------------"),
             tasks_str,
             String::from("++++++++++++++++++")
+        );
+    }
+}
+
+pub struct OpenTask;
+impl OpenTask {
+    pub fn add(task: &Task) -> String {
+        return OpenTask::task_title_str("Added task", task);
+    }
+
+    pub fn update(task: &Task) -> String {
+        return OpenTask::task_title_str("Updated task", task);
+    }
+
+    pub fn delete() -> String {
+        return String::from("Deleted task");
+    }
+
+    fn task_title_str(title: &str, task: &Task) -> String {
+        return format!(
+            "{}\n{}\n{}",
+            String::from(title),
+            String::from("------------------"),
+            open_task_str(&task)
+        );
+    }
+}
+
+pub struct OpenMarkTask;
+impl OpenMarkTask {
+    pub fn in_progress(task: &Task) -> String {
+        return OpenMarkTask::task_title_str("Mark as \"in progress\"", task);
+    }
+
+    pub fn done(task: &Task) -> String {
+        return OpenMarkTask::task_title_str("Mark as \"done\"", task);
+    }
+
+    fn task_title_str(title: &str, task: &Task) -> String {
+        return format!(
+            "{}\n{}\n{}",
+            String::from(title),
+            String::from("------------------"),
+            open_task_str(&task)
         );
     }
 }

@@ -24,7 +24,7 @@ message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     {
         name: 'add command with valid description should succeed',
         command: './task-cli add "This is a valid task description 3"',
-        expected: `Add task
+        expected: `Added task
 ------------------
 ID: 3
 ----- Description: This is a valid task description 3\n`
@@ -55,7 +55,7 @@ message: "DESCRIPTION is too short(min. 2 chars) or too long(max. 50 chars)"`
     {
         name: 'update command with valid description should succeed',
         command: './task-cli update 1 "This is an updated task description 1"',
-        expected: `Update task
+        expected: `Updated task
 ------------------
 ID: 1
 ----- Description: This is an updated task description 1`
@@ -79,7 +79,7 @@ message: "DESCRIPTION or STATUS is not identical"`
     {
         name: 'delete command with valid ID should succeed',
         command: './task-cli delete 3',
-        expected: `Delete task`
+        expected: `Deleted task`
     },
 
     /**

@@ -1,5 +1,5 @@
 use crate::adapters::{
-    cmd::cmd_printing::{OpenTasks, OpenTasksListTrait, open_task_title_str},
+    cmd::cmd_printing::*,
     presentation::{
         list_handler::CmdListHandler, mark_handler::CmdMarkHandler,
         task_manager_handler::CmdTaskManagerHandler,
@@ -105,7 +105,7 @@ impl<'a> SubCmd<'a> {
 
         // 4. Pass execution onto CMD controller
         match CmdTaskManagerHandler::handle_add_tasks(&mut handler, &description) {
-            Ok(task) => Ok(open_task_title_str("Add task", task)),
+            Ok(task) => Ok(OpenTask::add(&task)),
             Err(e) => Err(e),
         }
     }
@@ -132,7 +132,7 @@ impl<'a> SubCmd<'a> {
             *id as i32,
             &description,
         ) {
-            Ok(task) => Ok(open_task_title_str("Update task", task)),
+            Ok(task) => Ok(OpenTask::update(&task)),
             Err(e) => Err(e),
         }
     }
@@ -155,7 +155,7 @@ impl<'a> SubCmd<'a> {
 
         // 4. Pass execution onto CMD controller
         match CmdTaskManagerHandler::handle_delete(&mut handler, *id as i32) {
-            Ok(_) => Ok(String::from("Delete task success")),
+            Ok(_) => Ok(OpenTask::delete()),
             Err(e) => Err(AppError::Aborted(
                 FILE_NAME,
                 Box::leak(format!("Error deleting task: {}", e).into_boxed_str()),
@@ -184,7 +184,7 @@ impl<'a> SubCmd<'a> {
 
         // 4. Pass execution onto CMD controller
         match CmdMarkHandler::handle_mark_in_progress(&mut handler, *id as i32) {
-            Ok(task) => Ok(open_task_title_str("Mark as \"in progress\"", task)),
+            Ok(task) => Ok(OpenMarkTask::in_progress(&task)),
             Err(e) => Err(e),
         }
     }
@@ -207,7 +207,7 @@ impl<'a> SubCmd<'a> {
 
         // 4. Pass execution onto CMD controller
         match CmdMarkHandler::handle_mark_done(&mut handler, *id as i32) {
-            Ok(task) => Ok(open_task_title_str("Mark as \"done\"", task)),
+            Ok(task) => Ok(OpenMarkTask::done(&task)),
             Err(e) => Err(e),
         }
     }
