@@ -45,6 +45,13 @@ The list of commands and their usage is given below:
 
 ---
 
+The 4 Layers of Clean Architecture ┌─────────────────────────────────────────────────────────┐
+│ Presentation (CLI, Axum, Rocket) │
+│ └── Infrastructure (PostgreSQL, MongoDB, Kafka) │
+│ └── Application / Use Cases (Traits, Ports) │
+│ └── Domain (Entities, Pure Logic) │
+└─────────────────────────────────────────────────────────┘
+
 ## Build
 
 ```bash

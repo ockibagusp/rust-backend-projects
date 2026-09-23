@@ -1,0 +1,3 @@
+Infrastructure Layer
+--------------------
+Layer 3: DB adapters, ORMs, concrete implementations

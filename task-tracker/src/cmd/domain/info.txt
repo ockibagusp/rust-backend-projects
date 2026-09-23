@@ -1,0 +1,3 @@
+Domain Layer
+------------
+Layer 1: Core enterprise business rules

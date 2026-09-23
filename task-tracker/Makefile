@@ -11,10 +11,10 @@ test:
 	cargo test
 
 build:
-	cargo build
+	cargo build --release
 
 # create a symbolic link
-	ln -sf target/debug/$(link) $(link_after)
+	ln -sf target/release/$(link) $(link_after)
 
 js-test:
 # if tasks_test.json exists, remove it

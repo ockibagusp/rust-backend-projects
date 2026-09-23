@@ -1,7 +1,7 @@
 use dotenv::dotenv;
 use task_tracker::{
-    adapters::cmd::cmd::{Command, CommandTrait},
-    infrastructure::config::Config,
+    cmd::cmd::{Command, CommandTrait},
+    config::Config,
 };
 
 fn main() {
