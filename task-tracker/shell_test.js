@@ -126,6 +126,26 @@ message: "ID is not found"`
     /**
      * Test cases for list command
      */
+    // list with enum: fail, it should have failed
+
+{
+        name: 'list command with arguments should fail',
+        command: './task-cli list fail',
+        expected: `Error
+------------------
+code   : FILE
+kind   : ConnectionAborted
+message: "Invalid status: 'fail'"
+++++++++++++++++++`
+    },
+    {
+        name: 'list command with invalid status should fail',
+        command: './task-cli list todo',
+        expected: `Todo Lists
+------------------
+No lists found.`
+    },
+// list with enum: in-progress, done; it should have success
     {
         name: 'list command with no arguments should succeed',
         command: './task-cli list',

@@ -1,0 +1,3 @@
+Application Layer
+-----------------
+Layer 2: Application-specific use cases & ports

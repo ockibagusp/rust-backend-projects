@@ -1,1 +1,0 @@
-Inner Circle: Entities, business logic, error types, and repository traits (No external dependencies)
